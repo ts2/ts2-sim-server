@@ -17,18 +17,20 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
+// Main ts2-tim-server command
 package main
 
 import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/ts2/ts2-sim-server/server"
-	"github.com/ts2/ts2-sim-server/simulation"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/signal"
+
+	"github.com/ts2/ts2-sim-server/server"
+	"github.com/ts2/ts2-sim-server/simulation"
 )
 
 func main() {
