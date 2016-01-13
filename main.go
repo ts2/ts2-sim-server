@@ -35,6 +35,7 @@ import (
 
 func main() {
 	// Command line arguments
+	debug := flag.Bool("debug", false, "Enable debugging")
 	port := flag.String("port", "22222", "The port on which the server will listen")
 	addr := flag.String("addr", "0.0.0.0", "The address on which the server will listen. Set to 0.0.0.0 to listen on all addresses.")
 
@@ -71,6 +72,7 @@ OPTIONS:
 	}
 
 	var sim simulation.Simulation
+	sim.Debug = debug
 	json.Unmarshal(data, &sim)
 	log.Printf("Simulation loaded: %s\n", sim.Options.Title)
 

@@ -80,7 +80,7 @@ func (conn *connection) loop() {
 }
 
 /*
-processRead performs all read operations from the connection and forwards to the hub
+processRead() performs all read operations from the connection and forwards to the hub
 */
 func (conn *connection) processRead() {
 	for {
