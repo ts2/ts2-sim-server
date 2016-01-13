@@ -19,7 +19,9 @@
 
 package server
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 /*
 Request is a generic request made by a websocket client.

@@ -21,45 +21,46 @@ package server
 
 import (
 	"fmt"
-	"github.com/ts2/ts2-sim-server/simulation"
 	"html/template"
 	"log"
 	"net/http"
+
+	"github.com/ts2/ts2-sim-server/simulation"
 )
 
 var sim *simulation.Simulation
 var hub *Hub
 
 /*
-Run starts an http server and a hub for the given simulation, on the given address and port.
+Run() starts a http web server and websocket hub for the given simulation, on the given address and port.
 */
 func Run(s *simulation.Simulation, addr, port string) {
 	sim = s
 	hub = &Hub{}
-	go HttpdStart(addr, port)
+	go StartHttpd(addr, port)
 	hub.run()
 }
 
 /*
-HttpdStart starts the server which serves on the following routes:
+StartHttpd() starts the server which serves on the following routes:
 
-/ : Serves a HTTP home page with the server status and information about the loaded sim.
-It also includes a JavaScript WebSocket client to communicate and manage the server.
+    / - Serves a HTTP home page with the server status and information about the loaded sim.
+        It also includes a JavaScript WebSocket client to communicate and manage the server.
 
-/ws : WebSocket endpoint for all TS2 clients and managers.
+    /ws - WebSocket endpoint for all TS2 clients and managers.
 */
-func HttpdStart(addr, port string) {
-	http.HandleFunc("/", serveHome)
-	http.HandleFunc("/ws", serveWs)
+func StartHttpd(addr, port string) {
+	http.HandleFunc("/", H_Home)
+	http.HandleFunc("/ws", H_Websocket)
 	serverAddress := fmt.Sprintf("%s:%s", addr, port)
 	log.Printf("Starting HTTP at: http://%s\n", serverAddress)
 	log.Fatal(http.ListenAndServe(serverAddress, nil))
 }
 
 /*
-serveHome() serves the html home.html page with integrated JS WebSocket client.
+H_Home()  handles and serves home.html page with integrated JS WebSocket client.
 */
-func serveHome(w http.ResponseWriter, r *http.Request) {
+func H_Home(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
 		http.Error(w, "Not found", 404)
 		return

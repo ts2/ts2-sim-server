@@ -19,4 +19,3 @@
 
 // Package `server` implements the http/websocket front end for the ts2 simulator
 package server
-
