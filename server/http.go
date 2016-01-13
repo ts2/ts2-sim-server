@@ -32,6 +32,7 @@ import (
 var sim *simulation.Simulation
 var hub *Hub
 
+
 /*
 Run() starts a http web server and websocket hub for the given simulation, on the given address and port.
 */
@@ -114,10 +115,24 @@ func H_Home(w http.ResponseWriter, r *http.Request) {
 		sim.Options.Description,
 		"ws://" + r.Host + "/ws",
 	}
-	homeTempl.Execute(w, data)
+
+	// For now we compile every time = but neeed "Dev" flag here..
+	homeTpl = template.Must(  template.New("").Parse( string(MustAsset("templates/home.html")))  )
+	homeTpl.Execute(w, data)
 }
 
-var homeTempl = template.Must(template.New("").Parse(`
+
+
+
+var homeTpl *template.Template
+
+func init(){
+	homeTpl = template.Must(  template.New("").Parse( string(MustAsset("templates/home.html")))  )
+
+}
+
+
+var DEADhomeTempl = template.Must(template.New("").Parse(`
 <!DOCTYPE html>
 <html>
 <head>
