@@ -45,8 +45,8 @@ func TestLogin(t *testing.T) {
 	// Umm, this fails cos pedro sends a "HELLO: Login required" message is H_Websocket()
 	var expectedResponse ResponseStatus
 	c.ReadJSON(&expectedResponse)
-	expectedErrorMsg := fmt.Sprintf("HELLO %s - Login required", c.LocalAddr())
-	assertEqual(t, expectedResponse, ResponseStatus{RESPONSE, DataStatus{OK, expectedErrorMsg}}, "Login/Wrong request")
+	expectedErrorMsg := fmt.Sprintf("Error: %s - Login required", c.LocalAddr())
+	assertEqual(t, expectedResponse, ResponseStatus{RESPONSE, DataStatus{KO, expectedErrorMsg}}, "Login/Wrong request")
 	_, _, err := c.ReadMessage()
 	if _, ok := err.(*websocket.CloseError); err == nil || !ok {
 		t.Errorf("Login/Wrong request/Connection should be closed")

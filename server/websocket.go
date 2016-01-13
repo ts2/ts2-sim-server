@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"errors"
 
 	"github.com/gorilla/websocket"
 )
@@ -52,8 +53,7 @@ func H_Websocket(w http.ResponseWriter, r *http.Request) {
 		conn.Close()
 	}()
 	// reply back with a simple message
-	payload := NewOkResponse()
-	payload.Data.Message = fmt.Sprintf("HELLO %s - Login required", conn.RemoteAddr() )
+	payload := NewErrorResponse(errors.New(fmt.Sprintf("%s - Login required", conn.RemoteAddr() )))
 	conn.Conn.WriteJSON(payload)
 	conn.loop()
 }

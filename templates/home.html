@@ -20,7 +20,7 @@
                 $('#output').append(message + "\n")
             };
             var showConnected = function(connected){
-				print(connected ? "WS Connected": "WS Disconnected");
+				print(connected ? "# WS Connected": "# WS Disconnected");
 				$('#lblStatus').text(connected ? "Connected" : "Disconnected");
 				$('#btnClose').prop("disabled", !connected);
 				$('#btnOpen').prop("disabled", connected);
