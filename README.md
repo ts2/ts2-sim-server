@@ -9,10 +9,8 @@ ts2 Sim Server
 This is code for the new TS2 sim server, written in golang
 
 - Please visit https://github.com/ts2/ts2/wiki/New-Arch
-- Under development.....
-
-
-
+- https://github.com/ts2/ts2/wiki/TS2-Sim-Server-Specifications
+- Under development as v0.7 "next architecture"
 
 
 

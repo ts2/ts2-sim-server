@@ -20,78 +20,21 @@
 package server
 
 import (
-	"fmt"
 	"html/template"
-	"log"
 	"net/http"
-	"encoding/json"
-
-	"github.com/ts2/ts2-sim-server/simulation"
 )
 
-var sim *simulation.Simulation
-var hub *Hub
 
+var homeTpl *template.Template
 
-/*
-Run() starts a http web server and websocket hub for the given simulation, on the given address and port.
-*/
-func Run(s *simulation.Simulation, addr, port string) {
-	sim = s
-	hub = &Hub{}
-	go StartHttpd(addr, port)
-	hub.run()
+func getTemplate(name string) *template.Template {
+	return template.Must(template.New(name).Parse(string(MustAsset(name))))
 }
 
-/*
-StartHttpd() starts the server which serves on the following routes:
-
-    / - Serves a HTTP home page with the server status and information about the loaded sim.
-        It also includes a JavaScript WebSocket client to communicate and manage the server.
-
-    /ws - WebSocket endpoint for all TS2 clients and managers.
-*/
-func StartHttpd(addr, port string) {
-	http.HandleFunc("/", H_Home)
-	http.HandleFunc("/ajax", H_Ajax)
-	http.HandleFunc("/ws", H_Websocket)
-
-	serverAddress := fmt.Sprintf("%s:%s", addr, port)
-	log.Printf("Starting HTTP at: http://%s\n", serverAddress)
-	log.Fatal(http.ListenAndServe(serverAddress, nil))
+func init(){
+	homeTpl = getTemplate("templates/home.html")
 }
 
-
-/*
-H_Ajax() - handles and serves ajax requests (placeholder).
-*/
-func H_Ajax(w http.ResponseWriter, r *http.Request) {
-	data := struct {
-		Title       string
-		Description string
-		Host        string
-		Trains      []*simulation.Train
-	}{
-		sim.Options.Title,
-		sim.Options.Description,
-		"ws://" + r.Host + "/ws",
-		sim.Trains,
-	}
-
-	SendJson(w, data)
-}
-
-func SendJson(w http.ResponseWriter, payload interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	var err error
-	var json_data []byte
-
-	json_data, err = json.MarshalIndent(payload, "", "  ")
-	if err != nil {
-		json_data, err = json.MarshalIndent(NewErrorResponse(err), "", "")
-	}
-	w.Write(json_data)
-}
 
 /*
 H_Home()  handles and serves home.html page with integrated JS WebSocket client.
@@ -122,19 +65,10 @@ func H_Home(w http.ResponseWriter, r *http.Request) {
 }
 
 
-var homeTpl *template.Template
-
-func getTemplate(name string) *template.Template {
-	return template.Must(template.New(name).Parse(string(MustAsset(name))))
-}
-
-func init(){
-	homeTpl = getTemplate("templates/home.html")
-}
 
 
 
-var DEADhomeTempl = template.Must(template.New("").Parse(`
+var ___homeTempl = template.Must(template.New("").Parse(`
 <!DOCTYPE html>
 <html>
 <head>
