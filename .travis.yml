@@ -9,5 +9,6 @@ install:
   - go get github.com/jteeuwen/go-bindata/...
   - go get github.com/gorilla/websocket
 script:
+ - go-bindata -debug -pkg server -o server/bindata_templates.go templates/
  - go test -v ./...
 
