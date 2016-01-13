@@ -1,4 +1,4 @@
-/*   Copyright (C) 2008-2016 by Nicolas Piganeau and the TS2 TEAM
+ /*   Copyright (C) 2008-2016 by Nicolas Piganeau and the TS2 TEAM
  *   (See AUTHORS file)
  *
  *   This program is free software; you can redistribute it and/or modify

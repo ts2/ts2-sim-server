@@ -381,7 +381,7 @@ func (ti *textStruct) Type() string {
 }
 
 /*
-PointsItem is a three-way junction.
+A `PointsItem` is a three-way railway junction (known as Point, Switch, Turnout..)
 
 The three ends are called `common end`, `normal end` and `reverse end`
 
@@ -389,34 +389,41 @@ The three ends are called `common end`, `normal end` and `reverse end`
 	                   /
 	common ___________/______________normal
 
-Trains can go from common end to normal or reverse ends depending on the
-state of the points, but they cannot go from normal end to reverse end.
+Trains can go from the common end to normal or reverse ends depending on the
+state of the points, but they cannot go from the normal end to reverse end.
+
 Usually, the normal end is aligned with the common end and the reverse end
 is sideways, but this is not mandatory.
 
-Points are represented on a 10 x 10 square centered on Center point. CommonEnd,
+Geometric points are represented on a 10 x 10 square centered on Center() point. CommonEnd,
 NormalEnd and ReverseEnd are points on the side of this square (i.e. they have
 at least one coordinate which is 5 or -5)
 */
 type PointsItem interface {
 	TrackItem
+
 	// The center point of this PointsItem in the scene coordinates
 	Center() Point
+
 	// CommonEnd return the common end point in the item's coordinates
 	CommonEnd() Point
+
 	// NormalEnd return the normal end point in the item's coordinates
 	NormalEnd() Point
+
 	// ReverseEnd return the reverse end point in the item's coordinates
 	ReverseEnd() Point
+
 	// ReversedItem returns the item linked to the reverse end of these points
 	ReverseItem() TrackItem
+
 	// Reversed returns true if the points are in the reversed position, false
 	// otherwise
 	Reversed() bool
 }
 
 /*
-pointsStruct is a struct the pointer of which implements PointsItem
+pointsStruct is a struct which implements PointsItem
 */
 type pointsStruct struct {
 	trackStruct
