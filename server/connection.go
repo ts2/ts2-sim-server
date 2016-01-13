@@ -116,6 +116,8 @@ loginClient() waits for a login request from the client, checks it and registers
 on the hub if it is valid. Otherwise it returns an error.
 */
 func (conn *connection) loginClient() error {
+
+	// Parse request
 	req := new(Request)
 	if err := conn.ReadJSON(req); err != nil {
 		return err
@@ -123,23 +125,27 @@ func (conn *connection) loginClient() error {
 	if req.Object != "Server" || req.Action != "login" {
 		return fmt.Errorf("%s: Client should call Server/login before all other requests", conn.RemoteAddr())
 	}
-
 	loginParams := ParamsLogin{}
 	if err := json.Unmarshal(req.Params, &loginParams); err != nil {
 		return fmt.Errorf("%s: Unable to parse login params: %s", conn.RemoteAddr(), err)
 	}
 
+	// Authenticate client and type
 	if loginParams.ClientType == CLIENT &&
 		loginParams.Token == sim.Options.ClientToken {
 		conn.clientType = CLIENT
+
 	} else if loginParams.ClientType == MANAGER &&
-		loginParams.Token == sim.Options.ManagerToken &&
-		loginParams.ClientSubType.isManagerType() {
+				loginParams.Token == sim.Options.ManagerToken &&
+				loginParams.ClientSubType.isManagerType() {
 		conn.clientType = MANAGER
 		conn.ManagerType = loginParams.ClientSubType
+
 	} else {
 		return fmt.Errorf("%s: Invalid login parameters", conn.RemoteAddr())
 	}
+
+	// authenticated, so setup
 	if err := conn.WriteJSON(NewOkResponse()); err != nil {
 		log.Printf("%s: Error while writing: %s", conn.RemoteAddr(), req, err)
 	}

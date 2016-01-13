@@ -50,5 +50,9 @@ func H_Websocket(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		conn.Close()
 	}()
+	// reply back with a simple message
+	payload := NewOkResponse()
+	payload.Data.Message = "WELCOME: Login required"
+	conn.Conn.WriteJSON(payload)
 	conn.loop()
 }

@@ -117,19 +117,21 @@ func H_Home(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// For now we compile every time = but neeed "Dev" flag here..
-	homeTpl = template.Must(  template.New("").Parse( string(MustAsset("templates/home.html")))  )
+	homeTpl = getTemplate("templates/home.html")
 	homeTpl.Execute(w, data)
 }
 
 
-
-
 var homeTpl *template.Template
 
-func init(){
-	homeTpl = template.Must(  template.New("").Parse( string(MustAsset("templates/home.html")))  )
-
+func getTemplate(name string) *template.Template {
+	return template.Must(template.New(name).Parse(string(MustAsset(name))))
 }
+
+func init(){
+	homeTpl = getTemplate("templates/home.html")
+}
+
 
 
 var DEADhomeTempl = template.Must(template.New("").Parse(`

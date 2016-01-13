@@ -42,6 +42,7 @@ type Hub struct {
 
 	// Received requests channel
 	readChan chan *connection
+
 	// Objects received from simulation
 	writeChan chan interface{}
 }
