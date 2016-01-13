@@ -40,10 +40,10 @@ func init(){
 H_Home()  handles and serves home.html page with integrated JS WebSocket client.
 */
 func H_Home(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		http.Error(w, "404: Not found", 404)
-		return
-	}
+	//if r.URL.Path != "/" {
+	//	http.Error(w, "404: Not found", 404)
+	//	return
+	//}
 	if r.Method != "GET" {
 		http.Error(w, "405: Method not allowed", 405)
 		return

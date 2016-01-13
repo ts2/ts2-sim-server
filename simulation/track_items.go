@@ -96,6 +96,7 @@ type TrackItem interface {
 	// Origin() are the two coordinates (x, y) of the origin point of this TrackItem.
 	Origin() Point
 
+
 	// Returns the conflicting item of this TrackItem. The conflicting
 	// item is another item of the scenery on which a route must not be set if
 	// one is already active on this TrackItem (and vice-versa). This is
@@ -126,6 +127,7 @@ type TrackItem interface {
 trackStruct is a struct the pointer of which implements TrackItem
 */
 type trackStruct struct {
+	TiType           string                    `json:"__type__"`
 	TsName           string                    `json:"name"`
 	NextTiId         int                       `json:"nextTiId"`
 	PreviousTiId     int                       `json:"previousTiId"`
@@ -136,6 +138,7 @@ type trackStruct struct {
 	ConflictTiId     int                       `json:"conflictTiId"`
 	CustomProperties map[string]CustomProperty `json:"customProperties"`
 	PlaceCode        string                    `json:"placeCode"`
+
 
 	tsId           int
 	simulation     *Simulation
