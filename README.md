@@ -9,7 +9,9 @@ This is code for the new TS2 sim server, written in golang
 [![GoDoc](https://godoc.org/github.com/ts2/ts2-sim-server?status.svg)](https://godoc.org/github.com/ts2/ts2-sim-server)
 
 [![Join the chat at https://gitter.im/ts2/ts2-sim-server](https://badges.gitter.im/ts2/ts2-sim-server.svg)](https://gitter.im/ts2/ts2-sim-server?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
- 
+
+
+[![Build Status](https://secure.travis-ci.org/ts2/ts2-sim-server.svg?branch=pedro-dev)](http://travis-ci.org/revel/revel) 
 
 Notes
 -------------
