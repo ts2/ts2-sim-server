@@ -122,15 +122,19 @@ var homeTempl = template.Must(template.New("").Parse(`
 <html>
 <head>
     <meta charset="utf-8">
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet" integrity="sha256-7s5uDGW3AHqw6xtJmNNtr+OBRJUlgkNJEo78P4b0yRw= sha512-nNo+yCHEyn0smMxSswnf/OnX6/KwJuZTlNZBjauKhTK0c+zT+q5JOCx0UFhXQ6rJR9jg6Es8gPuD2uZcYDLqSw==" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-2.2.0.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha256-KXn5puMvxCw+dAYznun+drMdG1IFl3agK0p/pqT9KAo= sha512-2e8qq0ETcfWRI4HJBzQiA3UoyFk6tbNyG+qSaIBZLyW9Xf3sWZHN/lxe9fTh1U45DpPf07yj94KsUHHWe4Yk1A==" crossorigin="anonymous"></script>
     <script>
         window.addEventListener("load", function (evt) {
             var output = document.getElementById("output");
             var input = document.getElementById("input");
             var ws;
             var print = function (message) {
-                var d = document.createElement("div");
-                d.innerHTML = message;
-                output.appendChild(d);
+                //var d = document.createElement("div");
+                //d.innerHTML = message;
+                $('#output').append(message + "\n")
+                //output.appendChild(d);
             };
             document.getElementById("open").onclick = function (evt) {
                 if (ws) {
@@ -150,6 +154,7 @@ var homeTempl = template.Must(template.New("").Parse(`
                 ws.onerror = function (evt) {
                     print("ERROR: " + evt.data);
                 };
+                input.focus()
                 return false;
             };
             document.getElementById("send").onclick = function (evt) {
@@ -158,7 +163,7 @@ var homeTempl = template.Must(template.New("").Parse(`
                 }
                 print("SEND: " + input.value);
                 ws.send(input.value);
-                input.value = "";
+                //input.value = "";
                 return false;
             };
             document.getElementById("close").onclick = function (evt) {
@@ -168,54 +173,73 @@ var homeTempl = template.Must(template.New("").Parse(`
                 ws.close();
                 return false;
             };
+            document.getElementById("clear").onclick = function (evt) {
+            	$('#output').val("");
+            	return false;
+            }
         });
     </script>
 </head>
 <body>
-<h1>TS2 Sim Server</h1>
-<p>
-    TS2 Sim Server is running !
-</p>
-<h2>Simulation</h2>
-<table>
-    <tr>
-        <th>Title:</th>
-        <td>{{ .Title }}</td>
-    </tr>
-    <tr>
-        <th>Description:</th>
-        <td>{{ .Description }}</td>
-    </tr>
-</table>
+<nav class="navbar navbar-inverse xx-navbar-fixed-top">
+  <div class="container">
+	<div class="navbar-header">
+	  <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+		<span class="sr-only">Toggle navigation</span>
+		<span class="icon-bar"></span>
+		<span class="icon-bar"></span>
+		<span class="icon-bar"></span>
+	  </button>
+	  <a class="navbar-brand" href="#">TS2 Sim Server</a>
+	</div>
+	<div id="navbar" class="collapse navbar-collapse">
+	  <ul class="nav navbar-nav">
+		<li class="active"><a href="/">Home</a></li>
+		<li><a href="/">/ajax</a></li>
+		<li><a href="https://godoc.org/github.com/ts2/ts2-sim-server" target="_godoc">godoc</a></li>
+	  </ul>
+	</div><!--/.nav-collapse -->
+  </div>
+</nav>
 
-<h2>Test WebSocket Connection</h2>
-<table>
-    <tr>
-        <td valign="top" width="50%">
-            <p>
-                WebSocket server: {{ .Host }}
-            </p>
-            <p>
-                Click "Open" to create a connection to the server,
-                "Send" to send a message to the server and "Close" to close the connection.
-                You can change the message and send multiple times.
-            </p>
-            <form>
-                <p>
-                    <button id="open">Open</button>
-                    <button id="close">Close</button>
-                </p>
-                <p>
-                    <textarea id="input" type="text"></textarea>
-                    <button id="send">Send</button>
-                </p>
-            </form>
-        </td>
-        <td valign="top" width="50%">
-            <div id="output"></div>
-        </td>
-    </tr>
-</table>
+<div class="container">
+	<table class="table table-bordered table-condensed">
+		<caption>Loaded Simulation</caption>
+		<tr>
+			<th>Title:</th>
+			<td>{{ .Title }}</td>
+		</tr>
+		<tr>
+			<th>Description:</th>
+			<td>{{ .Description }}</td>
+		</tr>
+		<tr>
+			<th>WebSocket Server:</th>
+			<td>{{ .Host }}</td>
+		</tr>
+	</table>
+
+	<h2>Test WebSocket</h2>
+	<p>
+		Click "Open" to create a connection to the server,
+		"Send" to send a message to the server and "Close" to close the connection.
+		You can change the message and send multiple times.
+	</p>
+	<form  class="form-inline">
+		<div class="form-group">
+			<button id="open"  type="button" class="btn btn-info">Open</button>
+			<button id="close"  type="button" class="btn btn-info">Close</button>
+		</div>
+		<div class="form-group">
+			<input type="text" id="input" style="width:500px" placeHolder="Message">
+			<button id="send"  type="button" class="btn btn-success">Send</button>
+			<button id="clear"  type="button" class="btn btn-default">Clear</button>
+		</div>
+	</form>
+	<form>
+		<textarea id="output" style="width:100%; height:300px; overflow: auto;"  placeHolder="Log"></textarea>
+	</form>
+</div>
 </body>
 </html>
 `))
