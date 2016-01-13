@@ -54,7 +54,7 @@ TrackItems's so that trains can travel from one to another.
 The coordinates are expressed in pixels, the X-axis is from left to right and
 the Y-axis is from top to bottom.
 
-Every `TrackItem` has an origin() `Point` defined by its X and Y values.
+Every `TrackItem` has an Origin() `Point` defined by its X and Y values.
 */
 type TrackItem interface {
 
@@ -245,7 +245,7 @@ func (ri *resizableStruct) End() Point {
 
 /*
 A Place is a special TrackItem representing a physical location such as a
-station or a passing point. Place items are not linked to other items.
+station or a passing point. Note that Place items are not linked to other items.
 */
 type Place interface {
 	TrackItem
@@ -274,7 +274,7 @@ type PlaceObject interface {
 
 /*
 A LineItem is a resizable TrackItem that represent a simple railway line and
-that is used to connect two TrackItem together.
+is used to connect two TrackItem's together.
 */
 type LineItem interface {
 	ResizableItem
@@ -378,102 +378,4 @@ type textStruct struct {
 
 func (ti *textStruct) Type() string {
 	return "TextItem"
-}
-
-/*
-A `PointsItem` is a three-way railway junction (known as Point, Switch, Turnout..)
-
-The three ends are called `common end`, `normal end` and `reverse end`
-
-	                    ____________ reverse
-	                   /
-	common ___________/______________normal
-
-Trains can go from the common end to normal or reverse ends depending on the
-state of the points, but they cannot go from the normal end to reverse end.
-
-Usually, the normal end is aligned with the common end and the reverse end
-is sideways, but this is not mandatory.
-
-Geometric points are represented on a 10 x 10 square centered on Center() point. CommonEnd,
-NormalEnd and ReverseEnd are points on the side of this square (i.e. they have
-at least one coordinate which is 5 or -5)
-*/
-type PointsItem interface {
-	TrackItem
-
-	// The center point of this PointsItem in the scene coordinates
-	Center() Point
-
-	// CommonEnd return the common end point in the item's coordinates
-	CommonEnd() Point
-
-	// NormalEnd return the normal end point in the item's coordinates
-	NormalEnd() Point
-
-	// ReverseEnd return the reverse end point in the item's coordinates
-	ReverseEnd() Point
-
-	// ReversedItem returns the item linked to the reverse end of these points
-	ReverseItem() TrackItem
-
-	// Reversed returns true if the points are in the reversed position, false
-	// otherwise
-	Reversed() bool
-}
-
-/*
-pointsStruct is a struct which implements PointsItem
-*/
-type pointsStruct struct {
-	trackStruct
-	Xc          float64 `json:"xf"`
-	Yc          float64 `json:"yf"`
-	Xn          float64 `json:"xn"`
-	Yn          float64 `json:"yn"`
-	Xr          float64 `json:"xr"`
-	Yr          float64 `json:"yr"`
-	ReverseTiId int     `json:"reverseTiId"`
-	reversed    bool
-}
-
-func (pi *pointsStruct) Type() string {
-	return "PointsItem"
-}
-
-func (pi *pointsStruct) Center() Point {
-	return Point{pi.X, pi.Y}
-}
-
-func (pi *pointsStruct) CommonEnd() Point {
-	return Point{pi.Xc, pi.Yc}
-}
-
-func (pi *pointsStruct) NormalEnd() Point {
-	return Point{pi.Xn, pi.Yn}
-}
-
-func (pi *pointsStruct) ReverseEnd() Point {
-	return Point{pi.Xr, pi.Yr}
-}
-
-func (pi *pointsStruct) ReverseItem() TrackItem {
-	return pi.simulation.TrackItems[pi.ReverseTiId]
-}
-
-func (pi *pointsStruct) Reversed() bool {
-	return pi.reversed
-}
-func (ti *pointsStruct) FollowingItem(precedingItem TrackItem, dir PointDirection) (TrackItem, error) {
-	if precedingItem == PointsItem(ti).ReverseItem() || precedingItem == PointsItem(ti).NextItem() {
-		return ti.PreviousItem(), nil
-	}
-	if precedingItem == PointsItem(ti).PreviousItem() {
-		if dir == REVERSED {
-			return ti.ReverseItem(), nil
-		} else {
-			return ti.NextItem(), nil
-		}
-	}
-	return nil, ItemsNotLinkedError{ti, precedingItem}
 }

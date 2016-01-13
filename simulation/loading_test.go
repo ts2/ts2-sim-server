@@ -65,7 +65,7 @@ func TestLoadRoutes(t *testing.T) {
 	if !ok {
 		t.Errorf("Route 1/No direction 7")
 	}
-	assertEqual(t, d1, Direction(0), "Route 1/Direction 7")
+	assertEqual(t, d1, PointDirection(NORMAL), "Route 1/Direction 7")
 	assertEqual(t, r1.InitialState, ACTIVATED, "Route 1/InitialState")
 	assertEqual(t, r1.State, ACTIVATED, "Route 1/state")
 

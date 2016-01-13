@@ -39,23 +39,6 @@ const (
 	PERSISTENT RouteState = 2
 )
 
-// PointDirection are constants that represent the "physical state" of a points
-type PointDirection uint8
-
-const (
-	// Rail change is set at normal
-	NORMAL PointDirection = 0
-
-	// Rail change is set for cross over
-	REVERSED PointDirection = 1
-
-	// Point is moving and Unknown state
-	MOVING PointDirection = 10
-
-	// Point goes back to previous safe state.. and fail
-	BACKOFF PointDirection = 11
-)
-
 /*
 Route is a path between two signals.
 
