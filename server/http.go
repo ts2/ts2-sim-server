@@ -69,14 +69,15 @@ func H_Ajax(w http.ResponseWriter, r *http.Request) {
 		Title       string
 		Description string
 		Host        string
+		Trains      []*simulation.Train
 	}{
 		sim.Options.Title,
 		sim.Options.Description,
 		"ws://" + r.Host + "/ws",
+		sim.Trains,
 	}
 
 	SendJson(w, data)
-	//w.Write(jso)
 }
 
 func SendJson(w http.ResponseWriter, payload interface{}) {

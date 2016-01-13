@@ -58,21 +58,22 @@ OPTIONS:
 	signal.Notify(killChan, os.Interrupt)
 
 	// Load the simulation
-	var sim simulation.Simulation
-	if len(flag.Args()) > 0 {
-		simFile := flag.Arg(0)
-		log.Printf("Loading simulation: %s\n", simFile)
-		data, err := ioutil.ReadFile(simFile)
-		if err != nil {
-			log.Fatal(err)
-		}
-		json.Unmarshal(data, &sim)
-		log.Printf("Simulation loaded: %s\n", sim.Options.Title)
-	} else {
+	if len(flag.Args()) == 0 {
 		fmt.Fprintf(os.Stderr, "Error: Please specify a simulation file\n\n")
 		flag.Usage()
 		os.Exit(1)
 	}
+	simFile := flag.Arg(0)
+	log.Printf("Loading simulation: %s\n", simFile)
+	data, err := ioutil.ReadFile(simFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var sim simulation.Simulation
+	json.Unmarshal(data, &sim)
+	log.Printf("Simulation loaded: %s\n", sim.Options.Title)
+
 
 	go server.Run(&sim, *addr, *port)
 
