@@ -20,6 +20,7 @@
 package server
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -52,7 +53,7 @@ func H_Websocket(w http.ResponseWriter, r *http.Request) {
 	}()
 	// reply back with a simple message
 	payload := NewOkResponse()
-	payload.Data.Message = "WELCOME: Login required"
+	payload.Data.Message = fmt.Sprintf("HELLO %s - Login required", conn.RemoteAddr() )
 	conn.Conn.WriteJSON(payload)
 	conn.loop()
 }
