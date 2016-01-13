@@ -52,12 +52,14 @@ StartHttpd() starts the server which serves on the following routes:
     /ajax - Test for ajax/REST interface
 */
 func StartHttpd(addr, port string) {
-	http.HandleFunc("/", H_Home)
+
 	http.HandleFunc("/ajax", H_AjaxIndex)
 	http.HandleFunc("/ajax/trains", H_AjaxTrains)
 	http.HandleFunc("/ajax/trackitems", H_AjaxTrackItems)
+	http.HandleFunc("/sim.svg", H_SvgImageTest)
 	http.HandleFunc("/svg", H_SvgTest)
 	http.HandleFunc("/ws", H_Websocket)
+	http.HandleFunc("/", H_Home)
 
 	serverAddress := fmt.Sprintf("%s:%s", addr, port)
 	log.Printf("Starting HTTP at: http://%s\n", serverAddress)

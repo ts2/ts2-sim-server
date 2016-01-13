@@ -20,6 +20,7 @@
 package server
 
 import (
+	"log"
 	"encoding/json"
 	"net/http"
 
@@ -90,9 +91,9 @@ func H_AjaxTrackItems(w http.ResponseWriter, r *http.Request) {
 }
 
 /*
-H_Svg()  experimental to show svg
+H_SvgImageTest()  experimental to show svg
 */
-func H_SvgTest(w http.ResponseWriter, r *http.Request) {
+func H_SvgImageTest(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "image/svg+xml")
 	s := svg.New(w)
@@ -105,7 +106,6 @@ func H_SvgTest(w http.ResponseWriter, r *http.Request) {
 
 		switch ti.Type(){
 		case "LineItem":
-
 			s.Circle(ti.Origin().Xi(), ti.Origin().Yi(), 2, "fill:none;stroke:black")
 			s.Line(ti.Origin().Xi(),ti.Origin().Yi(), 20, 20,  "fill:none;stroke:green")
 
@@ -117,13 +117,23 @@ func H_SvgTest(w http.ResponseWriter, r *http.Request) {
 			//fmt.Println("==",xe,ye)
 			//s.Line(ti.Origin().Xi(),ti.Origin().Yi(), xe, ye,  "fill:none;stroke:green")
 
+		case "SignalItem":
+			s.Circle(ti.Origin().Xi(), ti.Origin().Yi(), 5, "fill:none;stroke:red")
+
 		default:
-			s.Circle(ti.Origin().Xi(), ti.Origin().Yi(), 2, "fill:none;stroke:red")
+			s.Circle(ti.Origin().Xi(), ti.Origin().Yi(), 2, "fill:none;stroke:grey")
 
 		}
 
-		s.Circle(ti.Origin().Xi(), ti.Origin().Yi(), 5, "fill:none;stroke:black")
-	}
 
+	}
 	s.End()
+}
+
+func H_SvgTest(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	tpl := getTemplate("templates/svg.html")
+	var data interface{}
+	tpl.Execute(w, data)
+	log.Println("HTML: /svg")
 }
