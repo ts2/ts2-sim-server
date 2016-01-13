@@ -55,6 +55,7 @@ func StartHttpd(addr, port string) {
 	http.HandleFunc("/", H_Home)
 	http.HandleFunc("/ajax", H_AjaxIndex)
 	http.HandleFunc("/ajax/trains", H_AjaxTrains)
+	http.HandleFunc("/ajax/trackitems", H_AjaxTrackItems)
 	http.HandleFunc("/ws", H_Websocket)
 
 	serverAddress := fmt.Sprintf("%s:%s", addr, port)
