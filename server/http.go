@@ -24,9 +24,9 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"encoding/json"
 
 	"github.com/ts2/ts2-sim-server/simulation"
-	"encoding/json"
 )
 
 var sim *simulation.Simulation
