@@ -110,7 +110,7 @@ type TrackItem interface {
 	//
 	// The second argument will return a ItemsNotLinkedError if the given
 	// precedingItem is not linked to this item.
-	FollowingItem(TrackItem, Direction) (TrackItem, error)
+	FollowingItem(TrackItem, PointDirection) (TrackItem, error)
 
 	// IsConnected returns true if this TrackItem is connected to the given
 	// TrackItem, false otherwise
@@ -194,7 +194,7 @@ func (ti *trackStruct) Place() Place {
 	return ti.simulation.Places[ti.PlaceCode]
 }
 
-func (ti *trackStruct) FollowingItem(precedingItem TrackItem, dir Direction) (TrackItem, error) {
+func (ti *trackStruct) FollowingItem(precedingItem TrackItem, dir PointDirection) (TrackItem, error) {
 	if precedingItem == TrackItem(ti).PreviousItem() {
 		return ti.NextItem(), nil
 	}
@@ -457,7 +457,7 @@ func (pi *pointsStruct) ReverseItem() TrackItem {
 func (pi *pointsStruct) Reversed() bool {
 	return pi.reversed
 }
-func (ti *pointsStruct) FollowingItem(precedingItem TrackItem, dir Direction) (TrackItem, error) {
+func (ti *pointsStruct) FollowingItem(precedingItem TrackItem, dir PointDirection) (TrackItem, error) {
 	if precedingItem == PointsItem(ti).ReverseItem() || precedingItem == PointsItem(ti).NextItem() {
 		return ti.PreviousItem(), nil
 	}

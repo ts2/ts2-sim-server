@@ -39,21 +39,21 @@ const (
 	PERSISTENT RouteState = 2
 )
 
-// Direction are constants that represent the "state" of a points, either normal or reversed
-type Direction uint8
+// PointDirection are constants that represent the "physical state" of a points
+type PointDirection uint8
 
 const (
-	// Rail change set at normal
-	NORMAL Direction = 0
+	// Rail change is set at normal
+	NORMAL PointDirection = 0
 
 	// Rail change is set for cross over
-	REVERSED Direction = 1
+	REVERSED PointDirection = 1
 
 	// Point is moving and Unknown state
-	MOVING Direction = 10
+	MOVING PointDirection = 10
 
 	// Point goes back to previous safe state.. and fail
-	BACKOFF Direction = 11
+	BACKOFF PointDirection = 11
 )
 
 /*
@@ -69,7 +69,7 @@ type Route struct {
 	BeginSignalId int
 	EndSignalId   int
 	InitialState  RouteState
-	Directions    map[int]Direction
+	Directions    map[int]PointDirection
 
 	State     RouteState
 	positions []Position
@@ -103,7 +103,7 @@ func (r *Route) initialize() error {
 		}
 		dir, ok := r.Directions[pos.TrackItem.TiId()]
 		if !ok {
-			dir = Direction(0)
+			dir = PointDirection(NORMAL)
 		}
 		pos = pos.Next(dir)
 	}
@@ -115,7 +115,7 @@ func (r *Route) UnmarshalJSON(data []byte) error {
 		BeginSignalId int                  `json:"beginSignal"`
 		EndSignalId   int                  `json:"endSignal"`
 		InitialState  RouteState           `json:"initialState"`
-		Directions    map[string]Direction `json:"directions"`
+		Directions    map[string]PointDirection `json:"directions"`
 	}
 	var rawRoute auxRoute
 	if err := json.Unmarshal(data, &rawRoute); err != nil {
@@ -124,7 +124,7 @@ func (r *Route) UnmarshalJSON(data []byte) error {
 	r.BeginSignalId = rawRoute.BeginSignalId
 	r.EndSignalId = rawRoute.EndSignalId
 	r.InitialState = rawRoute.InitialState
-	r.Directions = make(map[int]Direction)
+	r.Directions = make(map[int]PointDirection)
 	for tiIdStr, dir := range rawRoute.Directions {
 		tiId, _ := strconv.Atoi(tiIdStr)
 		r.Directions[tiId] = dir
