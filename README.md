@@ -8,12 +8,15 @@ This is code for the new TS2 sim server, written in golang
 
 [![GoDoc](https://godoc.org/github.com/ts2/ts2-sim-server?status.svg)](https://godoc.org/github.com/ts2/ts2-sim-server)
 
+[![Join the chat at https://gitter.im/ts2/ts2-sim-server](https://badges.gitter.im/ts2/ts2-sim-server.svg)](https://gitter.im/ts2/ts2-sim-server?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+ 
 
-Note:
+Notes
+-------------
 
 ```
 // install go-bindata 
-github.com/jteeuwen/go-bindata
+go get github.com/jteeuwen/go-bindata/...
 
 // create asset files
 go-bindata -debug -pkg server -o server/bindata_templates.go templates/
