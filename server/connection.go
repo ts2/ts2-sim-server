@@ -112,7 +112,7 @@ func (conn *connection) processWrite() {
 }
 
 /*
-loginClient waits for a login request from the client, checks it and registers the connection
+loginClient() waits for a login request from the client, checks it and registers the connection
 on the hub if it is valid. Otherwise it returns an error.
 */
 func (conn *connection) loginClient() error {
@@ -149,7 +149,7 @@ func (conn *connection) loginClient() error {
 }
 
 /*
-Close() terminates the connection and closes associated resources
+Close() terminates the websocket connection and closes associated resources
 */
 func (conn *connection) Close() error {
 	hub.unregisterChan <- conn

@@ -24,7 +24,7 @@ import (
 )
 
 /*
-bigFloat is a large number used for the length of EndItem. It must be bigger
+bigFloat is a large number used for the length of an EndItem. It must be bigger
 than the maximum distance the fastest train can travel during the game time step
 at maximum simulation speed.
 */
@@ -34,7 +34,7 @@ type CustomProperty map[string][]int
 
 /*
 An ItemsNotLinkedError is returned when two TrackItem instances that are assumed
-to be linked; are not.
+to be linked are not.
 */
 type ItemsNotLinkedError struct {
 	item1 TrackItem
@@ -46,20 +46,20 @@ func (e ItemsNotLinkedError) Error() string {
 }
 
 /*
-A "TrackItem" is a piece of scenery and is "the base interface".
+A `TrackItem` is a piece of scenery and is "the base interface".
 
 Every item has defined coordinates in the scenery layout and is connected to other
-TrackItems's so that the trains can travel from one to another.
+TrackItems's so that trains can travel from one to another.
 
 The coordinates are expressed in pixels, the X-axis is from left to right and
 the Y-axis is from top to bottom.
 
-Every TrackItem has an origin() Point defined by its X and Y values.
+Every `TrackItem` has an origin() `Point` defined by its X and Y values.
 */
 type TrackItem interface {
 
 	// TiId() returns the unique Id of this TrackItem, which is the index of this
-	// item in the Simulation TrackItems map.
+	// item in the Simulation's TrackItems map.
 	TiId() int
 
 	// Type() returns the name of the type of item this TrackItem is. This is
@@ -104,8 +104,8 @@ type TrackItem interface {
 	// (as defined by PlaceCode).
 	Place() Place
 
-	// FollowingItem returns the following TrackItem linked to this one,
-	// knowing we come from precedingItem. Returned is either NextItem or
+	// FollowingItem() returns the following TrackItem linked to this one,
+	// knowing we come from precedingItem(). Returned is either NextItem or
 	// PreviousItem, depending which way we come from.
 	//
 	// The second argument will return a ItemsNotLinkedError if the given
