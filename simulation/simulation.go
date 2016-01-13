@@ -74,7 +74,10 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 			if err := json.Unmarshal(tiString, ti); err != nil {
 				return fmt.Errorf("Unable to decode %s: %s. %s", tiType, tiString, err)
 			}
-			tiId, _ := strconv.Atoi(strings.Trim(tiId, `"`))
+			tiId, errconv := strconv.Atoi(strings.Trim(tiId, `"`))
+			if errconv != nil {
+				return fmt.Errorf("Unable to convert %s",  errconv)
+			}
 			ti.setSimulation(sim)
 			ti.setId(tiId)
 			sim.TrackItems[tiId] = ti
@@ -122,7 +125,9 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 		}
 
 	}
+
 	sim.Options = rawSim.Options
+
 	sim.SignalLib = rawSim.SignalLib
 
 	sim.Routes = make(map[int]*Route)
@@ -150,5 +155,6 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 
 	sim.MessageLogger = rawSim.MessageLogger
 	sim.MessageLogger.setSimulation(sim)
+
 	return nil
 }

@@ -23,6 +23,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"github.com/gpmgo/gopm/log"
 )
 
 // RouteState represents the state of a Route at a given time and instance
@@ -77,8 +78,15 @@ func (r *Route) setSimulation(sim *Simulation) {
 func (r *Route) initialize() error {
 	// Initialize state to initial state
 	r.State = r.InitialState
+
+	// Crash here.. as BeginSignal() is nil !!! kinda
+	if r.BeginSignal() == nil {
+		log.Error("ERROR: Route.initialize()", "BeginSignal() == nil")
+		return nil
+	}
 	// Populate positions slice
 	pos := Position{r.BeginSignal(), r.BeginSignal().PreviousItem(), 0}
+
 	for !pos.IsOut() {
 		r.positions = append(r.positions, pos)
 		if pos.TrackItem == r.EndSignal() {
@@ -90,6 +98,7 @@ func (r *Route) initialize() error {
 		}
 		pos = pos.Next(dir)
 	}
+
 	return fmt.Errorf("Unable to link signal %i to signal %i", r.BeginSignalId, r.EndSignalId)
 }
 

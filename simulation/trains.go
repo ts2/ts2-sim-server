@@ -53,7 +53,7 @@ type Train struct {
 	ServiceCode    string         `json:"serviceCode"`
 	Speed          float64        `json:"speed"`
 	Status         TrainStatus    `json:"status"`
-	StoppedTime    int            `json:"stoppedTime"`
+	StoppedTime    float64        `json:"stoppedTime"`
 	TrainHeadRepr  PositionRepr   `json:"trainHead"`
 	TrainTypeCode  string         `json:"trainTypeCode"`
 	TrainHead      *Position

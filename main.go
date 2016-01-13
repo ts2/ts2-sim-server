@@ -73,7 +73,11 @@ OPTIONS:
 
 	var sim simulation.Simulation
 	sim.Debug = debug
-	json.Unmarshal(data, &sim)
+	errload := json.Unmarshal(data, &sim)
+	if errload != nil {
+		log.Printf("Load Error: %s\n", errload)
+		return
+	}
 	log.Printf("Simulation loaded: %s\n", sim.Options.Title)
 
 
