@@ -32,6 +32,8 @@ const bigFloat = 1000000000.0
 
 type CustomProperty map[string][]int
 
+
+
 /*
 An ItemsNotLinkedError is returned when two TrackItem instances that are assumed
 to be linked are not.
@@ -343,7 +345,7 @@ func (ei *endStruct) RealLength() float64 {
 }
 
 /*
-Platform items are usually represented as a colored rectangle on the scene to
+PlatformItem's are usually represented as a colored rectangle on the scene to
 symbolise the platform. This colored rectangle can permit user interaction.
 */
 type PlatformItem interface {
@@ -362,8 +364,10 @@ func (pfi *platformStruct) Type() string {
 	return "PlatformItem"
 }
 
+
+
 /*
-TextItem is a prop to display simple text on the layout
+TextItem "displays simple text" on the scenery layout
 */
 type TextItem interface {
 	TrackItem

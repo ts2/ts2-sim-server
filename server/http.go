@@ -26,6 +26,7 @@ import (
 	"net/http"
 
 	"github.com/ts2/ts2-sim-server/simulation"
+	"encoding/json"
 )
 
 var sim *simulation.Simulation
@@ -51,10 +52,43 @@ StartHttpd() starts the server which serves on the following routes:
 */
 func StartHttpd(addr, port string) {
 	http.HandleFunc("/", H_Home)
+	http.HandleFunc("/ajax", H_Ajax)
 	http.HandleFunc("/ws", H_Websocket)
+
 	serverAddress := fmt.Sprintf("%s:%s", addr, port)
 	log.Printf("Starting HTTP at: http://%s\n", serverAddress)
 	log.Fatal(http.ListenAndServe(serverAddress, nil))
+}
+
+
+/*
+H_Ajax() - handles and serves ajax requests (placeholder).
+*/
+func H_Ajax(w http.ResponseWriter, r *http.Request) {
+	data := struct {
+		Title       string
+		Description string
+		Host        string
+	}{
+		sim.Options.Title,
+		sim.Options.Description,
+		"ws://" + r.Host + "/ws",
+	}
+
+	SendJson(w, data)
+	//w.Write(jso)
+}
+
+func SendJson(w http.ResponseWriter, payload interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	var err error
+	var json_data []byte
+
+	json_data, err = json.MarshalIndent(payload, "", "  ")
+	if err != nil {
+		json_data, err = json.MarshalIndent(NewErrorResponse(err), "", "")
+	}
+	w.Write(json_data)
 }
 
 /*
@@ -62,11 +96,11 @@ H_Home()  handles and serves home.html page with integrated JS WebSocket client.
 */
 func H_Home(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
-		http.Error(w, "Not found", 404)
+		http.Error(w, "404: Not found", 404)
 		return
 	}
 	if r.Method != "GET" {
-		http.Error(w, "Method not allowed", 405)
+		http.Error(w, "405: Method not allowed", 405)
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")

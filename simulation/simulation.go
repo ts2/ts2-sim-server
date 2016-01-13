@@ -61,6 +61,7 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 	}
 	sim.TrackItems = make(map[int]TrackItem)
 	sim.Places = make(map[string]Place)
+
 	for tiId, tiString := range rawSim.TrackItems {
 		var rawItem auxItem
 		if err := json.Unmarshal(tiString, &rawItem); err != nil {
@@ -83,30 +84,38 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 		case `"LineItem"`:
 			var ti lineStruct
 			unmarshalItem(&ti)
+
 		case `"InvisibleLinkItem"`:
 			var ti invisibleLinkstruct
 			unmarshalItem(&ti)
+
 		case `"EndItem"`:
 			var ti endStruct
 			unmarshalItem(&ti)
+
 		case `"PlatformItem"`:
 			var ti platformStruct
 			unmarshalItem(&ti)
+
 		case `"TextItem"`:
 			var ti textStruct
 			unmarshalItem(&ti)
+
 		case `"PointsItem"`:
 			var ti pointsStruct
 			unmarshalItem(&ti)
+
 		case `"SignalItem"`:
 			var ti signalStruct
 			unmarshalItem(&ti)
+
 		case `"Place"`:
 			var pl placeStruct
 			if err := json.Unmarshal(tiString, &pl); err != nil {
 				return fmt.Errorf("Unable to decode Place: %s. %s", tiString, err)
 			}
 			sim.Places[pl.PlaceCode] = Place(&pl)
+
 		default:
 			return fmt.Errorf("Unknown TrackItem type: %s", rawItem["__type__"])
 		}
@@ -114,6 +123,7 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 	}
 	sim.Options = rawSim.Options
 	sim.SignalLib = rawSim.SignalLib
+
 	sim.Routes = make(map[int]*Route)
 	for num, route := range rawSim.Routes {
 		route.setSimulation(sim)
@@ -121,18 +131,22 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 		routeNum, _ := strconv.Atoi(num)
 		sim.Routes[routeNum] = route
 	}
+
 	sim.TrainTypes = rawSim.TrainTypes
 	for _, tt := range sim.TrainTypes {
 		tt.setSimulation(sim)
 	}
+
 	sim.Services = rawSim.Services
 	for _, s := range sim.Services {
 		s.setSimulation(sim)
 	}
+
 	sim.Trains = rawSim.Trains
 	for _, t := range sim.Trains {
 		t.setSimulation(sim)
 	}
+
 	sim.MessageLogger = rawSim.MessageLogger
 	sim.MessageLogger.setSimulation(sim)
 	return nil
