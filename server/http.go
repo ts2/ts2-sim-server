@@ -126,26 +126,34 @@ var homeTempl = template.Must(template.New("").Parse(`
     <script src="https://code.jquery.com/jquery-2.2.0.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha256-KXn5puMvxCw+dAYznun+drMdG1IFl3agK0p/pqT9KAo= sha512-2e8qq0ETcfWRI4HJBzQiA3UoyFk6tbNyG+qSaIBZLyW9Xf3sWZHN/lxe9fTh1U45DpPf07yj94KsUHHWe4Yk1A==" crossorigin="anonymous"></script>
     <script>
+    	function clearMessage(){
+			$('input').val("");
+			$('input').focus();
+    	}
         window.addEventListener("load", function (evt) {
             var output = document.getElementById("output");
             var input = document.getElementById("input");
             var ws;
             var print = function (message) {
-                //var d = document.createElement("div");
-                //d.innerHTML = message;
                 $('#output').append(message + "\n")
-                //output.appendChild(d);
             };
-            document.getElementById("open").onclick = function (evt) {
+            var showConnected = function(connected){
+				print(connected ? "Ws Open": "Ws Closed");
+				$('#lblStatus').text(connected ? "Connected" : "Disconnected");
+				$('#btnClose').prop("disabled", !connected);
+				$('#btnOpen').prop("disabled", connected);
+				$('#btnSend').prop("disabled", !connected);
+            };
+            document.getElementById("btnOpen").onclick = function (evt) {
                 if (ws) {
                     return false;
                 }
                 ws = new WebSocket("{{.Host}}");
                 ws.onopen = function (evt) {
-                    print("OPEN");
+					showConnected(true);
                 };
                 ws.onclose = function (evt) {
-                    print("CLOSE");
+                    showConnected(false);
                     ws = null;
                 };
                 ws.onmessage = function (evt) {
@@ -157,26 +165,28 @@ var homeTempl = template.Must(template.New("").Parse(`
                 input.focus()
                 return false;
             };
-            document.getElementById("send").onclick = function (evt) {
+            document.getElementById("btnSend").onclick = function (evt) {
                 if (!ws) {
                     return false;
                 }
                 print("SEND: " + input.value);
                 ws.send(input.value);
                 //input.value = "";
+                $('input').focus();
                 return false;
             };
-            document.getElementById("close").onclick = function (evt) {
+            document.getElementById("btnClose").onclick = function (evt) {
                 if (!ws) {
                     return false;
                 }
                 ws.close();
                 return false;
             };
-            document.getElementById("clear").onclick = function (evt) {
-            	$('#output').val("");
+            document.getElementById("btnClear").onclick = function (evt) {
+            	$('#output').empty();
             	return false;
             }
+            showConnected(false);
         });
     </script>
 </head>
@@ -227,13 +237,15 @@ var homeTempl = template.Must(template.New("").Parse(`
 	</p>
 	<form  class="form-inline">
 		<div class="form-group">
-			<button id="open"  type="button" class="btn btn-info">Open</button>
-			<button id="close"  type="button" class="btn btn-info">Close</button>
+			<label id="lblStatus" style="width: 100px;">Closed</label>
+			<button id="btnOpen"  type="button" class="btn btn-info">Open</button>
+			<button id="btnClose"  type="button" class="btn btn-info">Close</button>
 		</div>
 		<div class="form-group">
 			<input type="text" id="input" style="width:500px" placeHolder="Message">
-			<button id="send"  type="button" class="btn btn-success">Send</button>
-			<button id="clear"  type="button" class="btn btn-default">Clear</button>
+			<span class="glyphicon glyphicon-remove-circle" onclick="clearMessage()"></span>
+			<button id="btnSend"  type="button" class="btn btn-success">Send</button>
+			<button id="btnClear"  type="button" class="btn btn-default">Clear</button>
 		</div>
 	</form>
 	<form>
