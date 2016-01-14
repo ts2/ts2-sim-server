@@ -49,23 +49,23 @@ type DelayGenerator struct {
 func (dg *DelayGenerator) UnmarshalJSON(data []byte) error {
 
 	// Hack to make work with python serialsed data
-	// eg "[(1,2,3)]", "0", ie quotes "" and ()'s
+	// eg "[(1,2,3)]", "0", ie quotes "" and ()'s are invalid
 	data = bytes.Replace(data, []byte{'('}, []byte{'['}, -1)
 	data = bytes.Replace(data, []byte{')'}, []byte{']'}, -1)
 	q := byte('"')
 	if data[0] == q && data[len(data)-1] == q {
-		//fmt.Println("qqqq")
 		data = bytes.Replace(data, []byte{'"'}, []byte{' '}, -1)
 	}
 
 	var field []delayTuplet
 	if err := json.Unmarshal(data, &field); err != nil {
-		//fmt.Printf("Delay Generator: Unparsable JSON: %s", err)
+		// Failed with delayTuplet[], so try a single value eg 0
 		var single int
 		if err := json.Unmarshal(data, &single); err != nil {
-			return fmt.Errorf("Delay Generator: Unparsable JSON: %s", data)
+			return fmt.Errorf("DelayGenerator.UnmarshalJSON(): Unparsable JSON: %s", data)
 		}
 		dg.data = []delayTuplet{{single, single, 100}}
+
 	} else {
 		dg.data = field
 	}

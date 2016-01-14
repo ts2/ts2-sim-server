@@ -134,7 +134,10 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 	for num, route := range rawSim.Routes {
 		route.setSimulation(sim)
 		route.initialize()
-		routeNum, _ := strconv.Atoi(num)
+		routeNum, err_route := strconv.Atoi(num)
+		if err_route != nil {
+			return fmt.Errorf("RouteNum : `%s` is invalid", num)
+		}
 		sim.Routes[routeNum] = route
 	}
 

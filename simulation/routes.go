@@ -23,7 +23,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
-	"github.com/gpmgo/gopm/log"
+	"log"
 )
 
 // RouteState represents the state of a Route at a given time and instance
@@ -61,7 +61,11 @@ type Route struct {
 
 // BeginSignal returns the SignalItem at which this Route starts.
 func (r *Route) BeginSignal() SignalItem {
-	return r.simulation.TrackItems[r.BeginSignalId].(SignalItem)
+	si, ok := r.simulation.TrackItems[r.BeginSignalId]
+	if !ok {
+		fmt.Println("CRASH HERE = BeginSignal()", ok, r.BeginSignalId, si)
+	}
+	return si.(SignalItem)
 }
 
 // EndSignal returns the SignalItem at which this Route ends.
@@ -81,7 +85,7 @@ func (r *Route) initialize() error {
 
 	// Crash here.. as BeginSignal() is nil !!! kinda
 	if r.BeginSignal() == nil {
-		log.Error("ERROR: Route.initialize()", "BeginSignal() == nil")
+		log.Println("ERROR: Route.initialize()", "BeginSignal() == nil")
 		return nil
 	}
 	// Populate positions slice
@@ -99,7 +103,7 @@ func (r *Route) initialize() error {
 		pos = pos.Next(dir)
 	}
 
-	return fmt.Errorf("Unable to link signal %i to signal %i", r.BeginSignalId, r.EndSignalId)
+	return fmt.Errorf("Route Error: Unable to link signal %i to signal %i", r.BeginSignalId, r.EndSignalId)
 }
 
 func (r *Route) UnmarshalJSON(data []byte) error {

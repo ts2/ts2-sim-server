@@ -25,14 +25,16 @@ import (
 )
 
 
-var homeTpl *template.Template
-
+// getTemplate() relies on go-bindata being run.. in -debug is dynamic
 func getTemplate(name string) *template.Template {
 	return template.Must(template.New(name).Parse(string(MustAsset(name))))
 }
 
+var tplHome *template.Template
+var TplWhateverFooBar *template.Template
+
 func init(){
-	homeTpl = getTemplate("templates/home.html")
+	//tplHome = getTemplate("templates/home.html")
 }
 
 
@@ -60,8 +62,8 @@ func H_Home(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// For now we compile every time = but neeed "Dev" flag here..
-	homeTpl = getTemplate("templates/home.html")
-	homeTpl.Execute(w, data)
+	tplHome = getTemplate("templates/home.html")
+	tplHome.Execute(w, data)
 }
 
 

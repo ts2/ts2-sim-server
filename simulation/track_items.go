@@ -48,7 +48,8 @@ func (e ItemsNotLinkedError) Error() string {
 }
 
 /*
-A `TrackItem` is a piece of scenery and is "the base interface".
+A `TrackItem` is a piece of scenery and is "the base interface" for others
+such as SignalItem, EndItem, PointsItem.
 
 Every item has defined coordinates in the scenery layout and is connected to other
 TrackItems's so that trains can travel from one to another.
