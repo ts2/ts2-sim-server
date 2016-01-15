@@ -20,34 +20,40 @@
 package server
 
 import (
-	"encoding/json"
+	"fmt"
+	"log"
+	"net/http"
+	"errors"
+
+	"github.com/gorilla/websocket"
 )
 
-/*
-Request is a generic request made by a websocket client.
-
-It is used before dispatching and unmarshaling into a specific request type.
-*/
-type Request struct {
-	Object string          `json:"object"`
-	Action string          `json:"action"`
-	Params json.RawMessage `json:"params"`
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
 }
 
 /*
-ParamsLogin is the struct of the Request Params for a RequestLogin
-*/
-type ParamsLogin struct {
-	ClientType    ClientType  `json:"type"`
-	ClientSubType ManagerType `json:"subType"`
-	Token         string      `json:"token"`
-}
+H_Websocket() handles  the WebSocket `/ws` endpoint of the server.
 
-/*
-RequestLogin is a request made by a websocket client to log onto the server.
+  - reads JSON from the client and sends a `Request` object to the hub.
+  - receives `Response` objects from the hub and send JSON to the client.
 */
-type RequestLogin struct {
-	Object string      `json:"object"`
-	Action string      `json:"action"`
-	Params ParamsLogin `json:"params"`
+func H_Websocket(w http.ResponseWriter, r *http.Request) {
+	ws, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	conn := &connection{
+		Conn:     *ws,
+		pushChan: make(chan interface{}, 256),
+	}
+	defer func() {
+		conn.Close()
+	}()
+	// reply back with a simple message
+	payload := NewErrorResponse(errors.New(fmt.Sprintf("%s - Login required", conn.RemoteAddr() )))
+	conn.Conn.WriteJSON(payload)
+	conn.loop()
 }

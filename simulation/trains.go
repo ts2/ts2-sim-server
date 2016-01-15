@@ -42,8 +42,8 @@ const (
 )
 
 /*
-Train is a stock of `TrainType` running on a track at a certain speed and to which
-is assigned a Service.
+`Train` is a stock of `TrainType` running on a track at a certain speed and to which
+is assigned a `Service`.
 */
 type Train struct {
 	AppearTime     Time           `json:"appearTime"`
@@ -53,7 +53,7 @@ type Train struct {
 	ServiceCode    string         `json:"serviceCode"`
 	Speed          float64        `json:"speed"`
 	Status         TrainStatus    `json:"status"`
-	StoppedTime    int            `json:"stoppedTime"`
+	StoppedTime    float64        `json:"stoppedTime"`
 	TrainHeadRepr  PositionRepr   `json:"trainHead"`
 	TrainTypeCode  string         `json:"trainTypeCode"`
 	TrainHead      *Position
@@ -62,7 +62,7 @@ type Train struct {
 }
 
 /*
-setSimulation() attaches the Simulation to this Tra, and in is part of and initialized TrainHead.
+setSimulation() attaches the Simulation to this Train, and in is part of and initialized TrainHead.
 */
 func (t *Train) setSimulation(sim *Simulation) {
 	t.simulation = sim
@@ -74,17 +74,16 @@ func (t *Train) setSimulation(sim *Simulation) {
 }
 
 /*
-Train.Service() returns a pointer to the Service assigned to this Train, or nil if no
-Service is assigned.
+Train.Service() returns a pointer to the `Service` assigned to this `Train`, or nil if no
+`Service` is assigned.
 */
 func (t *Train) Service() *Service {
 	return t.simulation.Services[t.ServiceCode]
 }
 
 /*
-Train.TrainType() returns a pointer to the TrainType of this Train and running.
+Train.TrainType() returns a pointer to the `TrainType` that this `Train` is running.
 */
 func (t *Train) TrainType() *TrainType {
-	// ummm said pedro
 	return t.simulation.TrainTypes[t.TrainTypeCode]
 }

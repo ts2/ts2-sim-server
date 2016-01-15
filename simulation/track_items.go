@@ -24,7 +24,7 @@ import (
 )
 
 /*
-bigFloat is a large number used for the length of EndItem. It must be bigger
+bigFloat is a large number used for the length of an EndItem. It must be bigger
 than the maximum distance the fastest train can travel during the game time step
 at maximum simulation speed.
 */
@@ -32,9 +32,11 @@ const bigFloat = 1000000000.0
 
 type CustomProperty map[string][]int
 
+
+
 /*
 An ItemsNotLinkedError is returned when two TrackItem instances that are assumed
-to be linked; are not.
+to be linked are not.
 */
 type ItemsNotLinkedError struct {
 	item1 TrackItem
@@ -46,20 +48,21 @@ func (e ItemsNotLinkedError) Error() string {
 }
 
 /*
-A "TrackItem" is a piece of scenery and is "the base interface".
+A `TrackItem` is a piece of scenery and is "the base interface" for others
+such as SignalItem, EndItem, PointsItem.
 
 Every item has defined coordinates in the scenery layout and is connected to other
-TrackItems's so that the trains can travel from one to another.
+TrackItems's so that trains can travel from one to another.
 
 The coordinates are expressed in pixels, the X-axis is from left to right and
 the Y-axis is from top to bottom.
 
-Every TrackItem has an origin() Point defined by its X and Y values.
+Every `TrackItem` has an Origin() `Point` defined by its X and Y values.
 */
 type TrackItem interface {
 
 	// TiId() returns the unique Id of this TrackItem, which is the index of this
-	// item in the Simulation TrackItems map.
+	// item in the Simulation's TrackItems map.
 	TiId() int
 
 	// Type() returns the name of the type of item this TrackItem is. This is
@@ -94,6 +97,7 @@ type TrackItem interface {
 	// Origin() are the two coordinates (x, y) of the origin point of this TrackItem.
 	Origin() Point
 
+
 	// Returns the conflicting item of this TrackItem. The conflicting
 	// item is another item of the scenery on which a route must not be set if
 	// one is already active on this TrackItem (and vice-versa). This is
@@ -104,13 +108,13 @@ type TrackItem interface {
 	// (as defined by PlaceCode).
 	Place() Place
 
-	// FollowingItem returns the following TrackItem linked to this one,
-	// knowing we come from precedingItem. Returned is either NextItem or
+	// FollowingItem() returns the following TrackItem linked to this one,
+	// knowing we come from precedingItem(). Returned is either NextItem or
 	// PreviousItem, depending which way we come from.
 	//
 	// The second argument will return a ItemsNotLinkedError if the given
 	// precedingItem is not linked to this item.
-	FollowingItem(TrackItem, Direction) (TrackItem, error)
+	FollowingItem(TrackItem, PointDirection) (TrackItem, error)
 
 	// IsConnected returns true if this TrackItem is connected to the given
 	// TrackItem, false otherwise
@@ -124,6 +128,7 @@ type TrackItem interface {
 trackStruct is a struct the pointer of which implements TrackItem
 */
 type trackStruct struct {
+	TiType           string                    `json:"__type__"`
 	TsName           string                    `json:"name"`
 	NextTiId         int                       `json:"nextTiId"`
 	PreviousTiId     int                       `json:"previousTiId"`
@@ -134,6 +139,7 @@ type trackStruct struct {
 	ConflictTiId     int                       `json:"conflictTiId"`
 	CustomProperties map[string]CustomProperty `json:"customProperties"`
 	PlaceCode        string                    `json:"placeCode"`
+
 
 	tsId           int
 	simulation     *Simulation
@@ -194,7 +200,7 @@ func (ti *trackStruct) Place() Place {
 	return ti.simulation.Places[ti.PlaceCode]
 }
 
-func (ti *trackStruct) FollowingItem(precedingItem TrackItem, dir Direction) (TrackItem, error) {
+func (ti *trackStruct) FollowingItem(precedingItem TrackItem, dir PointDirection) (TrackItem, error) {
 	if precedingItem == TrackItem(ti).PreviousItem() {
 		return ti.NextItem(), nil
 	}
@@ -245,7 +251,7 @@ func (ri *resizableStruct) End() Point {
 
 /*
 A Place is a special TrackItem representing a physical location such as a
-station or a passing point. Place items are not linked to other items.
+station or a passing point. Note that Place items are not linked to other items.
 */
 type Place interface {
 	TrackItem
@@ -274,7 +280,7 @@ type PlaceObject interface {
 
 /*
 A LineItem is a resizable TrackItem that represent a simple railway line and
-that is used to connect two TrackItem together.
+is used to connect two TrackItem's together.
 */
 type LineItem interface {
 	ResizableItem
@@ -343,7 +349,7 @@ func (ei *endStruct) RealLength() float64 {
 }
 
 /*
-Platform items are usually represented as a colored rectangle on the scene to
+PlatformItem's are usually represented as a colored rectangle on the scene to
 symbolise the platform. This colored rectangle can permit user interaction.
 */
 type PlatformItem interface {
@@ -362,8 +368,10 @@ func (pfi *platformStruct) Type() string {
 	return "PlatformItem"
 }
 
+
+
 /*
-TextItem is a prop to display simple text on the layout
+TextItem "displays simple text" on the scenery layout
 */
 type TextItem interface {
 	TrackItem
@@ -378,95 +386,4 @@ type textStruct struct {
 
 func (ti *textStruct) Type() string {
 	return "TextItem"
-}
-
-/*
-PointsItem is a three-way junction.
-
-The three ends are called `common end`, `normal end` and `reverse end`
-
-	                    ____________ reverse
-	                   /
-	common ___________/______________normal
-
-Trains can go from common end to normal or reverse ends depending on the
-state of the points, but they cannot go from normal end to reverse end.
-Usually, the normal end is aligned with the common end and the reverse end
-is sideways, but this is not mandatory.
-
-Points are represented on a 10 x 10 square centered on Center point. CommonEnd,
-NormalEnd and ReverseEnd are points on the side of this square (i.e. they have
-at least one coordinate which is 5 or -5)
-*/
-type PointsItem interface {
-	TrackItem
-	// The center point of this PointsItem in the scene coordinates
-	Center() Point
-	// CommonEnd return the common end point in the item's coordinates
-	CommonEnd() Point
-	// NormalEnd return the normal end point in the item's coordinates
-	NormalEnd() Point
-	// ReverseEnd return the reverse end point in the item's coordinates
-	ReverseEnd() Point
-	// ReversedItem returns the item linked to the reverse end of these points
-	ReverseItem() TrackItem
-	// Reversed returns true if the points are in the reversed position, false
-	// otherwise
-	Reversed() bool
-}
-
-/*
-pointsStruct is a struct the pointer of which implements PointsItem
-*/
-type pointsStruct struct {
-	trackStruct
-	Xc          float64 `json:"xf"`
-	Yc          float64 `json:"yf"`
-	Xn          float64 `json:"xn"`
-	Yn          float64 `json:"yn"`
-	Xr          float64 `json:"xr"`
-	Yr          float64 `json:"yr"`
-	ReverseTiId int     `json:"reverseTiId"`
-	reversed    bool
-}
-
-func (pi *pointsStruct) Type() string {
-	return "PointsItem"
-}
-
-func (pi *pointsStruct) Center() Point {
-	return Point{pi.X, pi.Y}
-}
-
-func (pi *pointsStruct) CommonEnd() Point {
-	return Point{pi.Xc, pi.Yc}
-}
-
-func (pi *pointsStruct) NormalEnd() Point {
-	return Point{pi.Xn, pi.Yn}
-}
-
-func (pi *pointsStruct) ReverseEnd() Point {
-	return Point{pi.Xr, pi.Yr}
-}
-
-func (pi *pointsStruct) ReverseItem() TrackItem {
-	return pi.simulation.TrackItems[pi.ReverseTiId]
-}
-
-func (pi *pointsStruct) Reversed() bool {
-	return pi.reversed
-}
-func (ti *pointsStruct) FollowingItem(precedingItem TrackItem, dir Direction) (TrackItem, error) {
-	if precedingItem == PointsItem(ti).ReverseItem() || precedingItem == PointsItem(ti).NextItem() {
-		return ti.PreviousItem(), nil
-	}
-	if precedingItem == PointsItem(ti).PreviousItem() {
-		if dir == REVERSED {
-			return ti.ReverseItem(), nil
-		} else {
-			return ti.NextItem(), nil
-		}
-	}
-	return nil, ItemsNotLinkedError{ti, precedingItem}
 }

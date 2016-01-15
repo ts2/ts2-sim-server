@@ -28,7 +28,7 @@ const (
 )
 
 /*
-Message is one message emitted to the Message Logger of the simulation.
+Message is one message emitted to the MessageLogger of the simulation.
 */
 type Message struct {
 	MsgType MessageType `json:"msgType"`
@@ -45,7 +45,7 @@ type MessageLogger struct {
 }
 
 /*
-setSimulation sets the Simulation this MessageLogger is part of.
+setSimulation() sets the Simulation this MessageLogger is part of.
 */
 func (ml *MessageLogger) setSimulation(sim *Simulation) {
 	ml.simulation = sim

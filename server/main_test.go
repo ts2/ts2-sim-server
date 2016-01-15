@@ -22,12 +22,14 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/websocket"
-	"github.com/ts2/ts2-sim-server/simulation"
 	"io/ioutil"
 	"net/url"
 	"os"
 	"testing"
+
+	"github.com/gorilla/websocket"
+
+	"github.com/ts2/ts2-sim-server/simulation"
 )
 
 func TestMain(m *testing.M) {

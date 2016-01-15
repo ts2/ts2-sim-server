@@ -18,10 +18,10 @@
 		"defaultMaxSpeed": 18.06,
 		"defaultMinimumStopTime": [[20,40,90],[40,120,10]],
 		"defaultSignalVisibility": 100,
-		"description": "This simulation is a demo sim !",
+		"description": "This is a developers  test/demo simulation!",
         "managerToken": "manager-secret",
 		"timeFactor": 5,
-		"title": "Demo Sim",
+		"title": "TS2 - Demo & Test Sim",
 		"trackCircuitBased": false,
 		"warningSpeed": 8.34,
 		"version": "0.7"

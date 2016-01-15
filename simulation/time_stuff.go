@@ -23,38 +23,49 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
+	"bytes"
 )
 
-/*
-DelayGenerator is a probability distribution for a duration in seconds; atmo
-
-It is used to have random delays of trains.
-
-The `data` field is a list of tuplets and an array of 3 integers.
-
-Each tuple defines in order:
-- A lower bound
-- An upper bound
-- A probability in percent of the value to be inside the defined bounds.
-
-e.g. [[0 100 80] [100 500 20]] means that when a value will be yielded by
-this DelayGenerator, it will have 80% chance of being between 0 and 100, and
-20% chance of being between 100 and 500.
-*/
 type delayTuplet [3]int
 
+/*
+DelayGenerator is a probability distribution for a duration in seconds
+and is used to generate random delays for trains.
+
+ - The `data` field is a list of tuplets and an array of 3 integers.
+ - Each tuple defines in order:
+	- A lower bound
+	- An upper bound
+	- A probability in percent of the value to be inside the defined bounds.
+
+	e.g. [[0 100 80] [100 500 20]] means that when a value will be yielded by
+	this DelayGenerator, it will have 80% chance of being between 0 and 100, and
+	20% chance of being between 100 and 500.
+*/
 type DelayGenerator struct {
 	data []delayTuplet
 }
 
 func (dg *DelayGenerator) UnmarshalJSON(data []byte) error {
+
+	// Hack to make work with python serialsed data
+	// eg "[(1,2,3)]", "0", ie quotes "" and ()'s are invalid
+	data = bytes.Replace(data, []byte{'('}, []byte{'['}, -1)
+	data = bytes.Replace(data, []byte{')'}, []byte{']'}, -1)
+	q := byte('"')
+	if data[0] == q && data[len(data)-1] == q {
+		data = bytes.Replace(data, []byte{'"'}, []byte{' '}, -1)
+	}
+
 	var field []delayTuplet
 	if err := json.Unmarshal(data, &field); err != nil {
+		// Failed with delayTuplet[], so try a single value eg 0
 		var single int
 		if err := json.Unmarshal(data, &single); err != nil {
-			return fmt.Errorf("Delay Generator: Unparsable JSON: %s", data)
+			return fmt.Errorf("DelayGenerator.UnmarshalJSON(): Unparsable JSON: %s", data)
 		}
 		dg.data = []delayTuplet{{single, single, 100}}
+
 	} else {
 		dg.data = field
 	}

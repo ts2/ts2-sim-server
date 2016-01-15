@@ -64,7 +64,7 @@ func (pos Position) IsOut() bool {
 }
 
 // Position.Next() is the Position on the next TrackItem with regard to this Position
-func (pos Position) Next(dir Direction) Position {
+func (pos Position) Next(dir PointDirection) Position {
 	nextTi, _ := pos.TrackItem.FollowingItem(pos.PreviousItem, dir)
 	return Position{nextTi, pos.TrackItem, 0}
 }

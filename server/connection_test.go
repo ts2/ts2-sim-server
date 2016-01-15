@@ -22,9 +22,10 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/websocket"
 	"testing"
 	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 func TestLogin(t *testing.T) {
@@ -40,9 +41,11 @@ func TestLogin(t *testing.T) {
 	if err := c.WriteJSON(badRequest); err != nil {
 		t.Error(err)
 	}
+
+	// Umm, this fails cos pedro sends a "HELLO: Login required" message is H_Websocket()
 	var expectedResponse ResponseStatus
 	c.ReadJSON(&expectedResponse)
-	expectedErrorMsg := fmt.Sprintf("Error: %s: Client should call Server/login before all other requests", c.LocalAddr())
+	expectedErrorMsg := fmt.Sprintf("Error: %s - Login required", c.LocalAddr())
 	assertEqual(t, expectedResponse, ResponseStatus{RESPONSE, DataStatus{KO, expectedErrorMsg}}, "Login/Wrong request")
 	_, _, err := c.ReadMessage()
 	if _, ok := err.(*websocket.CloseError); err == nil || !ok {

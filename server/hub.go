@@ -42,6 +42,7 @@ type Hub struct {
 
 	// Received requests channel
 	readChan chan *connection
+
 	// Objects received from simulation
 	writeChan chan interface{}
 }
@@ -59,6 +60,7 @@ func (h *Hub) run() {
 	h.unregisterChan = make(chan *connection)
 	h.readChan = make(chan *connection)
 	h.writeChan = make(chan interface{}, 256)
+
 	for {
 		select {
 		case o := <-h.writeChan:

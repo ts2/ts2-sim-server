@@ -35,8 +35,8 @@ func TestLoadOptions(t *testing.T) {
 	assertTrue(t, sim.Options.DefaultMinimumStopTime.Equals(DelayGenerator{[]delayTuplet{{20, 40, 90}, {40, 120, 10}}}), "Options/defaultMinimumStopTime")
 	assertEqual(t, sim.Options.DefaultMaxSpeed, 18.06, "Options/defaultMaxSpeed")
 	assertEqual(t, sim.Options.DefaultSignalVisibility, 100.0, "Options/defaultSignalVisibility")
-	assertEqual(t, sim.Options.Description, "This simulation is a demo sim !", "Options/description")
-	assertEqual(t, sim.Options.Title, "Demo Sim", "Options/title")
+	assertEqual(t, sim.Options.Description, "This is a developers  test/demo simulation!", "Options/description")
+	assertEqual(t, sim.Options.Title, "TS2 - Demo & Test Sim", "Options/title")
 	assertEqual(t, sim.Options.TimeFactor, 5, "Options/timeFactor")
 	assertEqual(t, sim.Options.Version, "0.7", "Options/version")
 	assertEqual(t, sim.Options.WarningSpeed, 8.34, "Options/warningSpeed")
@@ -65,7 +65,7 @@ func TestLoadRoutes(t *testing.T) {
 	if !ok {
 		t.Errorf("Route 1/No direction 7")
 	}
-	assertEqual(t, d1, Direction(0), "Route 1/Direction 7")
+	assertEqual(t, d1, PointDirection(NORMAL), "Route 1/Direction 7")
 	assertEqual(t, r1.InitialState, ACTIVATED, "Route 1/InitialState")
 	assertEqual(t, r1.State, ACTIVATED, "Route 1/state")
 
