@@ -24,6 +24,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	//"log"
+	"io/ioutil"
 )
 
 /*
@@ -39,10 +41,26 @@ type Simulation struct {
 	Services      map[string]*Service
 	Trains        []*Train
 	MessageLogger *MessageLogger
+	FileName      string
 	Debug         *bool
 }
 
-func (sim *Simulation) UnmarshalJSON(data []byte) error {
+func (sim *Simulation) ReLoad(fn string) error {
+	return sim.Load(sim.FileName)
+}
+
+func (sim *Simulation) Load(fn string) error {
+
+	data, err := ioutil.ReadFile(fn)
+	if err != nil {
+		return err
+	}
+	//errload := json.Unmarshal(data, &sim)
+	//return nil
+
+//}
+
+//func (sim *Simulation) UnmarshalJSON(data []byte) error {
 	type auxItem map[string]json.RawMessage
 
 	type auxSim struct {
@@ -127,7 +145,6 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 	}
 
 	sim.Options = rawSim.Options
-
 	sim.SignalLib = rawSim.SignalLib
 
 	sim.Routes = make(map[int]*Route)

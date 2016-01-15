@@ -34,10 +34,10 @@ var upgrader = websocket.Upgrader{
 }
 
 /*
-H_Websocket() handles and serves the WebSocket endpoint of the server.
+H_Websocket() handles  the WebSocket `/ws` endpoint of the server.
 
-  - It reads JSON from the client and sends a `Request` object to the hub.
-  - It receives `Response` objects from the hub and send JSON to the client.
+  - reads JSON from the client and sends a `Request` object to the hub.
+  - receives `Response` objects from the hub and send JSON to the client.
 */
 func H_Websocket(w http.ResponseWriter, r *http.Request) {
 	ws, err := upgrader.Upgrade(w, r, nil)

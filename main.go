@@ -21,10 +21,8 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/signal"
@@ -36,8 +34,8 @@ import (
 func main() {
 	// Command line arguments
 	debug := flag.Bool("debug", false, "Enable debugging")
-	port := flag.String("port", "22222", "The port on which the server will listen")
-	addr := flag.String("addr", "0.0.0.0", "The address on which the server will listen. Set to 0.0.0.0 to listen on all addresses.")
+	port := flag.String("port", server.DEFAULT_PORT, "The port on which the server will listen")
+	addr := flag.String("addr", server.DEFAULT_ADDR, "The address on which the server will listen. Set to 0.0.0.0 to listen on all addresses.")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, `Usage of ts2-sim-server:
@@ -66,14 +64,18 @@ OPTIONS:
 	}
 	simFile := flag.Arg(0)
 	log.Printf("Loading simulation: %s\n", simFile)
+	/*
 	data, err := ioutil.ReadFile(simFile)
 	if err != nil {
 		log.Fatal(err)
 	}
+	*/
 
 	var sim simulation.Simulation
 	sim.Debug = debug
-	errload := json.Unmarshal(data, &sim)
+	errload := sim.Load(simFile)
+	//errload := json.Unmarshal(data, &sim)
+
 	if errload != nil {
 		log.Printf("Load Error: %s\n", errload)
 		return

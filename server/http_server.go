@@ -27,6 +27,11 @@ import (
 	"github.com/ts2/ts2-sim-server/simulation"
 )
 
+const (
+	DEFAULT_ADDR string = "0.0.0.0"
+	DEFAULT_PORT string = "22222"
+)
+
 var sim *simulation.Simulation
 var hub *Hub
 
@@ -57,9 +62,9 @@ func StartHttpd(addr, port string) {
 	http.HandleFunc("/ajax/trains", H_AjaxTrains)
 	http.HandleFunc("/ajax/trackitems", H_AjaxTrackItems)
 	http.HandleFunc("/sim.svg", H_SvgImageTest)
-	http.HandleFunc("/svg", H_SvgTest)
+	http.HandleFunc("/svg", H_SvgTestPage)
 	http.HandleFunc("/ws", H_Websocket)
-	http.HandleFunc("/", H_Home)
+	http.HandleFunc("/", H_HomePage)
 
 	serverAddress := fmt.Sprintf("%s:%s", addr, port)
 	log.Printf("Starting HTTP at: http://%s\n", serverAddress)
