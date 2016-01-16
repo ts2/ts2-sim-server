@@ -21,10 +21,16 @@ package server
 
 import (
 	"fmt"
-	"github.com/ts2/ts2-sim-server/simulation"
 	"html/template"
 	"log"
 	"net/http"
+
+	"github.com/ts2/ts2-sim-server/simulation"
+)
+
+const (
+	DEFAULT_ADDR string = "0.0.0.0"
+	DEFAULT_PORT string = "22222"
 )
 
 var sim *simulation.Simulation
