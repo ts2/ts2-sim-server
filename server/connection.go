@@ -22,7 +22,6 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 
 	"github.com/gorilla/websocket"
 )
@@ -72,7 +71,7 @@ func (conn *connection) loop() {
 	if err := conn.loginClient(); err != nil {
 		// Try to notify client
 		conn.WriteJSON(NewErrorResponse(err))
-		log.Println(err)
+		logger.Error("Error while login", "connection", conn.RemoteAddr(), "error", err)
 		return
 	}
 	go conn.processWrite()
@@ -87,10 +86,10 @@ func (conn *connection) processRead() {
 		err := conn.ReadJSON(&conn.LastRequest)
 		if err != nil {
 			if _, ok := err.(*websocket.CloseError); ok {
-				log.Printf("%s: Connection closed by peer", conn.RemoteAddr())
+				logger.Info("Connection closed by peer", "connection", conn.RemoteAddr())
 				conn.Close()
 			} else {
-				log.Printf("%s: Error while reading: %s", conn.RemoteAddr(), err)
+				logger.Info("Error while reading", "connection", conn.RemoteAddr(), "error", err)
 				conn.pushChan <- NewErrorResponse(err)
 			}
 		} else {
@@ -106,7 +105,7 @@ func (conn *connection) processWrite() {
 	for {
 		req := <-conn.pushChan
 		if err := conn.WriteJSON(req); err != nil {
-			log.Printf("%s: Error while writing %+v: %s", conn.RemoteAddr(), req, err)
+			logger.Info("Error while writing", "connection", conn.RemoteAddr(), "request", req, "error", err)
 		}
 	}
 }
@@ -122,11 +121,11 @@ func (conn *connection) loginClient() error {
 		return err
 	}
 	if req.Object != "Server" || req.Action != "login" {
-		return fmt.Errorf("%s: Client should call Server/login before all other requests", conn.RemoteAddr())
+		return fmt.Errorf("Login required")
 	}
 	loginParams := ParamsLogin{}
 	if err := json.Unmarshal(req.Params, &loginParams); err != nil {
-		return fmt.Errorf("%s: Unable to parse login params: %s", conn.RemoteAddr(), err)
+		return fmt.Errorf("Unable to parse login params: %s", err)
 	}
 
 	// Authenticate client and type
@@ -140,15 +139,15 @@ func (conn *connection) loginClient() error {
 		conn.clientType = MANAGER
 		conn.ManagerType = loginParams.ClientSubType
 	} else {
-		return fmt.Errorf("%s: Invalid login parameters", conn.RemoteAddr())
+		return fmt.Errorf("Invalid login parameters")
 	}
 
 	// authenticated, so setup
 	if err := conn.WriteJSON(NewOkResponse()); err != nil {
-		log.Printf("%s: Error while writing: %s", conn.RemoteAddr(), req, err)
+		logger.Info("Error while writing", "connection", conn.RemoteAddr(), "request", req, "error", err)
 	}
 	hub.registerChan <- conn
-	log.Printf("%s: logged in as %s %s", conn.RemoteAddr(), conn.clientType, conn.ManagerType)
+	logger.Info("Logged in", "connection", conn.RemoteAddr(), "clientType", conn.clientType, "managerType", conn.ManagerType)
 	return nil
 }
 

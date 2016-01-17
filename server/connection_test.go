@@ -41,10 +41,9 @@ func TestLogin(t *testing.T) {
 	if err := c.WriteJSON(badRequest); err != nil {
 		t.Error(err)
 	}
-	var expectedResponse ResponseStatus
-	c.ReadJSON(&expectedResponse)
-	expectedErrorMsg := fmt.Sprintf("Error: %s: Client should call Server/login before all other requests", c.LocalAddr())
-	assertEqual(t, expectedResponse, ResponseStatus{RESPONSE, DataStatus{KO, expectedErrorMsg}}, "Login/Wrong request")
+	var serverResponse ResponseStatus
+	c.ReadJSON(&serverResponse)
+	assertEqual(t, serverResponse, ResponseStatus{RESPONSE, DataStatus{KO, "Error: Login required"}}, "Login/Wrong request")
 	_, _, err := c.ReadMessage()
 	if _, ok := err.(*websocket.CloseError); err == nil || !ok {
 		t.Errorf("Login/Wrong request/Connection should be closed")
@@ -53,7 +52,7 @@ func TestLogin(t *testing.T) {
 
 	// Incorrect login
 	c, err = login(t, CLIENT, "", "wrong-token")
-	expectedErrorMsg = fmt.Sprintf("Error: %s: Invalid login parameters", c.LocalAddr())
+	expectedErrorMsg := "Error: Invalid login parameters"
 	if err == nil || err.Error() != expectedErrorMsg {
 		t.Errorf("Login/Incorrect: Unexpected behaviour")
 	}

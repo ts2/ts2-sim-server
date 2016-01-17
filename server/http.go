@@ -22,10 +22,10 @@ package server
 import (
 	"fmt"
 	"html/template"
-	"log"
 	"net/http"
 
 	"github.com/ts2/ts2-sim-server/simulation"
+	log "gopkg.in/inconshreveable/log15.v2"
 )
 
 const (
@@ -35,13 +35,15 @@ const (
 
 var sim *simulation.Simulation
 var hub *Hub
+var logger log.Logger
 
 /*
 Run() starts a http web server and websocket hub for the given simulation, on the given address and port.
 */
-func Run(s *simulation.Simulation, addr, port string) {
+func Run(s *simulation.Simulation, addr, port string, parentLogger log.Logger) {
 	sim = s
 	hub = &Hub{}
+	logger = parentLogger.New("module", "server")
 	go HttpdStart(addr, port)
 	hub.run()
 }
@@ -58,8 +60,9 @@ func HttpdStart(addr, port string) {
 	http.HandleFunc("/", serveHome)
 	http.HandleFunc("/ws", serveWs)
 	serverAddress := fmt.Sprintf("%s:%s", addr, port)
-	log.Printf("Starting HTTP at: http://%s\n", serverAddress)
-	log.Fatal(http.ListenAndServe(serverAddress, nil))
+	logger.Info("Starting HTTP", "submodule", "http", "address", serverAddress)
+	err := http.ListenAndServe(serverAddress, nil)
+	logger.Crit("HTTP crashed", "submodule", "http", "error", err)
 }
 
 /*

@@ -29,13 +29,15 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/ts2/ts2-sim-server/simulation"
+	log "gopkg.in/inconshreveable/log15.v2"
 )
 
 func TestMain(m *testing.M) {
 	data, _ := ioutil.ReadFile("../simulation/test_data/demo.json")
 	var s simulation.Simulation
 	json.Unmarshal(data, &s)
-	go Run(&s, "0.0.0.0", "22222")
+	logger := log.New()
+	go Run(&s, "0.0.0.0", "22222", logger)
 	os.Exit(m.Run())
 }
 

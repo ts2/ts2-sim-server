@@ -25,18 +25,22 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/signal"
 
 	"github.com/ts2/ts2-sim-server/server"
 	"github.com/ts2/ts2-sim-server/simulation"
+	log "gopkg.in/inconshreveable/log15.v2"
 )
+
+var logger log.Logger
 
 func main() {
 	// Command line arguments
 	port := flag.String("port", server.DEFAULT_PORT, "The port on which the server will listen")
 	addr := flag.String("addr", server.DEFAULT_ADDR, "The address on which the server will listen. Set to 0.0.0.0 to listen on all addresses.")
+	logFile := flag.String("logfile", "", "The filename in which to save the logs. If not specified, the logs are sent to stderr.")
+	logLevel := flag.String("loglevel", "info", "The minimum level of log to be written. Possible values are 'crit', 'error', 'warn', 'info' and 'debug'.")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, `Usage of ts2-sim-server:
@@ -57,6 +61,25 @@ OPTIONS:
 	killChan := make(chan os.Signal, 1)
 	signal.Notify(killChan, os.Interrupt)
 
+	// Setup logging system
+	logger = log.New()
+	var outputHandler log.Handler
+	if *logFile != "" {
+		outputHandler = log.Must.FileHandler(*logFile, log.LogfmtFormat())
+	} else {
+		outputHandler = log.StderrHandler
+	}
+	logLvl, err_level := log.LvlFromString(*logLevel)
+	if err_level != nil {
+		fmt.Fprintf(os.Stderr, "Error: Unknown loglevel\n\n")
+		flag.Usage()
+		os.Exit(1)
+	}
+	logger.SetHandler(log.LvlFilterHandler(
+		logLvl,
+		outputHandler,
+	))
+
 	// Load the simulation
 	if len(flag.Args()) == 0 {
 		fmt.Fprintf(os.Stderr, "Error: Please specify a simulation file\n\n")
@@ -64,23 +87,24 @@ OPTIONS:
 		os.Exit(1)
 	}
 	simFile := flag.Arg(0)
-	log.Printf("Loading simulation: %s\n", simFile)
+	logger.Info("Loading simulation", "file", simFile)
 
 	data, err := ioutil.ReadFile(simFile)
 	if err != nil {
-		log.Fatal(err)
+		logger.Crit("Unable to read file", "file", simFile, "error", err)
+		os.Exit(1)
 	}
 
 	var sim simulation.Simulation
 	errload := json.Unmarshal(data, &sim)
 
 	if errload != nil {
-		log.Printf("Load Error: %s\n", errload)
+		logger.Error("Load Error", "file", simFile, "error", errload)
 		return
 	}
-	log.Printf("Simulation loaded: %s\n", sim.Options.Title)
+	logger.Info("Simulation loaded", "sim", sim.Options.Title)
 
-	go server.Run(&sim, *addr, *port)
+	go server.Run(&sim, *addr, *port, logger)
 
 	// Route all messages
 	for {
@@ -88,7 +112,7 @@ OPTIONS:
 
 		case <-killChan:
 			// TODO gracefully shutdown things maybe
-			log.Println("Server killed, exiting...")
+			logger.Info("Server killed, exiting...")
 			os.Exit(0)
 		}
 	}

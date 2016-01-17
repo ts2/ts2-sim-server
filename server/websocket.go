@@ -20,9 +20,9 @@
 package server
 
 import (
-	"github.com/gorilla/websocket"
-	"log"
 	"net/http"
+
+	"github.com/gorilla/websocket"
 )
 
 var upgrader = websocket.Upgrader{
@@ -39,7 +39,7 @@ It receives Response objects from the hub and send JSON to the client.
 func serveWs(w http.ResponseWriter, r *http.Request) {
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println(err)
+		logger.Error("Unable to upgrade to WebSocket", "submodule", "http", "error", err)
 		return
 	}
 	conn := &connection{

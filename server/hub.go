@@ -21,7 +21,6 @@ package server
 
 import (
 	"fmt"
-	"log"
 )
 
 /*
@@ -51,7 +50,7 @@ type Hub struct {
 Hub.run() is the loop for handling dispatching requests and responses
 */
 func (h *Hub) run() {
-	log.Print("Hub: starting...")
+	logger.Info("Hub starting...", "submodule", "hub")
 	// make connection maps
 	h.clientConnections = make(map[*connection]bool)
 	h.managerConnections = make(map[*connection]bool)
@@ -64,12 +63,15 @@ func (h *Hub) run() {
 	for {
 		select {
 		case o := <-h.writeChan:
-			log.Printf("Object to write: %s", o)
+			logger.Debug("Writing object", "submodule", "hub", "object", o)
 		case c := <-h.readChan:
+			logger.Debug("Reading object", "submodule", "hub", "object", c.LastRequest)
 			go h.dispatchObject(c.LastRequest, c.pushChan)
 		case c := <-h.registerChan:
+			logger.Debug("Registering connection", "submodule", "hub", "connection", c.RemoteAddr())
 			h.register(c)
 		case c := <-h.unregisterChan:
+			logger.Debug("Unregistering connection", "submodule", "hub", "connection", c.RemoteAddr())
 			h.unregister(c)
 		}
 	}
