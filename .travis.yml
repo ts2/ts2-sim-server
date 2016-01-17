@@ -6,6 +6,7 @@ go:
  - tip
 install:
  - go get github.com/gorilla/websocket
+ - go get gopkg.in/inconshreveable/log15.v2
 notifications:
   webhooks:
     urls:
