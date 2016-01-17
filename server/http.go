@@ -37,7 +37,7 @@ var sim *simulation.Simulation
 var hub *Hub
 
 /*
-Run starts an http server and a hub for the given simulation, on the given address and port.
+Run() starts a http web server and websocket hub for the given simulation, on the given address and port.
 */
 func Run(s *simulation.Simulation, addr, port string) {
 	sim = s
@@ -47,12 +47,12 @@ func Run(s *simulation.Simulation, addr, port string) {
 }
 
 /*
-HttpdStart starts the server which serves on the following routes:
+StartHttpd() starts the server which serves on the following routes:
 
-/ : Serves a HTTP home page with the server status and information about the loaded sim.
-It also includes a JavaScript WebSocket client to communicate and manage the server.
+    / - Serves a HTTP home page with the server status and information about the loaded sim.
+        It also includes a JavaScript WebSocket client to communicate and manage the server.
 
-/ws : WebSocket endpoint for all TS2 clients and managers.
+    /ws - WebSocket endpoint for all TS2 clients and managers.
 */
 func HttpdStart(addr, port string) {
 	http.HandleFunc("/", serveHome)
@@ -92,100 +92,138 @@ var homeTempl = template.Must(template.New("").Parse(`
 <html>
 <head>
     <meta charset="utf-8">
+    <link rel="icon" href="https://ts2.github.io/favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="https://ts2.github.io/favicon.ico" type="image/x-icon" />
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet" integrity="sha256-7s5uDGW3AHqw6xtJmNNtr+OBRJUlgkNJEo78P4b0yRw= sha512-nNo+yCHEyn0smMxSswnf/OnX6/KwJuZTlNZBjauKhTK0c+zT+q5JOCx0UFhXQ6rJR9jg6Es8gPuD2uZcYDLqSw==" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-2.2.0.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha256-KXn5puMvxCw+dAYznun+drMdG1IFl3agK0p/pqT9KAo= sha512-2e8qq0ETcfWRI4HJBzQiA3UoyFk6tbNyG+qSaIBZLyW9Xf3sWZHN/lxe9fTh1U45DpPf07yj94KsUHHWe4Yk1A==" crossorigin="anonymous"></script>
     <script>
+    	function clearMessage(){
+			$('input').val("");
+			$('input').focus();
+    	}
         window.addEventListener("load", function (evt) {
             var output = document.getElementById("output");
             var input = document.getElementById("input");
-            var ws;
+            var ws = null;
             var print = function (message) {
-                var d = document.createElement("div");
-                d.innerHTML = message;
-                output.appendChild(d);
+                $('#output').append(message + "\n")
             };
-            document.getElementById("open").onclick = function (evt) {
+            var showConnected = function(connected){
+				print(connected ? "# WS Connected": "# WS Disconnected");
+				$('#lblStatus').text(connected ? "Connected" : "Disconnected");
+				$('#btnClose').prop("disabled", !connected);
+				$('#btnOpen').prop("disabled", connected);
+				$('#btnSend').prop("disabled", !connected);
+            };
+            document.getElementById("btnOpen").onclick = function (evt) {
                 if (ws) {
                     return false;
                 }
                 ws = new WebSocket("{{.Host}}");
                 ws.onopen = function (evt) {
-                    print("OPEN");
+					showConnected(true);
                 };
                 ws.onclose = function (evt) {
-                    print("CLOSE");
+                    showConnected(false);
                     ws = null;
                 };
                 ws.onmessage = function (evt) {
-                    print("RESPONSE: " + evt.data);
+                    print("< RESPONSE: " + evt.data);
                 };
                 ws.onerror = function (evt) {
-                    print("ERROR: " + evt.data);
+                    print("< ERROR: " + evt.data);
                 };
+                input.focus()
                 return false;
             };
-            document.getElementById("send").onclick = function (evt) {
+            document.getElementById("btnSend").onclick = function (evt) {
                 if (!ws) {
                     return false;
                 }
-                print("SEND: " + input.value);
+                print("> SEND: " + input.value);
                 ws.send(input.value);
-                input.value = "";
+                $('input').focus();
                 return false;
             };
-            document.getElementById("close").onclick = function (evt) {
-                if (!ws) {
-                    return false;
+            document.getElementById("btnClose").onclick = function (evt) {
+                if (ws) {
+                    ws.close();
                 }
-                ws.close();
                 return false;
             };
+            document.getElementById("btnClear").onclick = function (evt) {
+            	$('#output').empty();
+            	return false;
+            }
+            showConnected(false);
         });
+        // //{"object": "Server", "action": "login", "params": {"type": "client","token": "client-secret"} }
     </script>
 </head>
 <body>
-<h1>TS2 Sim Server</h1>
-<p>
-    TS2 Sim Server is running !
-</p>
-<h2>Simulation</h2>
-<table>
-    <tr>
-        <th>Title:</th>
-        <td>{{ .Title }}</td>
-    </tr>
-    <tr>
-        <th>Description:</th>
-        <td>{{ .Description }}</td>
-    </tr>
-</table>
+<nav class="navbar navbar-inverse xx-navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">TS2 Sim Server</a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+            <ul class="nav navbar-nav">
+                <li class="active"><a href="/">Home</a></li>
+                <li><a href="https://godoc.org/github.com/ts2/ts2-sim-server" target="_godoc">godoc</a></li>
+            </ul>
+        </div><!--/.nav-collapse -->
+    </div>
+</nav>
 
-<h2>Test WebSocket Connection</h2>
-<table>
-    <tr>
-        <td valign="top" width="50%">
-            <p>
-                WebSocket server: {{ .Host }}
-            </p>
-            <p>
-                Click "Open" to create a connection to the server,
-                "Send" to send a message to the server and "Close" to close the connection.
-                You can change the message and send multiple times.
-            </p>
-            <form>
-                <p>
-                    <button id="open">Open</button>
-                    <button id="close">Close</button>
-                </p>
-                <p>
-                    <textarea id="input" type="text"></textarea>
-                    <button id="send">Send</button>
-                </p>
-            </form>
-        </td>
-        <td valign="top" width="50%">
-            <div id="output"></div>
-        </td>
-    </tr>
-</table>
+<div class="container">
+    <table class="table table-bordered table-condensed">
+        <caption>Loaded Simulation</caption>
+        <tr>
+            <th>Title:</th>
+            <td>{{ .Title }}</td>
+        </tr>
+        <tr>
+            <th>Description:</th>
+            <td>{{ .Description }}</td>
+        </tr>
+        <tr>
+            <th>WebSocket Server:</th>
+            <td>{{ .Host }}</td>
+        </tr>
+    </table>
+
+    <h3>Test WebSocket</h3>
+    <p>
+        Click "Open" to create a connection to the server,
+        "Send" to send a message to the server and "Close" to close the connection.
+        You can change the message and send multiple times.
+    </p>
+    <form  class="form-inline">
+        <div class="form-group">
+            <label id="lblStatus" style="width: 100px;">Closed</label>
+            <button id="btnOpen"  type="button" class="btn btn-info">Open</button>
+            <button id="btnClose"  type="button" class="btn btn-info">Close</button>
+        </div>
+        <div class="form-group">
+            <input type="text" id="input" style="width:500px" placeHolder="Message">
+            <span class="glyphicon glyphicon-remove-circle" onclick="clearMessage()"></span>
+            <button id="btnSend"  type="button" class="btn btn-success">Send</button>
+            <button id="btnClear"  type="button" class="btn btn-default">Clear</button>
+        </div>
+    </form>
+</div>
+<div class="container">
+    <form>
+        <textarea id="output" style="margin-top: 10px; width:100%; height:300px; overflow: auto;"  placeHolder="Log"></textarea>
+    </form>
+</div>
 </body>
 </html>
 `))

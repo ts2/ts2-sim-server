@@ -1,4 +1,4 @@
-/*   Copyright (C) 2008-2016 by Nicolas Piganeau and the TS2 team
+/*   Copyright (C) 2008-2016 by Nicolas Piganeau and the TS2 TEAM
  *   (See AUTHORS file)
  *
  *   This program is free software; you can redistribute it and/or modify
@@ -17,36 +17,5 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
+// package simulation contains core logic of ts2
 package simulation
-
-type MessageType uint8
-
-const (
-	SOFTWARE_MSG       MessageType = 0
-	PLAYER_WARNING_MSG MessageType = 1
-	SIMULATION_MSG     MessageType = 2
-)
-
-/*
-Message is one message emitted to the MessageLogger of the simulation.
-*/
-type Message struct {
-	MsgType MessageType `json:"msgType"`
-	MsgText string      `json:"msgText"`
-}
-
-/*
-MessageLogger holds all Message instances that have been emitted to it.
-*/
-type MessageLogger struct {
-	Messages []Message `json:"messages"`
-
-	simulation *Simulation
-}
-
-/*
-setSimulation() sets the Simulation this MessageLogger is part of.
-*/
-func (ml *MessageLogger) setSimulation(sim *Simulation) {
-	ml.simulation = sim
-}

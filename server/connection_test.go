@@ -22,9 +22,10 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/websocket"
 	"testing"
 	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 func TestLogin(t *testing.T) {
