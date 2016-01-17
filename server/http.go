@@ -134,7 +134,7 @@ var homeTempl = template.Must(template.New("").Parse(`
                 ws.onerror = function (evt) {
                     print("< ERROR: " + evt.data);
                 };
-                input.focus()
+                input.focus();
                 return false;
             };
             document.getElementById("btnSend").onclick = function (evt) {
@@ -155,7 +155,7 @@ var homeTempl = template.Must(template.New("").Parse(`
             document.getElementById("btnClear").onclick = function (evt) {
             	$('#output').empty();
             	return false;
-            }
+            };
             showConnected(false);
         });
         // //{"object": "Server", "action": "login", "params": {"type": "client","token": "client-secret"} }
