@@ -79,6 +79,8 @@ OPTIONS:
 		logLvl,
 		outputHandler,
 	))
+	simulation.InitializeLogger(logger)
+	server.InitializeLogger(logger)
 
 	// Load the simulation
 	if len(flag.Args()) == 0 {
@@ -104,7 +106,7 @@ OPTIONS:
 	}
 	logger.Info("Simulation loaded", "sim", sim.Options.Title)
 
-	go server.Run(&sim, *addr, *port, logger)
+	go server.Run(&sim, *addr, *port)
 
 	// Route all messages
 	for {

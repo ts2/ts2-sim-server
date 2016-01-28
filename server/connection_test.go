@@ -21,7 +21,6 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 	"time"
 
@@ -83,9 +82,9 @@ func TestDoubleLogin(t *testing.T) {
 		var expectedResponse ResponseStatus
 		c.ReadJSON(&expectedResponse)
 		if expectedResponse.Data.Status != KO {
-			fmt.Errorf("Double login: should have failed")
+			t.Errorf("Double login: should have failed")
 		} else if expectedResponse.Data.Message != "Error: Can't call login when already logged in" {
-			fmt.Errorf("Double login: Wrong error message")
+			t.Errorf("Double login: Wrong error message")
 		}
 	}
 }

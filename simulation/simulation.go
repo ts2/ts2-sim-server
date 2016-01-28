@@ -24,7 +24,30 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
+
+	log "gopkg.in/inconshreveable/log15.v2"
 )
+
+const TIME_STEP time.Duration = 500 * time.Millisecond
+
+var logger log.Logger
+
+/*
+InitializeLogger creates the logger for the simulation module
+*/
+func InitializeLogger(parentLogger log.Logger) {
+	logger = parentLogger.New("module", "simulation")
+}
+
+
+/*
+Event is a wrapper around an object that is sent to the server hub to notify clients of a change.
+ */
+type Event struct {
+	Name   string
+	Object interface{}
+}
 
 /*
 Simulation holds all the game logic.
@@ -39,6 +62,10 @@ type Simulation struct {
 	Services      map[string]*Service
 	Trains        []*Train
 	MessageLogger *MessageLogger
+	EventChan     chan Event
+
+	clockTicker *time.Ticker
+	stopChan    chan bool
 }
 
 func (sim *Simulation) UnmarshalJSON(data []byte) error {
@@ -142,4 +169,43 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 	sim.MessageLogger = rawSim.MessageLogger
 	sim.MessageLogger.setSimulation(sim)
 	return nil
+}
+
+/*
+Start runs the main loop of the simulation by making the clock tick and process each object.
+*/
+func (sim *Simulation) Start() {
+	if sim.clockTicker == nil {
+		sim.clockTicker = time.NewTicker(TIME_STEP)
+		sim.stopChan = make(chan bool)
+		sim.EventChan = make(chan Event)
+		go sim.run()
+		logger.Info("Simulation started")
+	}
+}
+
+/*
+run enters the main loop of the simulation
+*/
+func (sim *Simulation) run() {
+	for {
+		select {
+		case <-sim.stopChan:
+			sim.clockTicker.Stop()
+			sim.clockTicker = nil
+			close(sim.EventChan)
+			logger.Info("Simulation paused")
+			return
+		case <-sim.clockTicker.C:
+			sim.Options.CurrentTime.Add(TIME_STEP)
+			go func() { sim.EventChan <- Event{"currentTime", &sim.Options.CurrentTime} }()
+		}
+	}
+}
+
+/*
+Pause holds the simulation by stopping the clock ticker. Call Start again to restart the simulation.
+*/
+func (sim *Simulation) Pause() {
+	sim.stopChan <- true
 }

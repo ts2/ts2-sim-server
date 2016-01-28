@@ -38,12 +38,18 @@ var hub *Hub
 var logger log.Logger
 
 /*
+InitializeLogger creates the logger for the server module
+*/
+func InitializeLogger(parentLogger log.Logger) {
+	logger = parentLogger.New("module", "server")
+}
+
+/*
 Run() starts a http web server and websocket hub for the given simulation, on the given address and port.
 */
-func Run(s *simulation.Simulation, addr, port string, parentLogger log.Logger) {
+func Run(s *simulation.Simulation, addr, port string) {
 	sim = s
 	hub = &Hub{}
-	logger = parentLogger.New("module", "server")
 	go HttpdStart(addr, port)
 	hub.run()
 }

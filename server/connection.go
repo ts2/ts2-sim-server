@@ -86,8 +86,9 @@ func (conn *connection) processRead() {
 		err := conn.ReadJSON(&conn.LastRequest)
 		if err != nil {
 			if _, ok := err.(*websocket.CloseError); ok {
-				logger.Info("Connection closed by peer", "connection", conn.RemoteAddr())
+				logger.Debug("Connection closed by peer", "connection", conn.RemoteAddr())
 				conn.Close()
+				return
 			} else {
 				logger.Info("Error while reading", "connection", conn.RemoteAddr(), "error", err)
 				conn.pushChan <- NewErrorResponse(err)
@@ -144,7 +145,7 @@ func (conn *connection) loginClient() error {
 
 	// authenticated, so setup
 	if err := conn.WriteJSON(NewOkResponse()); err != nil {
-		logger.Info("Error while writing", "connection", conn.RemoteAddr(), "request", req, "error", err)
+		logger.Info("Error while writing", "connection", conn.RemoteAddr(), "request", "NewOkResponse", "error", err)
 	}
 	hub.registerChan <- conn
 	logger.Info("Logged in", "connection", conn.RemoteAddr(), "clientType", conn.clientType, "managerType", conn.ManagerType)
@@ -155,8 +156,7 @@ func (conn *connection) loginClient() error {
 Close() terminates the websocket connection and closes associated resources
 */
 func (conn *connection) Close() error {
-	hub.unregisterChan <- conn
 	conn.Conn.Close()
-	close(conn.pushChan)
+	hub.unregisterChan <- conn
 	return nil
 }

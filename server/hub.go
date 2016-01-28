@@ -41,9 +41,6 @@ type Hub struct {
 
 	// Received requests channel
 	readChan chan *connection
-
-	// Objects received from simulation
-	writeChan chan interface{}
 }
 
 /*
@@ -58,14 +55,13 @@ func (h *Hub) run() {
 	h.registerChan = make(chan *connection)
 	h.unregisterChan = make(chan *connection)
 	h.readChan = make(chan *connection)
-	h.writeChan = make(chan interface{}, 256)
 
 	for {
 		select {
-		case o := <-h.writeChan:
-			logger.Debug("Writing object", "submodule", "hub", "object", o)
+		case e := <-sim.EventChan:
+			logger.Debug("Received event from simulation", "submodule", "hub", "object", e)
 		case c := <-h.readChan:
-			logger.Debug("Reading object", "submodule", "hub", "object", c.LastRequest)
+			logger.Debug("Reading request from client", "submodule", "hub", "object", c.LastRequest)
 			go h.dispatchObject(c.LastRequest, c.pushChan)
 		case c := <-h.registerChan:
 			logger.Debug("Registering connection", "submodule", "hub", "connection", c.RemoteAddr())
@@ -106,14 +102,17 @@ func (h *Hub) unregister(c *connection) {
 }
 
 /*
-dispatchObject process a request and
+dispatchObject process a request.
+
+- req is the request to process
+- ch is the channel on which to send the response
 */
 func (h *Hub) dispatchObject(req Request, ch chan interface{}) {
 	switch req.Object {
 	case "Server":
 		h.dispatchServer(req, ch)
-		//	case "Simulation":
-		//		h.dispatchSimulation(req, ch)
+	case "Simulation":
+		h.dispatchSimulation(req, ch)
 		//	case "TrackItem":
 		//		h.dispatchTrackItem(req, ch)
 		//	case "Route":
@@ -124,6 +123,9 @@ func (h *Hub) dispatchObject(req Request, ch chan interface{}) {
 		//		h.dispatchService(req, ch)
 		//	case "Train":
 		//		h.dispatchTrain(req, ch)
+	default:
+		ch <- NewErrorResponse(fmt.Errorf("Unknwon object %s", req.Object))
+		logger.Debug("Request for unknown object received", "submodule", "hub", "object", req.Object)
 	}
 }
 
@@ -134,5 +136,28 @@ func (h *Hub) dispatchServer(req Request, ch chan interface{}) {
 	switch req.Action {
 	case "login":
 		ch <- NewErrorResponse(fmt.Errorf("Can't call login when already logged in"))
+		logger.Debug("Request for second login received", "submodule", "hub", "object", req.Object, "action", req.Action)
+	default:
+		ch <- NewErrorResponse(fmt.Errorf("Unknwon action %s/%s", req.Object, req.Action))
+		logger.Debug("Request for unknown action received", "submodule", "hub", "object", req.Object, "action", req.Action)
+	}
+}
+
+/*
+dispatchSimulation processes requests made on the Simulation object
+*/
+func (h *Hub) dispatchSimulation(req Request, ch chan interface{}) {
+	switch req.Action {
+	case "start":
+		logger.Debug("Request for simulation start received", "submodule", "hub", "object", req.Object, "action", req.Action)
+		sim.Start()
+		ch <- NewOkResponse()
+	case "pause":
+		logger.Debug("Request for simulation pause received", "submodule", "hub", "object", req.Object, "action", req.Action)
+		sim.Pause()
+		ch <- NewOkResponse()
+	default:
+		ch <- NewErrorResponse(fmt.Errorf("Unknwon action %s/%s", req.Object, req.Action))
+		logger.Debug("Request for unknown action received", "submodule", "hub", "object", req.Object, "action", req.Action)
 	}
 }
