@@ -20,6 +20,7 @@
 package server
 
 import (
+	"github.com/ts2/ts2-sim-server/simulation"
 	"testing"
 	"time"
 )
@@ -31,22 +32,71 @@ func TestStartPauseSimulation(t *testing.T) {
 	defer func() {
 		c.Close()
 	}()
-
 	if err != nil {
 		t.Errorf(err.Error())
 		return
 	}
+
 	c.WriteJSON(Request{Object: "Simulation", Action: "start"})
 	var expectedResponse ResponseStatus
 	c.ReadJSON(&expectedResponse)
-	if expectedResponse.Data.Status != OK{
+	if expectedResponse.Data.Status != OK {
 		t.Errorf("The response from server is NOOK (Simulation/start)")
 	}
 
 	c.WriteJSON(Request{Object: "Simulation", Action: "pause"})
 	c.ReadJSON(&expectedResponse)
-	if expectedResponse.Data.Status != OK{
+	if expectedResponse.Data.Status != OK {
 		t.Errorf("The response from server is NOOK (Simulation/pause)")
 	}
 
+}
+
+func TestAddRemoveListeners(t *testing.T) {
+	// Wait for server to come up
+	time.Sleep(100 * time.Millisecond)
+	c, err := login(t, CLIENT, "", "client-secret")
+	defer func() {
+		c.Close()
+	}()
+	if err != nil {
+		t.Errorf(err.Error())
+		return
+	}
+
+	// add listener for clock
+	c.WriteJSON(RequestListener{
+		Object: "Server",
+		Action: "addListener",
+		Params: ParamsListener{
+			Event: simulation.CLOCK,
+		},
+	})
+	var expectedResponse ResponseStatus
+	c.ReadJSON(&expectedResponse)
+	if expectedResponse.Data.Status != OK {
+		t.Errorf("The response from server is NOOK (Server/addListener)")
+	}
+
+	// start simulation
+	c.WriteJSON(Request{Object: "Simulation", Action: "start"})
+	c.ReadJSON(&expectedResponse)
+	if expectedResponse.Data.Status != OK {
+		t.Errorf("The response from server is NOOK (Simulation/start)")
+	}
+
+	// check we receive events
+	var clockEvent ResponseEvent
+	c.ReadJSON(&clockEvent)
+	if clockEvent.MsgType != EVENT || clockEvent.Data.Name != simulation.CLOCK {
+		t.Errorf("No clock event received from server !")
+	}
+
+	// remove listener
+	//c.WriteJSON(Request{Object: "Server", Action: "removeListener", Params: json.RawMessage("{\"event\": \"clock\"}")})
+	//c.ReadJSON(&expectedResponse)
+	//if expectedResponse.Data.Status != OK {
+	//	t.Errorf("The response from server is NOOK (Server/removeListener)")
+	//}
+	time.Sleep(2 * time.Second)
 }

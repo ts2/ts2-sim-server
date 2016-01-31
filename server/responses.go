@@ -21,6 +21,7 @@ package server
 
 import (
 	"fmt"
+	"github.com/ts2/ts2-sim-server/simulation"
 )
 
 type StatusCode string
@@ -55,6 +56,22 @@ type ResponseStatus struct {
 }
 
 /*
+DataEvent is the Data part of a ResponseEvent message
+*/
+type DataEvent struct {
+	Name   simulation.EventName `json:"name"`
+	Object interface{}          `json:"object"`
+}
+
+/*
+ResponseEvent is a message sent by the server to the clients when an event is triggered in the simulation
+*/
+type ResponseEvent struct {
+	MsgType MessageType `json:"msgType"`
+	Data    DataEvent   `json:"data"`
+}
+
+/*
 NewErrorResponse returns a ResponseStatus object corresponding to the given error.
 */
 func NewErrorResponse(e error) *ResponseStatus {
@@ -80,4 +97,18 @@ func NewOkResponse() *ResponseStatus {
 		},
 	}
 	return &sr
+}
+
+/*
+NewEventResponse returns a new ResponseEvent object from the given Event
+ */
+func NewEventResponse(e *simulation.Event) *ResponseEvent {
+	er := ResponseEvent{
+		MsgType: EVENT,
+		Data: DataEvent{
+			Name: e.Name,
+			Object: e.Object,
+		},
+	}
+	return &er
 }

@@ -20,7 +20,10 @@
 package server
 
 import (
+	"encoding/json"
 	"fmt"
+
+	"github.com/ts2/ts2-sim-server/simulation"
 )
 
 /*
@@ -32,6 +35,9 @@ type Hub struct {
 
 	// Registered train manager connections
 	managerConnections map[*connection]bool
+
+	// Registry of client listeners
+	registry map[*registryEntry]bool
 
 	// Register requests from the connection
 	registerChan chan *connection
@@ -51,6 +57,8 @@ func (h *Hub) run() {
 	// make connection maps
 	h.clientConnections = make(map[*connection]bool)
 	h.managerConnections = make(map[*connection]bool)
+	// make registry map
+	h.registry = make(map[*registryEntry]bool)
 	// make channels
 	h.registerChan = make(chan *connection)
 	h.unregisterChan = make(chan *connection)
@@ -60,15 +68,17 @@ func (h *Hub) run() {
 		select {
 		case e := <-sim.EventChan:
 			logger.Debug("Received event from simulation", "submodule", "hub", "object", e)
+			h.notifyClients(e)
 		case c := <-h.readChan:
 			logger.Debug("Reading request from client", "submodule", "hub", "object", c.LastRequest)
-			go h.dispatchObject(c.LastRequest, c.pushChan)
+			go h.dispatchObject(c)
 		case c := <-h.registerChan:
 			logger.Debug("Registering connection", "submodule", "hub", "connection", c.RemoteAddr())
 			h.register(c)
 		case c := <-h.unregisterChan:
 			logger.Debug("Unregistering connection", "submodule", "hub", "connection", c.RemoteAddr())
 			h.unregister(c)
+		default:
 		}
 	}
 }
@@ -102,17 +112,30 @@ func (h *Hub) unregister(c *connection) {
 }
 
 /*
+Hub.notifyClients sends the event received on the hub to all registered clients.
+*/
+func (h *Hub) notifyClients(e *simulation.Event) {
+	logger.Debug("Notifying clients", "submodule", "hub", "event", e)
+	for re := range h.registry {
+		if re.eventName == e.Name {
+			re.conn.pushChan <- NewEventResponse(e)
+		}
+	}
+}
+
+/*
 dispatchObject process a request.
 
 - req is the request to process
 - ch is the channel on which to send the response
 */
-func (h *Hub) dispatchObject(req Request, ch chan interface{}) {
+func (h *Hub) dispatchObject(conn *connection) {
+	req := conn.LastRequest
 	switch req.Object {
 	case "Server":
-		h.dispatchServer(req, ch)
+		h.dispatchServer(req, conn)
 	case "Simulation":
-		h.dispatchSimulation(req, ch)
+		h.dispatchSimulation(req, conn)
 		//	case "TrackItem":
 		//		h.dispatchTrackItem(req, ch)
 		//	case "Route":
@@ -124,7 +147,7 @@ func (h *Hub) dispatchObject(req Request, ch chan interface{}) {
 		//	case "Train":
 		//		h.dispatchTrain(req, ch)
 	default:
-		ch <- NewErrorResponse(fmt.Errorf("Unknwon object %s", req.Object))
+		conn.pushChan <- NewErrorResponse(fmt.Errorf("Unknwon object %s", req.Object))
 		logger.Debug("Request for unknown object received", "submodule", "hub", "object", req.Object)
 	}
 }
@@ -132,11 +155,20 @@ func (h *Hub) dispatchObject(req Request, ch chan interface{}) {
 /*
 dispatchServer processes requests made on the Server object
 */
-func (h *Hub) dispatchServer(req Request, ch chan interface{}) {
+func (h *Hub) dispatchServer(req Request, conn *connection) {
+	ch := conn.pushChan
 	switch req.Action {
 	case "login":
 		ch <- NewErrorResponse(fmt.Errorf("Can't call login when already logged in"))
 		logger.Debug("Request for second login received", "submodule", "hub", "object", req.Object, "action", req.Action)
+	case "addListener":
+		logger.Debug("Request for addListener received", "submodule", "hub", "object", req.Object, "action", req.Action)
+		h.addRegistryEntry(req, conn)
+		ch <- NewOkResponse()
+	case "removeListener":
+		logger.Debug("Request for removeListener received", "submodule", "hub", "object", req.Object, "action", req.Action)
+		h.removeRegistryEntry(req, conn)
+		ch <- NewOkResponse()
 	default:
 		ch <- NewErrorResponse(fmt.Errorf("Unknwon action %s/%s", req.Object, req.Action))
 		logger.Debug("Request for unknown action received", "submodule", "hub", "object", req.Object, "action", req.Action)
@@ -146,7 +178,8 @@ func (h *Hub) dispatchServer(req Request, ch chan interface{}) {
 /*
 dispatchSimulation processes requests made on the Simulation object
 */
-func (h *Hub) dispatchSimulation(req Request, ch chan interface{}) {
+func (h *Hub) dispatchSimulation(req Request, conn *connection) {
+	ch := conn.pushChan
 	switch req.Action {
 	case "start":
 		logger.Debug("Request for simulation start received", "submodule", "hub", "object", req.Object, "action", req.Action)
@@ -159,5 +192,35 @@ func (h *Hub) dispatchSimulation(req Request, ch chan interface{}) {
 	default:
 		ch <- NewErrorResponse(fmt.Errorf("Unknwon action %s/%s", req.Object, req.Action))
 		logger.Debug("Request for unknown action received", "submodule", "hub", "object", req.Object, "action", req.Action)
+	}
+}
+
+/*
+Hub.addRegistryEntry adds the given registry entry to the registry.
+*/
+func (h *Hub) addRegistryEntry(req Request, conn *connection) {
+	var pl ParamsListener
+	if err := json.Unmarshal(req.Params, &pl); err != nil {
+		logger.Error("Unparsable request (addRegistryEntry)", "submodule", "hub", "request", req)
+	}
+	re := registryEntry{conn: conn, eventName: pl.Event, ids: pl.Ids}
+	h.registry[&re] = true
+	logger.Debug("Registry entry added", "submodule", "hub", "entry", re)
+}
+
+/*
+Hub.removeRegistryEntry removes the given registry entry from the registry.
+*/
+func (h *Hub) removeRegistryEntry(req Request, conn *connection) {
+	var pl ParamsListener
+	if err := json.Unmarshal(req.Params, &pl); err != nil {
+		logger.Error("Unparsable request (addRegistryEntry)", "submodule", "hub", "request", req)
+	}
+	re := registryEntry{conn: conn, eventName: pl.Event}
+	for r, _ := range h.registry {
+		if r.conn == re.conn && r.eventName == re.eventName {
+			delete(h.registry, r)
+			break
+		}
 	}
 }

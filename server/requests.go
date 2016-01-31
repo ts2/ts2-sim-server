@@ -19,7 +19,10 @@
 
 package server
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"github.com/ts2/ts2-sim-server/simulation"
+)
 
 /*
 Request is a generic request made by a websocket client.
@@ -48,4 +51,21 @@ type RequestLogin struct {
 	Object string      `json:"object"`
 	Action string      `json:"action"`
 	Params ParamsLogin `json:"params"`
+}
+
+/*
+ParamsListener is the struct of the Request Params for a RequestListener
+*/
+type ParamsListener struct {
+	Event simulation.EventName `json:"event"`
+	Ids   []string             `json:"ids"`
+}
+
+/*
+RequestLstener is a request made by a websocket client to add or remove a listener.
+*/
+type RequestListener struct {
+	Object string         `json:"object"`
+	Action string         `json:"action"`
+	Params ParamsListener `json:"params"`
 }
