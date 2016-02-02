@@ -36,21 +36,21 @@ type Request struct {
 }
 
 /*
-ParamsLogin is the struct of the Request Params for a RequestLogin
+ParamsRegister is the struct of the Request Params for a RequestRegister
 */
-type ParamsLogin struct {
+type ParamsRegister struct {
 	ClientType    ClientType  `json:"type"`
 	ClientSubType ManagerType `json:"subType"`
 	Token         string      `json:"token"`
 }
 
 /*
-RequestLogin is a request made by a websocket client to log onto the server.
+RequestRegister is a request made by a websocket client to log onto the server.
 */
-type RequestLogin struct {
+type RequestRegister struct {
 	Object string      `json:"object"`
 	Action string      `json:"action"`
-	Params ParamsLogin `json:"params"`
+	Params ParamsRegister `json:"params"`
 }
 
 /*

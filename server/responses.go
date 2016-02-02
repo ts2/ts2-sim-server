@@ -28,7 +28,7 @@ type StatusCode string
 
 const (
 	OK StatusCode = "OK"
-	KO StatusCode = "KO"
+	FAIL StatusCode = "FAIL"
 )
 
 type MessageType string
@@ -78,7 +78,7 @@ func NewErrorResponse(e error) *ResponseStatus {
 	sr := ResponseStatus{
 		MsgType: RESPONSE,
 		Data: DataStatus{
-			KO,
+			FAIL,
 			fmt.Sprintf("Error: %s", e),
 		},
 	}
@@ -88,12 +88,12 @@ func NewErrorResponse(e error) *ResponseStatus {
 /*
 NewOkResponse returns a new ResponseStatus object with OK status and empty message.
 */
-func NewOkResponse() *ResponseStatus {
+func NewOkResponse(msg string) *ResponseStatus {
 	sr := ResponseStatus{
 		MsgType: RESPONSE,
 		Data: DataStatus{
 			OK,
-			"",
+			msg,
 		},
 	}
 	return &sr

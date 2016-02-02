@@ -132,9 +132,9 @@ dispatchObject process a request.
 func (h *Hub) dispatchObject(conn *connection) {
 	req := conn.LastRequest
 	switch req.Object {
-	case "Server":
+	case "server":
 		h.dispatchServer(req, conn)
-	case "Simulation":
+	case "simulation":
 		h.dispatchSimulation(req, conn)
 		//	case "TrackItem":
 		//		h.dispatchTrackItem(req, ch)
@@ -158,17 +158,17 @@ dispatchServer processes requests made on the Server object
 func (h *Hub) dispatchServer(req Request, conn *connection) {
 	ch := conn.pushChan
 	switch req.Action {
-	case "login":
-		ch <- NewErrorResponse(fmt.Errorf("Can't call login when already logged in"))
-		logger.Debug("Request for second login received", "submodule", "hub", "object", req.Object, "action", req.Action)
+	case "register":
+		ch <- NewErrorResponse(fmt.Errorf("Can't call register when already registered"))
+		logger.Debug("Request for second register received", "submodule", "hub", "object", req.Object, "action", req.Action)
 	case "addListener":
 		logger.Debug("Request for addListener received", "submodule", "hub", "object", req.Object, "action", req.Action)
 		h.addRegistryEntry(req, conn)
-		ch <- NewOkResponse()
+		ch <- NewOkResponse("Listener added successfully")
 	case "removeListener":
 		logger.Debug("Request for removeListener received", "submodule", "hub", "object", req.Object, "action", req.Action)
 		h.removeRegistryEntry(req, conn)
-		ch <- NewOkResponse()
+		ch <- NewOkResponse("Listener removed successfully")
 	default:
 		ch <- NewErrorResponse(fmt.Errorf("Unknwon action %s/%s", req.Object, req.Action))
 		logger.Debug("Request for unknown action received", "submodule", "hub", "object", req.Object, "action", req.Action)
@@ -184,11 +184,11 @@ func (h *Hub) dispatchSimulation(req Request, conn *connection) {
 	case "start":
 		logger.Debug("Request for simulation start received", "submodule", "hub", "object", req.Object, "action", req.Action)
 		sim.Start()
-		ch <- NewOkResponse()
+		ch <- NewOkResponse("Simulation started successfully")
 	case "pause":
 		logger.Debug("Request for simulation pause received", "submodule", "hub", "object", req.Object, "action", req.Action)
 		sim.Pause()
-		ch <- NewOkResponse()
+		ch <- NewOkResponse("Simulation paused successfully")
 	default:
 		ch <- NewErrorResponse(fmt.Errorf("Unknwon action %s/%s", req.Object, req.Action))
 		logger.Debug("Request for unknown action received", "submodule", "hub", "object", req.Object, "action", req.Action)

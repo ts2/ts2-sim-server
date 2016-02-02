@@ -28,7 +28,7 @@ import (
 func TestStartPauseSimulation(t *testing.T) {
 	// Wait for server to come up
 	time.Sleep(100 * time.Millisecond)
-	c, err := login(t, CLIENT, "", "client-secret")
+	c, err := register(t, CLIENT, "", "client-secret")
 	defer func() {
 		c.Close()
 	}()
@@ -37,14 +37,14 @@ func TestStartPauseSimulation(t *testing.T) {
 		return
 	}
 
-	c.WriteJSON(Request{Object: "Simulation", Action: "start"})
+	c.WriteJSON(Request{Object: "simulation", Action: "start"})
 	var expectedResponse ResponseStatus
 	c.ReadJSON(&expectedResponse)
 	if expectedResponse.Data.Status != OK {
 		t.Errorf("The response from server is NOOK (Simulation/start)")
 	}
 
-	c.WriteJSON(Request{Object: "Simulation", Action: "pause"})
+	c.WriteJSON(Request{Object: "simulation", Action: "pause"})
 	c.ReadJSON(&expectedResponse)
 	if expectedResponse.Data.Status != OK {
 		t.Errorf("The response from server is NOOK (Simulation/pause)")
@@ -55,7 +55,7 @@ func TestStartPauseSimulation(t *testing.T) {
 func TestAddRemoveListeners(t *testing.T) {
 	// Wait for server to come up
 	time.Sleep(100 * time.Millisecond)
-	c, err := login(t, CLIENT, "", "client-secret")
+	c, err := register(t, CLIENT, "", "client-secret")
 	defer func() {
 		c.Close()
 	}()
@@ -66,7 +66,7 @@ func TestAddRemoveListeners(t *testing.T) {
 
 	// add listener for clock
 	c.WriteJSON(RequestListener{
-		Object: "Server",
+		Object: "server",
 		Action: "addListener",
 		Params: ParamsListener{
 			Event: simulation.CLOCK,
@@ -79,7 +79,7 @@ func TestAddRemoveListeners(t *testing.T) {
 	}
 
 	// start simulation
-	c.WriteJSON(Request{Object: "Simulation", Action: "start"})
+	c.WriteJSON(Request{Object: "simulation", Action: "start"})
 	c.ReadJSON(&expectedResponse)
 	if expectedResponse.Data.Status != OK {
 		t.Errorf("The response from server is NOOK (Simulation/start)")

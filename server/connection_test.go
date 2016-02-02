@@ -42,27 +42,27 @@ func TestLogin(t *testing.T) {
 	}
 	var serverResponse ResponseStatus
 	c.ReadJSON(&serverResponse)
-	assertEqual(t, serverResponse, ResponseStatus{RESPONSE, DataStatus{KO, "Error: Login required"}}, "Login/Wrong request")
+	assertEqual(t, serverResponse, ResponseStatus{RESPONSE, DataStatus{FAIL, "Error: Register required"}}, "Register/Wrong request")
 	_, _, err := c.ReadMessage()
 	if _, ok := err.(*websocket.CloseError); err == nil || !ok {
-		t.Errorf("Login/Wrong request/Connection should be closed")
+		t.Errorf("Register/Wrong request/Connection should be closed")
 	}
 	c.Close()
 
 	// Incorrect login
-	c, err = login(t, CLIENT, "", "wrong-token")
-	expectedErrorMsg := "Error: Invalid login parameters"
+	c, err = register(t, CLIENT, "", "wrong-token")
+	expectedErrorMsg := "Error: Invalid register parameters"
 	if err == nil || err.Error() != expectedErrorMsg {
-		t.Errorf("Login/Incorrect: Unexpected behaviour")
+		t.Errorf("Register/Incorrect: Unexpected behaviour")
 	}
 	_, _, err = c.ReadMessage()
 	if _, ok := err.(*websocket.CloseError); err == nil || !ok {
-		t.Errorf("Login/Wrong request/Connection should be closed")
+		t.Errorf("Register/Wrong request/Connection should be closed")
 	}
 	c.Close()
 
 	// Correct login
-	if _, err = login(t, CLIENT, "", "client-secret"); err != nil {
+	if _, err = register(t, CLIENT, "", "client-secret"); err != nil {
 		t.Errorf(err.Error())
 	}
 }
@@ -70,7 +70,7 @@ func TestLogin(t *testing.T) {
 func TestDoubleLogin(t *testing.T) {
 	// Wait for server to come up
 	time.Sleep(100 * time.Millisecond)
-	c, err := login(t, CLIENT, "", "client-secret")
+	c, err := register(t, CLIENT, "", "client-secret")
 	defer func() {
 		c.Close()
 	}()
@@ -78,13 +78,13 @@ func TestDoubleLogin(t *testing.T) {
 	if err != nil {
 		t.Errorf(err.Error())
 	} else {
-		c.WriteJSON(RequestLogin{"Server", "login", ParamsLogin{CLIENT, "", "client-secret"}})
+		c.WriteJSON(RequestRegister{"server", "register", ParamsRegister{CLIENT, "", "client-secret"}})
 		var expectedResponse ResponseStatus
 		c.ReadJSON(&expectedResponse)
-		if expectedResponse.Data.Status != KO {
+		if expectedResponse.Data.Status != FAIL {
 			t.Errorf("Double login: should have failed")
-		} else if expectedResponse.Data.Message != "Error: Can't call login when already logged in" {
-			t.Errorf("Double login: Wrong error message")
+		} else if expectedResponse.Data.Message != "Error: Can't call register when already registered" {
+			t.Errorf("Double login: Wrong error message : %s", expectedResponse.Data.Message)
 		}
 	}
 }

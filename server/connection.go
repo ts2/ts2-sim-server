@@ -68,7 +68,7 @@ type connection struct {
 loop starts the reading and writing loops of the connection.
 */
 func (conn *connection) loop() {
-	if err := conn.loginClient(); err != nil {
+	if err := conn.registerClient(); err != nil {
 		// Try to notify client
 		conn.WriteJSON(NewErrorResponse(err))
 		logger.Error("Error while login", "connection", conn.RemoteAddr(), "error", err)
@@ -112,43 +112,43 @@ func (conn *connection) processWrite() {
 }
 
 /*
-loginClient() waits for a login request from the client, checks it and registers the connection
+registerClient() waits for a register request from the client, checks it and registers the connection
 on the hub if it is valid. Otherwise it returns an error.
 */
-func (conn *connection) loginClient() error {
+func (conn *connection) registerClient() error {
 	// Parse request
 	req := new(Request)
 	if err := conn.ReadJSON(req); err != nil {
 		return err
 	}
-	if req.Object != "Server" || req.Action != "login" {
-		return fmt.Errorf("Login required")
+	if req.Object != "server" || req.Action != "register" {
+		return fmt.Errorf("Register required")
 	}
-	loginParams := ParamsLogin{}
-	if err := json.Unmarshal(req.Params, &loginParams); err != nil {
-		return fmt.Errorf("Unable to parse login params: %s", err)
+	registerParams := ParamsRegister{}
+	if err := json.Unmarshal(req.Params, &registerParams); err != nil {
+		return fmt.Errorf("Unable to parse register params: %s", err)
 	}
 
 	// Authenticate client and type
-	if loginParams.ClientType == CLIENT &&
-		loginParams.Token == sim.Options.ClientToken {
+	if registerParams.ClientType == CLIENT &&
+		registerParams.Token == sim.Options.ClientToken {
 		conn.clientType = CLIENT
 
-	} else if loginParams.ClientType == MANAGER &&
-		loginParams.Token == sim.Options.ManagerToken &&
-		loginParams.ClientSubType.isManagerType() {
+	} else if registerParams.ClientType == MANAGER &&
+		registerParams.Token == sim.Options.ManagerToken &&
+		registerParams.ClientSubType.isManagerType() {
 		conn.clientType = MANAGER
-		conn.ManagerType = loginParams.ClientSubType
+		conn.ManagerType = registerParams.ClientSubType
 	} else {
-		return fmt.Errorf("Invalid login parameters")
+		return fmt.Errorf("Invalid register parameters")
 	}
 
 	// authenticated, so setup
-	if err := conn.WriteJSON(NewOkResponse()); err != nil {
+	if err := conn.WriteJSON(NewOkResponse("Successfully registered")); err != nil {
 		logger.Info("Error while writing", "connection", conn.RemoteAddr(), "request", "NewOkResponse", "error", err)
 	}
 	hub.registerChan <- conn
-	logger.Info("Logged in", "connection", conn.RemoteAddr(), "clientType", conn.clientType, "managerType", conn.ManagerType)
+	logger.Info("Registered", "connection", conn.RemoteAddr(), "clientType", conn.clientType, "managerType", conn.ManagerType)
 	return nil
 }
 
