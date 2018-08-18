@@ -1,21 +1,20 @@
-/*   Copyright (C) 2008-2016 by Nicolas Piganeau and the TS2 team
- *   (See AUTHORS file)
- *
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or
- *   (at your option) any later version.
- *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, write to the
- *   Free Software Foundation, Inc.,
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
- */
+// Copyright (C) 2008-2018 by Nicolas Piganeau and the TS2 TEAM
+// (See AUTHORS file)
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the
+// Free Software Foundation, Inc.,
+// 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 package server
 
@@ -30,32 +29,12 @@ import (
 type ClientType string
 
 const (
-	CLIENT  ClientType = "client"
-	MANAGER ClientType = "manager"
+	Client ClientType = "client"
 )
 
 type ManagerType string
 
-const (
-	TRAIN_MANAGER     ManagerType = "train"
-	ROUTE_MANAGER     ManagerType = "route"
-	TRACKITEM_MANAGER ManagerType = "trackItem"
-	ARS_MANAGER       ManagerType = "ars"
-)
-
-func (mt ManagerType) isManagerType() bool {
-	if mt == TRAIN_MANAGER ||
-		mt == ROUTE_MANAGER ||
-		mt == TRACKITEM_MANAGER ||
-		mt == ARS_MANAGER {
-		return true
-	}
-	return false
-}
-
-/*
-connection is a wrapper around the websocket.Conn
-*/
+// connection is a wrapper around the websocket.Conn
 type connection struct {
 	websocket.Conn
 	// pushChan is the channel on which pushed messaged are sent
@@ -65,9 +44,7 @@ type connection struct {
 	LastRequest Request
 }
 
-/*
-loop starts the reading and writing loops of the connection.
-*/
+// loop starts the reading and writing loops of the connection.
 func (conn *connection) loop(ctx context.Context) {
 	logger.Debug("New connection", "remote", conn.RemoteAddr())
 	if err := conn.registerClient(); err != nil {
@@ -82,9 +59,7 @@ func (conn *connection) loop(ctx context.Context) {
 	conn.processRead(loopCtx)
 }
 
-/*
-processRead() performs all read operations from the connection and forwards to the hub
-*/
+//processRead() performs all read operations from the connection and forwards to the hub
 func (conn *connection) processRead(ctx context.Context) {
 	for {
 		select {
@@ -108,9 +83,7 @@ func (conn *connection) processRead(ctx context.Context) {
 	}
 }
 
-/*
-processWrite performs all the write operations to the connection sent by the hub
-*/
+// processWrite performs all the write operations to the connection sent by the hub
 func (conn *connection) processWrite(ctx context.Context) {
 	for {
 		select {
@@ -124,10 +97,8 @@ func (conn *connection) processWrite(ctx context.Context) {
 	}
 }
 
-/*
-registerClient() waits for a register request from the client, checks it and registers the connection
-on the hub if it is valid. Otherwise it returns an error.
-*/
+// registerClient() waits for a register request from the client, checks it and registers the connection
+// on the hub if it is valid. Otherwise it returns an error.
 func (conn *connection) registerClient() error {
 	// Parse request
 	req := new(Request)
@@ -135,25 +106,19 @@ func (conn *connection) registerClient() error {
 		return err
 	}
 	if req.Object != "server" || req.Action != "register" {
-		return fmt.Errorf("Register required")
+		return fmt.Errorf("register required")
 	}
 	registerParams := ParamsRegister{}
 	if err := json.Unmarshal(req.Params, &registerParams); err != nil {
-		return fmt.Errorf("Unable to parse register params: %s", err)
+		return fmt.Errorf("unable to parse register params: %s", err)
 	}
 
 	// Authenticate client and type
-	if registerParams.ClientType == CLIENT &&
+	if registerParams.ClientType == Client &&
 		registerParams.Token == sim.Options.ClientToken {
-		conn.clientType = CLIENT
-
-	} else if registerParams.ClientType == MANAGER &&
-		registerParams.Token == sim.Options.ManagerToken &&
-		registerParams.ClientSubType.isManagerType() {
-		conn.clientType = MANAGER
-		conn.ManagerType = registerParams.ClientSubType
+		conn.clientType = Client
 	} else {
-		return fmt.Errorf("Invalid register parameters")
+		return fmt.Errorf("invalid register parameters")
 	}
 
 	// authenticated, so setup

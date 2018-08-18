@@ -1,21 +1,20 @@
-/*   Copyright (C) 2008-2016 by Nicolas Piganeau and the TS2 TEAM
- *   (See AUTHORS file)
- *
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or
- *   (at your option) any later version.
- *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, write to the
- *   Free Software Foundation, Inc.,
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
- */
+// Copyright (C) 2008-2018 by Nicolas Piganeau and the TS2 TEAM
+// (See AUTHORS file)
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the
+// Free Software Foundation, Inc.,
+// 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 package simulation
 
@@ -29,24 +28,20 @@ import (
 	log "gopkg.in/inconshreveable/log15.v2"
 )
 
-const TIME_STEP = 500 * time.Millisecond
+const timeStep = 500 * time.Millisecond
 
 var logger log.Logger
 
-/*
-InitializeLogger creates the logger for the simulation module
-*/
+// InitializeLogger creates the logger for the simulation module
 func InitializeLogger(parentLogger log.Logger) {
 	logger = parentLogger.New("module", "simulation")
 }
 
-/*
-Simulation holds all the game logic.
-*/
+// Simulation holds all the game logic.
 type Simulation struct {
 	SignalLib     SignalLibrary
 	TrackItems    map[int]TrackItem
-	Places        map[string]Place
+	Places        map[string]*Place
 	Options       options
 	Routes        map[int]*Route
 	TrainTypes    map[string]*TrainType
@@ -59,6 +54,7 @@ type Simulation struct {
 	stopChan    chan bool
 }
 
+// UnmarshalJSON for the Simulation type
 func (sim *Simulation) UnmarshalJSON(data []byte) error {
 	type auxItem map[string]json.RawMessage
 
@@ -75,61 +71,61 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 
 	var rawSim auxSim
 	if err := json.Unmarshal(data, &rawSim); err != nil {
-		return fmt.Errorf("Unable to decode simulation JSON: %s", err)
+		return fmt.Errorf("unable to decode simulation JSON: %s", err)
 	}
 	sim.TrackItems = make(map[int]TrackItem)
-	sim.Places = make(map[string]Place)
+	sim.Places = make(map[string]*Place)
 	for tiId, tiString := range rawSim.TrackItems {
 		var rawItem auxItem
 		if err := json.Unmarshal(tiString, &rawItem); err != nil {
-			return fmt.Errorf("Unable to read TrackItem: %s. %s", tiString, err)
+			return fmt.Errorf("unable to read TrackItem: %s. %s", tiString, err)
 		}
 
 		tiType := string(rawItem["__type__"])
 		unmarshalItem := func(ti TrackItem) error {
 			if err := json.Unmarshal(tiString, ti); err != nil {
-				return fmt.Errorf("Unable to decode %s: %s. %s", tiType, tiString, err)
+				return fmt.Errorf("unable to decode %s: %s. %s", tiType, tiString, err)
 			}
 			tiId, errconv := strconv.Atoi(strings.Trim(tiId, `"`))
 			if errconv != nil {
-				return fmt.Errorf("Unable to convert %s", errconv)
+				return fmt.Errorf("unable to convert %s", errconv)
 			}
 			ti.setSimulation(sim)
-			ti.setId(tiId)
+			ti.setID(tiId)
 			sim.TrackItems[tiId] = ti
 			return nil
 		}
 
 		switch tiType {
 		case `"LineItem"`:
-			var ti lineStruct
+			var ti LineItem
 			unmarshalItem(&ti)
 		case `"InvisibleLinkItem"`:
-			var ti invisibleLinkstruct
+			var ti InvisibleLinkItem
 			unmarshalItem(&ti)
 		case `"EndItem"`:
-			var ti endStruct
+			var ti EndItem
 			unmarshalItem(&ti)
 		case `"PlatformItem"`:
-			var ti platformStruct
+			var ti PlatformItem
 			unmarshalItem(&ti)
 		case `"TextItem"`:
-			var ti textStruct
+			var ti TextItem
 			unmarshalItem(&ti)
 		case `"PointsItem"`:
-			var ti pointsStruct
+			var ti PointsItem
 			unmarshalItem(&ti)
 		case `"SignalItem"`:
-			var ti signalStruct
+			var ti SignalItem
 			unmarshalItem(&ti)
 		case `"Place"`:
-			var pl placeStruct
+			var pl Place
 			if err := json.Unmarshal(tiString, &pl); err != nil {
-				return fmt.Errorf("Unable to decode Place: %s. %s", tiString, err)
+				return fmt.Errorf("unable to decode Place: %s. %s", tiString, err)
 			}
-			sim.Places[pl.PlaceCode] = Place(&pl)
+			sim.Places[pl.PlaceCode] = &pl
 		default:
-			return fmt.Errorf("Unknown TrackItem type: %s", rawItem["__type__"])
+			return fmt.Errorf("unknown TrackItem type: %s", rawItem["__type__"])
 		}
 
 	}
@@ -141,7 +137,7 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 		route.initialize()
 		routeNum, err_route := strconv.Atoi(num)
 		if err_route != nil {
-			return fmt.Errorf("RouteNum : `%s` is invalid", num)
+			return fmt.Errorf("routeNum : `%s` is invalid", num)
 		}
 		sim.Routes[routeNum] = route
 	}
@@ -169,14 +165,12 @@ func (sim *Simulation) Initialize() {
 	sim.stopChan = make(chan bool)
 }
 
-/*
-Start runs the main loop of the simulation by making the clock tick and process each object.
-*/
+// Start runs the main loop of the simulation by making the clock tick and process each object.
 func (sim *Simulation) Start() {
 	if sim.stopChan == nil || sim.EventChan == nil {
 		panic("You must call Initialize before starting the simulation")
 	}
-	sim.clockTicker = time.NewTicker(TIME_STEP)
+	sim.clockTicker = time.NewTicker(timeStep)
 	go sim.run()
 	logger.Info("Simulation started")
 }
@@ -190,8 +184,8 @@ func (sim *Simulation) run() {
 			logger.Info("Simulation paused")
 			return
 		case <-sim.clockTicker.C:
-			sim.increaseTime(TIME_STEP)
-			sim.sendEvent(&Event{CLOCK, sim.Options.CurrentTime})
+			sim.increaseTime(timeStep)
+			sim.sendEvent(&Event{ClockEvent, sim.Options.CurrentTime})
 		}
 	}
 }
@@ -211,5 +205,5 @@ func (sim *Simulation) sendEvent(evt *Event) {
 func (sim *Simulation) increaseTime(step time.Duration) {
 	sim.Options.CurrentTime.Lock()
 	defer sim.Options.CurrentTime.Unlock()
-	sim.Options.CurrentTime.Time = sim.Options.CurrentTime.Time.Add(step)
+	sim.Options.CurrentTime = sim.Options.CurrentTime.Add(step)
 }

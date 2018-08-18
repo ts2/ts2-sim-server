@@ -1,21 +1,20 @@
-/*   Copyright (C) 2008-2016 by Nicolas Piganeau and the TS2 TEAM
- *   (See AUTHORS file)
- *
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or
- *   (at your option) any later version.
- *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, write to the
- *   Free Software Foundation, Inc.,
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
- */
+// Copyright (C) 2008-2018 by Nicolas Piganeau and the TS2 TEAM
+// (See AUTHORS file)
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the
+// Free Software Foundation, Inc.,
+// 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 package simulation
 
@@ -52,36 +51,36 @@ func TestLoadRoutes(t *testing.T) {
 	r1, ok := sim.Routes[1]
 	assertTrue(t, ok, "Routes: 1 not loaded")
 
-	si5, _ := sim.TrackItems[5].(SignalItem)
-	si11, _ := sim.TrackItems[11].(SignalItem)
+	si5, _ := sim.TrackItems[5].(*SignalItem)
+	si11, _ := sim.TrackItems[11].(*SignalItem)
 	assertEqual(t, r1.BeginSignal(), si5, "Route 1/BeginSignal")
 	assertEqual(t, r1.EndSignal(), si11, "Route 1/EndSignal")
 	items := []int{5, 6, 7, 8, 9, 10, 11}
 	for i, pos := range r1.positions {
-		assertEqual(t, pos.TrackItem.TiId(), items[i], "Route 1/Positions")
+		assertEqual(t, pos.TrackItem.TiID(), items[i], "Route 1/Positions")
 	}
 	assertEqual(t, len(r1.Directions), 1, "Route 1/Directions")
 	d1, ok := r1.Directions[7]
 	if !ok {
 		t.Errorf("Route 1/No direction 7")
 	}
-	assertEqual(t, d1, PointDirection(NORMAL), "Route 1/Direction 7")
-	assertEqual(t, r1.InitialState, ACTIVATED, "Route 1/InitialState")
-	assertEqual(t, r1.State, ACTIVATED, "Route 1/state")
+	assertEqual(t, d1, PointDirection(normal), "Route 1/Direction 7")
+	assertEqual(t, r1.InitialState, activated, "Route 1/InitialState")
+	assertEqual(t, r1.State, activated, "Route 1/state")
 
 	r4, ok := sim.Routes[4]
 	assertTrue(t, ok, "Routes: 4 not loaded")
 
-	si15, _ := sim.TrackItems[15].(SignalItem)
-	si3, _ := sim.TrackItems[3].(SignalItem)
+	si15, _ := sim.TrackItems[15].(*SignalItem)
+	si3, _ := sim.TrackItems[3].(*SignalItem)
 	assertEqual(t, r4.BeginSignal(), si15, "Route 4/BeginSignal")
 	assertEqual(t, r4.EndSignal(), si3, "Route 4/EndSignal")
 	items = []int{15, 14, 7, 6, 5, 4, 3}
 	for i, pos := range r4.positions {
-		assertEqual(t, pos.TrackItem.TiId(), items[i], "Route 4/Positions")
+		assertEqual(t, pos.TrackItem.TiID(), items[i], "Route 4/Positions")
 	}
-	assertEqual(t, r4.InitialState, DEACTIVATED, "Route 4/InitialState")
-	assertEqual(t, r4.State, DEACTIVATED, "Route 4/state")
+	assertEqual(t, r4.InitialState, deactivated, "Route 4/InitialState")
+	assertEqual(t, r4.State, deactivated, "Route 4/state")
 }
 
 func TestLoadTrackItems(t *testing.T) {
@@ -91,41 +90,41 @@ func TestLoadTrackItems(t *testing.T) {
 	}
 	assertEqual(t, len(sim.TrackItems), 22, "TrackItems: Not all loaded")
 
-	ei1, ok := sim.TrackItems[1].(EndItem)
+	ei1, ok := sim.TrackItems[1].(*EndItem)
 	assertTrue(t, ok, "TrackItems: 1 not loaded")
-	li2, ok := sim.TrackItems[2].(LineItem)
+	li2, ok := sim.TrackItems[2].(*LineItem)
 	assertTrue(t, ok, "TrackItems: 2 not loaded")
-	si3, ok := sim.TrackItems[3].(SignalItem)
+	si3, ok := sim.TrackItems[3].(*SignalItem)
 	assertTrue(t, ok, "TrackItems: 3 not loaded")
-	li4, ok := sim.TrackItems[4].(LineItem)
+	li4, ok := sim.TrackItems[4].(*LineItem)
 	assertTrue(t, ok, "TrackItems: 4 not loaded")
-	si5, ok := sim.TrackItems[5].(SignalItem)
+	si5, ok := sim.TrackItems[5].(*SignalItem)
 	assertTrue(t, ok, "TrackItems: 5 not loaded")
-	ili6, ok := sim.TrackItems[6].(InvisibleLinkItem)
+	ili6, ok := sim.TrackItems[6].(*InvisibleLinkItem)
 	assertTrue(t, ok, "TrackItems: 6 not loaded")
-	pi7, ok := sim.TrackItems[7].(PointsItem)
+	pi7, ok := sim.TrackItems[7].(*PointsItem)
 	assertTrue(t, ok, "TrackItems: 7 not loaded")
-	li8, ok := sim.TrackItems[8].(LineItem)
+	li8, ok := sim.TrackItems[8].(*LineItem)
 	assertTrue(t, ok, "TrackItems: 8 not loaded")
-	si9, ok := sim.TrackItems[9].(SignalItem)
+	si9, ok := sim.TrackItems[9].(*SignalItem)
 	assertTrue(t, ok, "TrackItems: 9 not loaded")
-	li10, ok := sim.TrackItems[10].(LineItem)
+	li10, ok := sim.TrackItems[10].(*LineItem)
 	assertTrue(t, ok, "TrackItems: 10 not loaded")
-	si11, ok := sim.TrackItems[11].(SignalItem)
+	si11, ok := sim.TrackItems[11].(*SignalItem)
 	assertTrue(t, ok, "TrackItems: 11 not loaded")
-	li12, ok := sim.TrackItems[12].(LineItem)
+	li12, ok := sim.TrackItems[12].(*LineItem)
 	assertTrue(t, ok, "TrackItems: 12 not loaded")
-	ei13, ok := sim.TrackItems[13].(EndItem)
+	ei13, ok := sim.TrackItems[13].(*EndItem)
 	assertTrue(t, ok, "TrackItems: 13 not loaded")
-	li14, ok := sim.TrackItems[14].(LineItem)
+	li14, ok := sim.TrackItems[14].(*LineItem)
 	assertTrue(t, ok, "TrackItems: 14 not loaded")
-	si15, ok := sim.TrackItems[15].(SignalItem)
+	si15, ok := sim.TrackItems[15].(*SignalItem)
 	assertTrue(t, ok, "TrackItems: 15 not loaded")
-	li16, ok := sim.TrackItems[16].(LineItem)
+	li16, ok := sim.TrackItems[16].(*LineItem)
 	assertTrue(t, ok, "TrackItems: 16 not loaded")
-	si17, ok := sim.TrackItems[17].(SignalItem)
+	si17, ok := sim.TrackItems[17].(*SignalItem)
 	assertTrue(t, ok, "TrackItems: 15 not loaded")
-	ei18, ok := sim.TrackItems[18].(EndItem)
+	ei18, ok := sim.TrackItems[18].(*EndItem)
 	assertTrue(t, ok, "TrackItems: 18 not loaded")
 	lft, ok := sim.Places["LFT"]
 	assertTrue(t, ok, "Places: LFT not loaded")
@@ -133,20 +132,20 @@ func TestLoadTrackItems(t *testing.T) {
 	assertTrue(t, ok, "Places: STN not loaded")
 	rgt, ok := sim.Places["RGT"]
 	assertTrue(t, ok, "Places: RGT not loaded")
-	pfi22, ok := sim.TrackItems[22].(PlatformItem)
+	pfi22, ok := sim.TrackItems[22].(*PlatformItem)
 	assertTrue(t, ok, "TrackItems: 22 not loaded")
-	pfi23, ok := sim.TrackItems[23].(PlatformItem)
+	pfi23, ok := sim.TrackItems[23].(*PlatformItem)
 	assertTrue(t, ok, "TrackItems: 23 not loaded")
-	txti24, ok := sim.TrackItems[24].(TextItem)
+	txti24, ok := sim.TrackItems[24].(*TextItem)
 	assertTrue(t, ok, "TrackItems: 24 not loaded")
-	txti25, ok := sim.TrackItems[25].(TextItem)
+	txti25, ok := sim.TrackItems[25].(*TextItem)
 	assertTrue(t, ok, "TrackItems: 25 not loaded")
 
 	assertEqual(t, ei1.Name(), "", "EndItem1/Name")
 	assertEqual(t, ei1.NextItem(), nil, "EndItem1/NextItem")
 	assertEqual(t, ei1.PreviousItem(), li2, "EndItem1/PreviousItem")
 	assertEqual(t, ei1.Origin(), Point{0.0, 0.0}, "EndItem1/Origin")
-	assertEqual(t, ei1.TiId(), 1, "EndItem/ID")
+	assertEqual(t, ei1.TiID(), 1, "EndItem/ID")
 	assertEqual(t, li2.PreviousItem(), ei1, "LineItem2/PreviousItem")
 	assertEqual(t, li2.TrackCode(), "", "LineItem2/TrackCode")
 	assertEqual(t, li2.Place(), lft, "LineItem2/Place")
@@ -256,9 +255,9 @@ func TestLoadServices(t *testing.T) {
 	assertEqual(t, s1.Lines[0].ScheduledDepartureTime, ParseTime("06:00:30"), "Service1/ScheduledArrivalTime")
 	assertEqual(t, s1.Lines[0].TrackCode, "", "Service1/TrackCode")
 	assertEqual(t, len(s1.PostActions), 2, "Service1/len(PostActions)")
-	assertEqual(t, s1.PostActions[0].ActionCode, ACTION_REVERSE, "Service1/PostActions0/Code")
+	assertEqual(t, s1.PostActions[0].ActionCode, actionReverse, "Service1/PostActions0/Code")
 	assertEqual(t, s1.PostActions[0].ActionParam, "", "Service1/PostActions0/Param")
-	assertEqual(t, s1.PostActions[1].ActionCode, ACTION_SET_SERVICE, "Service1/PostActions1/Code")
+	assertEqual(t, s1.PostActions[1].ActionCode, actionSetService, "Service1/PostActions1/Code")
 	assertEqual(t, s1.PostActions[1].ActionParam, "S002", "Service1/PostActions1/Param")
 	assertEqual(t, s2.Description, "STATION->LEFT", "Service2/Description")
 	assertEqual(t, len(s2.PostActions), 0, "Service2/len(PostActions)")
@@ -279,7 +278,7 @@ func TestLoadTrains(t *testing.T) {
 	assertEqual(t, tr.InitialSpeed, 5.0, "Train1/InitialSpeed")
 	assertEqual(t, tr.Speed, 5.0, "Train1/Speed")
 	assertEqual(t, tr.NextPlaceIndex, 0, "Train1/NextPlaceIndex")
-	assertEqual(t, tr.Status, INACTIVE, "Train1/Status")
+	assertEqual(t, tr.Status, inactive, "Train1/Status")
 	assertEqual(t, tr.StoppedTime, 0, "Train1/StoppedTime")
 }
 
@@ -289,7 +288,7 @@ func TestLoadMessageLogger(t *testing.T) {
 		t.Errorf("MessageLogger: error while loading JSON: %s", err)
 	}
 	assertEqual(t, len(sim.MessageLogger.Messages), 1, "Messages: Not all loaded")
-	assertEqual(t, sim.MessageLogger.Messages[0], Message{PLAYER_WARNING_MSG, "Test message"}, "Messages/Message1")
+	assertEqual(t, sim.MessageLogger.Messages[0], Message{playerWarningMsg, "Test message"}, "Messages/Message1")
 }
 
 func TestLoadSignalLibrary(t *testing.T) {
@@ -303,27 +302,27 @@ func TestLoadSignalLibrary(t *testing.T) {
 	if !ok {
 		t.Errorf("SignalLibrary: no BUFFER in aspects")
 	}
-	assertEqual(t, bufferAspect.LineStyle, BUFFER, "SignalLibrary/Aspects/LineStyle")
-	assertEqual(t, bufferAspect.OuterShapes, [6]signalShape{NONE, NONE, NONE, NONE, NONE, NONE}, "SignalLibrary/Aspects/OuterShapes")
+	assertEqual(t, bufferAspect.LineStyle, bufferStyle, "SignalLibrary/Aspects/LineStyle")
+	assertEqual(t, bufferAspect.OuterShapes, [6]signalShape{noneShape, noneShape, noneShape, noneShape, noneShape, noneShape}, "SignalLibrary/Aspects/OuterShapes")
 	black, _ := FromHex("#000000")
 	assertEqual(t, bufferAspect.OuterColors, [6]Color{black, black, black, black, black, black}, "SignalLibrary/Aspects/OuterColors")
-	assertEqual(t, bufferAspect.Shapes, [6]signalShape{NONE, NONE, NONE, NONE, NONE, NONE}, "SignalLibrary/Aspects/Shapes")
+	assertEqual(t, bufferAspect.Shapes, [6]signalShape{noneShape, noneShape, noneShape, noneShape, noneShape, noneShape}, "SignalLibrary/Aspects/Shapes")
 	assertEqual(t, bufferAspect.ShapesColors, [6]Color{black, black, black, black, black, black}, "SignalLibrary/Aspects/Colors")
 	assertEqual(t, len(bufferAspect.Actions), 1, "SignalLibrary/Aspects: Not all actions loaded")
-	assertEqual(t, bufferAspect.Actions[0].Target, BEFORE_THIS_SIGNAL, "SignalLibrary/Aspects/Actions/Target")
+	assertEqual(t, bufferAspect.Actions[0].Target, beforeThisSignal, "SignalLibrary/Aspects/Actions/Target")
 	assertEqual(t, bufferAspect.Actions[0].Speed, 0.0, "SignalLibrary/Aspects/Actions/Speed")
 	dangerAspect, ok := sim.SignalLib.Aspects["UK_DANGER"]
 	if !ok {
 		t.Errorf("SignalLibrary: no UK_DANGER in aspects")
 	}
-	assertEqual(t, dangerAspect.LineStyle, LINE, "SignalLibrary/Aspects/LineStyle")
-	assertEqual(t, dangerAspect.Shapes, [6]signalShape{CIRCLE, NONE, NONE, NONE, NONE, NONE}, "SignalLibrary/Aspects/Shapes")
+	assertEqual(t, dangerAspect.LineStyle, lineStyle, "SignalLibrary/Aspects/LineStyle")
+	assertEqual(t, dangerAspect.Shapes, [6]signalShape{circleShape, noneShape, noneShape, noneShape, noneShape, noneShape}, "SignalLibrary/Aspects/Shapes")
 	red, _ := FromHex("#FF0000")
 	assertEqual(t, dangerAspect.ShapesColors, [6]Color{red, black, black, black, black, black}, "SignalLibrary/Aspects/Colors")
 	cautionAspect, ok := sim.SignalLib.Aspects["UK_CAUTION"]
 	if !ok {
 		t.Errorf("SignalLibrary: no UK_CAUTION in aspects")
 	}
-	assertEqual(t, cautionAspect.Actions[0].Target, BEFORE_NEXT_SIGNAL, "SignalLibrary/Aspects/Actions/Target")
+	assertEqual(t, cautionAspect.Actions[0].Target, beforeNextSignal, "SignalLibrary/Aspects/Actions/Target")
 	assertEqual(t, cautionAspect.Actions[0].Speed, 0.0, "SignalLibrary/Aspects/Actions/Speed")
 }

@@ -1,21 +1,20 @@
-/*   Copyright (C) 2008-2016 by Nicolas Piganeau and the TS2 TEAM
- *   (See AUTHORS file)
- *
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or
- *   (at your option) any later version.
- *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, write to the
- *   Free Software Foundation, Inc.,
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
- */
+// Copyright (C) 2008-2018 by Nicolas Piganeau and the TS2 TEAM
+// (See AUTHORS file)
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the
+// Free Software Foundation, Inc.,
+// 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 package simulation
 
@@ -29,24 +28,22 @@ import (
 type RouteState uint8
 
 const (
-	// DEACTIVATED =  The route is not active
-	DEACTIVATED RouteState = 0
+	// deactivated =  The route is not active
+	deactivated RouteState = 0
 
-	// ACTIVATED =  The route is active but will be destroyed by the first train using it
-	ACTIVATED RouteState = 1
+	// activated =  The route is active but will be destroyed by the first train using it
+	activated RouteState = 1
 
-	// PERSISTENT =  The route is set and will remain after train passage
-	PERSISTENT RouteState = 2
+	// persistent =  The route is set and will remain after train passage
+	persistent RouteState = 2
 )
 
-/*
-Route is a path between two signals.
-
-If a route is activated, the path is selected, and the signals at the beginning
-and the end of the route are changed and the conflicting possible other routes
-are inhibited. Routes are static and defined in the game file. The player can
-only activate or deactivate them.
-*/
+// A Route is a path between two signals.
+//
+// If a route is activated, the path is selected, and the signals at the beginning
+// and the end of the route are changed and the conflicting possible other routes
+// are inhibited. Routes are static and defined in the game file. The player can
+// only activate or deactivate them.
 type Route struct {
 	simulation    *Simulation
 	BeginSignalId int
@@ -59,13 +56,13 @@ type Route struct {
 }
 
 // BeginSignal returns the SignalItem at which this Route starts.
-func (r *Route) BeginSignal() SignalItem {
-	return r.simulation.TrackItems[r.BeginSignalId].(SignalItem)
+func (r *Route) BeginSignal() *SignalItem {
+	return r.simulation.TrackItems[r.BeginSignalId].(*SignalItem)
 }
 
 // EndSignal returns the SignalItem at which this Route ends.
-func (r *Route) EndSignal() SignalItem {
-	return r.simulation.TrackItems[r.EndSignalId].(SignalItem)
+func (r *Route) EndSignal() *SignalItem {
+	return r.simulation.TrackItems[r.EndSignalId].(*SignalItem)
 }
 
 // setSimulation sets the Simulation this Route is part of.
@@ -85,9 +82,9 @@ func (r *Route) initialize() error {
 		if pos.TrackItem == r.EndSignal() {
 			return nil
 		}
-		dir, ok := r.Directions[pos.TrackItem.TiId()]
+		dir, ok := r.Directions[pos.TrackItem.TiID()]
 		if !ok {
-			dir = PointDirection(NORMAL)
+			dir = PointDirection(normal)
 		}
 		pos = pos.Next(dir)
 	}
@@ -95,6 +92,7 @@ func (r *Route) initialize() error {
 	return fmt.Errorf("route Error: unable to link signal %d to signal %d", r.BeginSignalId, r.EndSignalId)
 }
 
+// UnmarshalJSON for the Route type
 func (r *Route) UnmarshalJSON(data []byte) error {
 	type auxRoute struct {
 		BeginSignalId int                       `json:"beginSignal"`

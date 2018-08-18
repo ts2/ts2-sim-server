@@ -1,21 +1,20 @@
-/*   Copyright (C) 2008-2016 by Nicolas Piganeau and the TS2 team
- *   (See AUTHORS file)
- *
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or
- *   (at your option) any later version.
- *
- *   This program is distributed in the hope that it will be useful,
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License for more details.
- *
- *   You should have received a copy of the GNU General Public License
- *   along with this program; if not, write to the
- *   Free Software Foundation, Inc.,
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
- */
+// Copyright (C) 2008-2018 by Nicolas Piganeau and the TS2 TEAM
+// (See AUTHORS file)
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the
+// Free Software Foundation, Inc.,
+// 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 package server
 
@@ -41,7 +40,7 @@ func TestLogin(t *testing.T) {
 	}
 	var serverResponse ResponseStatus
 	c.ReadJSON(&serverResponse)
-	assertEqual(t, serverResponse, ResponseStatus{RESPONSE, DataStatus{FAIL, "Error: Register required"}}, "Register/Wrong request")
+	assertEqual(t, serverResponse, ResponseStatus{TypeResponse, DataStatus{Fail, "Error: register required"}}, "Register/Wrong request")
 	_, _, err := c.ReadMessage()
 	if _, ok := err.(*websocket.CloseError); err == nil || !ok {
 		t.Errorf("Register/Wrong request/Connection should be closed")
@@ -49,11 +48,12 @@ func TestLogin(t *testing.T) {
 	c.Close()
 
 	// Incorrect login
-	c, err = register(t, CLIENT, "", "wrong-token")
-	expectedErrorMsg := "Error: Invalid register parameters"
-	if err == nil || err.Error() != expectedErrorMsg {
+	c, err = register(t, Client, "", "wrong-token")
+	expectedErrorMsg := "Error: invalid register parameters"
+	if err == nil {
 		t.Errorf("Register/Incorrect: Unexpected behaviour")
 	}
+	assertEqual(t, err.Error(), expectedErrorMsg, "Register/Incorrect")
 	_, _, err = c.ReadMessage()
 	if _, ok := err.(*websocket.CloseError); err == nil || !ok {
 		t.Errorf("Register/Wrong request/Connection should be closed")
@@ -61,7 +61,7 @@ func TestLogin(t *testing.T) {
 	c.Close()
 
 	// Correct login
-	if _, err = register(t, CLIENT, "", "client-secret"); err != nil {
+	if _, err = register(t, Client, "", "client-secret"); err != nil {
 		t.Errorf(err.Error())
 	}
 }
@@ -69,7 +69,7 @@ func TestLogin(t *testing.T) {
 func TestDoubleLogin(t *testing.T) {
 	// Wait for server to come up
 	time.Sleep(100 * time.Millisecond)
-	c, err := register(t, CLIENT, "", "client-secret")
+	c, err := register(t, Client, "", "client-secret")
 	defer func() {
 		c.Close()
 	}()
@@ -77,12 +77,12 @@ func TestDoubleLogin(t *testing.T) {
 	if err != nil {
 		t.Errorf(err.Error())
 	} else {
-		c.WriteJSON(RequestRegister{"server", "register", ParamsRegister{CLIENT, "", "client-secret"}})
+		c.WriteJSON(RequestRegister{"server", "register", ParamsRegister{Client, "", "client-secret"}})
 		var expectedResponse ResponseStatus
 		c.ReadJSON(&expectedResponse)
-		if expectedResponse.Data.Status != FAIL {
+		if expectedResponse.Data.Status != Fail {
 			t.Errorf("Double login: should have failed")
-		} else if expectedResponse.Data.Message != "Error: Can't call register when already registered" {
+		} else if expectedResponse.Data.Message != "Error: can't call register when already registered" {
 			t.Errorf("Double login: Wrong error message : %s", expectedResponse.Data.Message)
 		}
 	}
