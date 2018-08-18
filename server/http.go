@@ -24,13 +24,18 @@ import (
 	"html/template"
 	"net/http"
 
+	"time"
+
+	"os"
+
 	"github.com/ts2/ts2-sim-server/simulation"
 	log "gopkg.in/inconshreveable/log15.v2"
 )
 
 const (
-	DEFAULT_ADDR string = "0.0.0.0"
-	DEFAULT_PORT string = "22222"
+	DEFAULT_ADDR      string = "0.0.0.0"
+	DEFAULT_PORT      string = "22222"
+	MaxHubStartupTime        = 3 * time.Second
 )
 
 var sim *simulation.Simulation
@@ -50,8 +55,16 @@ Run() starts a http web server and websocket hub for the given simulation, on th
 func Run(s *simulation.Simulation, addr, port string) {
 	sim = s
 	hub = &Hub{}
-	go HttpdStart(addr, port)
-	hub.run()
+	hubUp := make(chan bool)
+	timer := time.After(MaxHubStartupTime)
+	go hub.run(hubUp)
+	select {
+	case <-hubUp:
+		HttpdStart(addr, port)
+	case <-timer:
+		log.Crit("Hub did not start")
+		os.Exit(1)
+	}
 }
 
 /*
@@ -75,6 +88,7 @@ func HttpdStart(addr, port string) {
 serveHome() serves the html home.html page with integrated JS WebSocket client.
 */
 func serveHome(w http.ResponseWriter, r *http.Request) {
+	logger.Debug("New HTTP connection", "submodule", "http", "remote", r.RemoteAddr)
 	if r.URL.Path != "/" {
 		http.Error(w, "Not found", 404)
 		return

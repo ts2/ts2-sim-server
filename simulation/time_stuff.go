@@ -22,6 +22,7 @@ package simulation
 import (
 	"encoding/json"
 	"fmt"
+	"sync"
 	"time"
 )
 
@@ -66,12 +67,15 @@ Time type for the simulation (HH:MM:SS).
 
 Valid Time objects start on 0000-01-02.
 */
-type Time struct{ time.Time }
+type Time struct {
+	sync.RWMutex
+	time.Time
+}
 
 func (h *Time) UnmarshalJSON(data []byte) error {
 	var hourStr string
 	if err := json.Unmarshal(data, &hourStr); err != nil {
-		return fmt.Errorf("Times should be encoded as 00:00:00 strings in JSON, got %s instead", data)
+		return fmt.Errorf("times should be encoded as 00:00:00 strings in JSON, got %s instead", data)
 	}
 	*h = ParseTime(hourStr)
 	return nil
@@ -86,5 +90,7 @@ func ParseTime(data string) Time {
 		return Time{}
 	}
 	// We add 24 hours to make a difference between 00:00:00 and an empty Time
-	return Time{t.Add(24 * time.Hour)}
+	return Time{
+		Time: t.Add(24 * time.Hour),
+	}
 }

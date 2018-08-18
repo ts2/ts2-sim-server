@@ -20,9 +20,11 @@
 package server
 
 import (
-	"github.com/ts2/ts2-sim-server/simulation"
+	"encoding/json"
 	"testing"
 	"time"
+
+	"github.com/ts2/ts2-sim-server/simulation"
 )
 
 func TestStartPauseSimulation(t *testing.T) {
@@ -92,11 +94,11 @@ func TestAddRemoveListeners(t *testing.T) {
 		t.Errorf("No clock event received from server !")
 	}
 
+	time.Sleep(1 * time.Second)
 	// remove listener
-	//c.WriteJSON(Request{Object: "Server", Action: "removeListener", Params: json.RawMessage("{\"event\": \"clock\"}")})
-	//c.ReadJSON(&expectedResponse)
-	//if expectedResponse.Data.Status != OK {
-	//	t.Errorf("The response from server is NOOK (Server/removeListener)")
-	//}
-	time.Sleep(2 * time.Second)
+	c.WriteJSON(Request{Object: "Server", Action: "removeListener", Params: json.RawMessage("{\"event\": \"clock\"}")})
+	c.ReadJSON(&expectedResponse)
+	if expectedResponse.Data.Status != OK {
+		t.Errorf("The response from server is NOOK (Server/removeListener)")
+	}
 }

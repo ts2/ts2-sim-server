@@ -99,6 +99,7 @@ OPTIONS:
 
 	var sim simulation.Simulation
 	errload := json.Unmarshal(data, &sim)
+	sim.Initialize()
 
 	if errload != nil {
 		logger.Error("Load Error", "file", simFile, "error", errload)
@@ -108,14 +109,10 @@ OPTIONS:
 
 	go server.Run(&sim, *addr, *port)
 
-	// Route all messages
-	for {
-		select {
-
-		case <-killChan:
-			// TODO gracefully shutdown things maybe
-			logger.Info("Server killed, exiting...")
-			os.Exit(0)
-		}
+	select {
+	case <-killChan:
+		// TODO gracefully shutdown things maybe
+		logger.Info("Server killed, exiting...")
+		os.Exit(0)
 	}
 }

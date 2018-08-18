@@ -20,6 +20,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -67,22 +68,30 @@ type connection struct {
 /*
 loop starts the reading and writing loops of the connection.
 */
-func (conn *connection) loop() {
+func (conn *connection) loop(ctx context.Context) {
+	logger.Debug("New connection", "remote", conn.RemoteAddr())
 	if err := conn.registerClient(); err != nil {
 		// Try to notify client
 		conn.WriteJSON(NewErrorResponse(err))
 		logger.Error("Error while login", "connection", conn.RemoteAddr(), "error", err)
 		return
 	}
-	go conn.processWrite()
-	conn.processRead()
+	loopCtx, childCancel := context.WithCancel(ctx)
+	defer childCancel()
+	go conn.processWrite(loopCtx)
+	conn.processRead(loopCtx)
 }
 
 /*
 processRead() performs all read operations from the connection and forwards to the hub
 */
-func (conn *connection) processRead() {
+func (conn *connection) processRead(ctx context.Context) {
 	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
 		err := conn.ReadJSON(&conn.LastRequest)
 		if err != nil {
 			if _, ok := err.(*websocket.CloseError); ok {
@@ -92,21 +101,25 @@ func (conn *connection) processRead() {
 			} else {
 				logger.Info("Error while reading", "connection", conn.RemoteAddr(), "error", err)
 				conn.pushChan <- NewErrorResponse(err)
+				continue
 			}
-		} else {
-			hub.readChan <- conn
 		}
+		hub.readChan <- conn
 	}
 }
 
 /*
 processWrite performs all the write operations to the connection sent by the hub
 */
-func (conn *connection) processWrite() {
+func (conn *connection) processWrite(ctx context.Context) {
 	for {
-		req := <-conn.pushChan
-		if err := conn.WriteJSON(req); err != nil {
-			logger.Info("Error while writing", "connection", conn.RemoteAddr(), "request", req, "error", err)
+		select {
+		case req := <-conn.pushChan:
+			if err := conn.WriteJSON(req); err != nil {
+				logger.Info("Error while writing", "connection", conn.RemoteAddr(), "request", req, "error", err)
+			}
+		case <-ctx.Done():
+			return
 		}
 	}
 }

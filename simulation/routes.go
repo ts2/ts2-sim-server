@@ -92,7 +92,7 @@ func (r *Route) initialize() error {
 		pos = pos.Next(dir)
 	}
 
-	return fmt.Errorf("Route Error: Unable to link signal %i to signal %i", r.BeginSignalId, r.EndSignalId)
+	return fmt.Errorf("route Error: unable to link signal %d to signal %d", r.BeginSignalId, r.EndSignalId)
 }
 
 func (r *Route) UnmarshalJSON(data []byte) error {
@@ -104,7 +104,7 @@ func (r *Route) UnmarshalJSON(data []byte) error {
 	}
 	var rawRoute auxRoute
 	if err := json.Unmarshal(data, &rawRoute); err != nil {
-		return fmt.Errorf("Unable to decode simulation JSON: %s", err)
+		return fmt.Errorf("unable to decode simulation JSON: %s", err)
 	}
 	r.BeginSignalId = rawRoute.BeginSignalId
 	r.EndSignalId = rawRoute.EndSignalId

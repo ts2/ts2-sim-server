@@ -20,7 +20,6 @@
 package server
 
 import (
-	"encoding/json"
 	"testing"
 	"time"
 
@@ -36,7 +35,7 @@ func TestLogin(t *testing.T) {
 	}()
 
 	// Try to send something that is not a login request
-	badRequest := Request{"Dummy", "dummy", json.RawMessage{}}
+	badRequest := Request{"Dummy", "dummy", nil}
 	if err := c.WriteJSON(badRequest); err != nil {
 		t.Error(err)
 	}

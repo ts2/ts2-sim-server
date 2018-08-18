@@ -36,6 +36,7 @@ func TestMain(m *testing.M) {
 	data, _ := ioutil.ReadFile("../simulation/test_data/demo.json")
 	var s simulation.Simulation
 	json.Unmarshal(data, &s)
+	s.Initialize()
 	mainLogger := log.New()
 	InitializeLogger(mainLogger)
 	simulation.InitializeLogger(mainLogger)

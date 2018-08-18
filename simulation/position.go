@@ -88,15 +88,15 @@ pointer and PositionRepr.
 func NewPosition(sim *Simulation, posRepr PositionRepr) (*Position, error) {
 	ti, ok := sim.TrackItems[posRepr.TrackItemId]
 	if !ok {
-		return nil, fmt.Errorf("Unknown item with ID: %i", posRepr.TrackItemId)
+		return nil, fmt.Errorf("unknown item with ID: %d", posRepr.TrackItemId)
 	}
 	pti, ok := sim.TrackItems[posRepr.PreviousItemId]
 	if !ok {
-		return nil, fmt.Errorf("Unknown item with ID: %i", posRepr.PreviousItemId)
+		return nil, fmt.Errorf("unknown item with ID: %d", posRepr.PreviousItemId)
 	}
 	newPos := Position{ti, pti, posRepr.PositionOnTi}
 	if !newPos.IsValid() {
-		return nil, fmt.Errorf("Position (%i, %i, %f) is not valid", posRepr.TrackItemId, posRepr.PreviousItemId, posRepr.PositionOnTi)
+		return nil, fmt.Errorf("position (%d, %d, %f) is not valid", posRepr.TrackItemId, posRepr.PreviousItemId, posRepr.PositionOnTi)
 	}
 	return &newPos, nil
 }

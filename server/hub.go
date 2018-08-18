@@ -52,7 +52,7 @@ type Hub struct {
 /*
 Hub.run() is the loop for handling dispatching requests and responses
 */
-func (h *Hub) run() {
+func (h *Hub) run(hubUp chan bool) {
 	logger.Info("Hub starting...", "submodule", "hub")
 	// make connection maps
 	h.clientConnections = make(map[*connection]bool)
@@ -64,21 +64,25 @@ func (h *Hub) run() {
 	h.unregisterChan = make(chan *connection)
 	h.readChan = make(chan *connection)
 
+	hubUp <- true
+	var (
+		e *simulation.Event
+		c *connection
+	)
 	for {
 		select {
-		case e := <-sim.EventChan:
+		case e = <-sim.EventChan:
 			logger.Debug("Received event from simulation", "submodule", "hub", "object", e)
 			h.notifyClients(e)
-		case c := <-h.readChan:
+		case c = <-h.readChan:
 			logger.Debug("Reading request from client", "submodule", "hub", "object", c.LastRequest)
 			go h.dispatchObject(c)
-		case c := <-h.registerChan:
+		case c = <-h.registerChan:
 			logger.Debug("Registering connection", "submodule", "hub", "connection", c.RemoteAddr())
 			h.register(c)
-		case c := <-h.unregisterChan:
+		case c = <-h.unregisterChan:
 			logger.Debug("Unregistering connection", "submodule", "hub", "connection", c.RemoteAddr())
 			h.unregister(c)
-		default:
 		}
 	}
 }
@@ -217,7 +221,7 @@ func (h *Hub) removeRegistryEntry(req Request, conn *connection) {
 		logger.Error("Unparsable request (addRegistryEntry)", "submodule", "hub", "request", req)
 	}
 	re := registryEntry{conn: conn, eventName: pl.Event}
-	for r, _ := range h.registry {
+	for r := range h.registry {
 		if r.conn == re.conn && r.eventName == re.eventName {
 			delete(h.registry, r)
 			break

@@ -22,6 +22,8 @@ package server
 import (
 	"net/http"
 
+	"context"
+
 	"github.com/gorilla/websocket"
 )
 
@@ -46,8 +48,10 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		Conn:     *ws,
 		pushChan: make(chan interface{}, 256),
 	}
+	ctx, cancel := context.WithCancel(context.Background())
 	defer func() {
+		cancel()
 		conn.Close()
 	}()
-	conn.loop()
+	conn.loop(ctx)
 }

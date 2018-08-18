@@ -29,7 +29,7 @@ import (
 	log "gopkg.in/inconshreveable/log15.v2"
 )
 
-const TIME_STEP time.Duration = 500 * time.Millisecond
+const TIME_STEP = 500 * time.Millisecond
 
 var logger log.Logger
 
@@ -162,41 +162,54 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// Initialize initializes the simulation.
+// This method must be called before Start.
+func (sim *Simulation) Initialize() {
+	sim.EventChan = make(chan *Event)
+	sim.stopChan = make(chan bool)
+}
+
 /*
 Start runs the main loop of the simulation by making the clock tick and process each object.
 */
 func (sim *Simulation) Start() {
-	if sim.clockTicker == nil {
-		sim.clockTicker = time.NewTicker(TIME_STEP)
-		sim.stopChan = make(chan bool)
-		sim.EventChan = make(chan *Event)
-		go sim.run()
-		logger.Info("Simulation started")
+	if sim.stopChan == nil || sim.EventChan == nil {
+		panic("You must call Initialize before starting the simulation")
 	}
+	sim.clockTicker = time.NewTicker(TIME_STEP)
+	go sim.run()
+	logger.Info("Simulation started")
 }
 
-/*
-run enters the main loop of the simulation
-*/
+// run enters the main loop of the simulation
 func (sim *Simulation) run() {
 	for {
 		select {
 		case <-sim.stopChan:
 			sim.clockTicker.Stop()
-			sim.clockTicker = nil
-			sim.EventChan = nil
 			logger.Info("Simulation paused")
 			return
 		case <-sim.clockTicker.C:
-			sim.Options.CurrentTime = Time{sim.Options.CurrentTime.Add(TIME_STEP)}
-			go func() { sim.EventChan <- &Event{CLOCK, &sim.Options.CurrentTime} }()
+			sim.increaseTime(TIME_STEP)
+			sim.sendEvent(&Event{CLOCK, sim.Options.CurrentTime})
 		}
 	}
 }
 
-/*
-Pause holds the simulation by stopping the clock ticker. Call Start again to restart the simulation.
-*/
+// Pause holds the simulation by stopping the clock ticker. Call Start again to restart the simulation.
 func (sim *Simulation) Pause() {
 	sim.stopChan <- true
+}
+
+// sendEvent sends the given event on the event channel to notify clients.
+// Sending is done asynchronously so as not to block.
+func (sim *Simulation) sendEvent(evt *Event) {
+	go func() { sim.EventChan <- evt }()
+}
+
+// increaseTime adds the step to the simulation time.
+func (sim *Simulation) increaseTime(step time.Duration) {
+	sim.Options.CurrentTime.Lock()
+	defer sim.Options.CurrentTime.Unlock()
+	sim.Options.CurrentTime.Time = sim.Options.CurrentTime.Time.Add(step)
 }
