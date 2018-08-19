@@ -27,6 +27,20 @@ import (
 // at maximum simulation speed.
 const bigFloat = 1000000000.0
 
+type trackItemType string
+
+const (
+	trackItem         trackItemType = "TrackItem"
+	lineItem          trackItemType = "LineItem"
+	invisibleLinkItem trackItemType = "InvisibleLinkItem"
+	endItem           trackItemType = "EndItem"
+	signalItem        trackItemType = "SignalItem"
+	pointsItem        trackItemType = "PointsItem"
+	place             trackItemType = "Place"
+	platformItem      trackItemType = "PlatformItem"
+	textItem          trackItemType = "TextItem"
+)
+
 type CustomProperty map[string][]int
 
 // An ItemsNotLinkedError is returned when two TrackItem instances that are assumed
@@ -39,6 +53,17 @@ type ItemsNotLinkedError struct {
 // Error method for the ItemsNotLinkedError
 func (e ItemsNotLinkedError) Error() string {
 	return fmt.Sprintf("TrackItems %s and %s are not linked", e.item1, e.item2)
+}
+
+// An ItemNotLinkedAtError is returned when a TrackItem instance has no connected item at the given end.
+type ItemNotLinkedAtError struct {
+	item TrackItem
+	pt   Point
+}
+
+// Error method for the ItemsNotLinkedError
+func (i ItemNotLinkedAtError) Error() string {
+	return fmt.Sprintf("trackItem %s is not linked at (%f, %f)", i.item, i.pt.X, i.pt.Y)
 }
 
 // A TrackItem is a piece of scenery and is "the base interface" for others
@@ -58,7 +83,7 @@ type TrackItem interface {
 	TiID() int
 
 	// Type returns the name of the type of this item
-	Type() string
+	Type() trackItemType
 
 	// Name returns the human readable name of this item
 	Name() string
@@ -66,12 +91,12 @@ type TrackItem interface {
 	// setSimulation attaches this TrackItem to a Simulation instance
 	setSimulation(*Simulation)
 
-	// setID() sets the item's internal id
+	// setID sets the item's internal id
 	setID(int)
 
-	// NextItem() returns the next item of this TrackItem.
+	// NextItem returns the next item of this TrackItem.
 	//
-	// The next item is usually the item connected to the end of the item that is not the Origin()
+	// The next item is usually the item connected to the end of the item that is not the Origin
 	NextItem() TrackItem
 
 	// PreviousItem returns the previous item of this TrackItem.
@@ -79,14 +104,17 @@ type TrackItem interface {
 	// The previous item is usually the item connected to the Origin() of this item.
 	PreviousItem() TrackItem
 
-	// MaxSpeed() is the maximum allowed speed on this TrackItem in meters per second.
+	// MaxSpeed is the maximum allowed speed on this TrackItem in meters per second.
 	MaxSpeed() float64
 
-	// RealLength() is the length in meters that this TrackItem has in real life track length
+	// RealLength is the length in meters that this TrackItem has in real life track length
 	RealLength() float64
 
-	// Origin() are the two coordinates (x, y) of the origin point of this TrackItem.
+	// Origin are the two coordinates (x, y) of the origin point of this TrackItem.
 	Origin() Point
+
+	// End are the two coordinates (xf, yf) of the end point of this TrackItem.
+	End() Point
 
 	// ConflictItem returns the conflicting item of this TrackItem. The conflicting
 	// item is another item of the scenery on which a route must not be set if
@@ -141,8 +169,8 @@ func (ti *trackStruct) TiID() int {
 }
 
 // Type returns the name of the type of this item
-func (ti *trackStruct) Type() string {
-	return "TrackItem"
+func (ti *trackStruct) Type() trackItemType {
+	return trackItem
 }
 
 func (ti *trackStruct) Name() string {
@@ -177,6 +205,10 @@ func (ti *trackStruct) RealLength() float64 {
 }
 
 func (ti *trackStruct) Origin() Point {
+	return Point{ti.X, ti.Y}
+}
+
+func (ti *trackStruct) End() Point {
 	return Point{ti.X, ti.Y}
 }
 
@@ -217,15 +249,6 @@ func (ti *trackStruct) CustomProperty(key string) CustomProperty {
 
 var _ TrackItem = new(trackStruct)
 
-// ResizableItem is the base of any TrackItem that can be resized by the user in
-// the editor, such as LineItem or PlatformItem.
-type ResizableItem interface {
-	TrackItem
-	// End returns the two coordinates (Xf, Yf) of the end point of this
-	// ResizeableItem.
-	End() Point
-}
-
 // A Place is a special TrackItem representing a physical location such as a
 // station or a passing point. Note that Place items are not linked to other items.
 type Place struct {
@@ -233,8 +256,8 @@ type Place struct {
 }
 
 // Type returns the name of the type of this item
-func (pl *Place) Type() string {
-	return "Place"
+func (pl *Place) Type() trackItemType {
+	return place
 }
 
 var _ TrackItem = new(Place)
@@ -249,8 +272,8 @@ type LineItem struct {
 }
 
 // Type returns the name of the type of this item
-func (li *LineItem) Type() string {
-	return "LineItem"
+func (li *LineItem) Type() trackItemType {
+	return lineItem
 }
 
 // TrackCode returns the track number of this LineItem, if it is part of a
@@ -259,8 +282,7 @@ func (li *LineItem) TrackCode() string {
 	return li.TsTrackCode
 }
 
-// End returns the two coordinates (Xf, Yf) of the end point of this
-// ResizeableItem.
+// End returns the two coordinates (Xf, Yf) of the end point of this item
 func (li *LineItem) End() Point {
 	return Point{li.Xf, li.Yf}
 }
@@ -275,8 +297,8 @@ type InvisibleLinkItem struct {
 }
 
 // Type returns the name of the type of this item
-func (ili *InvisibleLinkItem) Type() string {
-	return "InvisibleLinkItem"
+func (ili *InvisibleLinkItem) Type() trackItemType {
+	return invisibleLinkItem
 }
 
 var _ TrackItem = new(InvisibleLinkItem)
@@ -290,8 +312,8 @@ type EndItem struct {
 }
 
 // Type returns the name of the type of this item
-func (ei *EndItem) Type() string {
-	return "EndItem"
+func (ei *EndItem) Type() trackItemType {
+	return endItem
 }
 
 // RealLength() is the length in meters that this TrackItem has in real life track length
@@ -307,8 +329,8 @@ type PlatformItem struct {
 	LineItem
 }
 
-func (pfi *PlatformItem) Type() string {
-	return "PlatformItem"
+func (pfi *PlatformItem) Type() trackItemType {
+	return platformItem
 }
 
 var _ TrackItem = new(PlatformItem)
@@ -319,8 +341,8 @@ type TextItem struct {
 }
 
 // Type returns the name of the type of this item
-func (ti *TextItem) Type() string {
-	return "TextItem"
+func (ti *TextItem) Type() trackItemType {
+	return textItem
 }
 
 var _ TrackItem = new(TextItem)

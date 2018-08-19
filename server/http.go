@@ -51,7 +51,6 @@ func InitializeLogger(parentLogger log.Logger) {
 // Run starts a http web server and websocket hub for the given simulation, on the given address and port.
 func Run(s *simulation.Simulation, addr, port string) {
 	sim = s
-	hub = &Hub{}
 	hubUp := make(chan bool)
 	timer := time.After(MaxHubStartupTime)
 	go hub.run(hubUp)
@@ -64,7 +63,7 @@ func Run(s *simulation.Simulation, addr, port string) {
 	}
 }
 
-// StartHttpd starts the server which serves on the following routes:
+// HttpdStart starts the server which serves on the following routes:
 //
 //    / - Serves a HTTP home page with the server status and information about the loaded sim.
 //        It also includes a JavaScript WebSocket client to communicate and manage the server.
@@ -182,6 +181,26 @@ var homeTempl = template.Must(template.New("").Parse(`<!DOCTYPE html>
                 input.focus();
                 return false;
             };
+            document.getElementById("addListenerTmpl").onclick = function (evt) {
+                input.value = '{"object": "server", "action": "addListener", "params": {"event": "clock", "ids": []}}';
+                input.focus();
+                return false;
+            };
+            document.getElementById("removeListenerTmpl").onclick = function (evt) {
+                input.value = '{"object": "server", "action": "removeListener", "params": {"event": "clock"}}';
+                input.focus();
+                return false;
+            };
+            document.getElementById("simStartTmpl").onclick = function (evt) {
+                input.value = '{"object": "simulation", "action": "start"}';
+                input.focus();
+                return false;
+            };
+            document.getElementById("simPauseTmpl").onclick = function (evt) {
+                input.value = '{"object": "simulation", "action": "pause"}';
+                input.focus();
+                return false;
+            };
             showConnected(false);
         });
     </script>
@@ -243,7 +262,7 @@ var homeTempl = template.Must(template.New("").Parse(`<!DOCTYPE html>
                 <button id="btnClear" type="button" class="btn btn-default">Clear</button>
             </div>
         </div>
-        <div class="form-group">
+        <div class="form-group form-row">
             <label for="srvTmpl">Message templates</label>
             <div class="btn-group">
                 <button id="srvTmpl" type="button" class="btn btn-default dropdown-toggle"
@@ -251,6 +270,17 @@ var homeTempl = template.Must(template.New("").Parse(`<!DOCTYPE html>
                 </button>
                 <ul class="dropdown-menu">
                     <li><a id="loginTmpl" href="#">Login</a></li>
+                    <li><a id="addListenerTmpl" href="#">Add Listener</a></li>
+                    <li><a id="removeListenerTmpl" href="#">Remove Listener</a></li>
+                </ul>
+            </div>
+            <div class="btn-group">
+                <button id="srvTmpl" type="button" class="btn btn-default dropdown-toggle"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Simulation
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a id="simStartTmpl" href="#">Start</a></li>
+                    <li><a id="simPauseTmpl" href="#">Pause</a></li>
                 </ul>
             </div>
         </div>

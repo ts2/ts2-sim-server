@@ -120,6 +120,11 @@ type SignalItem struct {
 	Reverse        bool    `json:"reverse"`
 }
 
+// Type returns the name of the type of this item
+func (si *SignalItem) Type() trackItemType {
+	return signalItem
+}
+
 // SignalType returns a pointer to the SignalType of this signal
 func (si *SignalItem) SignalType() *SignalType {
 	return si.simulation.SignalLib.Types[si.SignalTypeCode]

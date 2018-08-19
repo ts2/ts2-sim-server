@@ -21,7 +21,7 @@ package simulation
 type MessageType uint8
 
 const (
-	SoftwareMsg      MessageType = 0
+	softwareMsg      MessageType = 0
 	playerWarningMsg MessageType = 1
 	simulationMsg    MessageType = 2
 )
@@ -41,4 +41,16 @@ type MessageLogger struct {
 // setSimulation() sets the Simulation this MessageLogger is part of.
 func (ml *MessageLogger) setSimulation(sim *Simulation) {
 	ml.simulation = sim
+}
+
+// addMessage adds the given message to the simulation message logger.
+// This method also logs to the logger the same message.
+func (ml *MessageLogger) addMessage(msg string, typ MessageType) {
+	ml.Messages = append(ml.Messages, Message{
+		MsgText: msg,
+		MsgType: typ,
+	})
+	if logger != nil {
+		logger.Info(msg, "msgType", typ)
+	}
 }

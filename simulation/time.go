@@ -77,6 +77,11 @@ func (h *Time) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// MarshalJSON for the Time type
+func (h Time) MarshalJSON() ([]byte, error) {
+	return json.Marshal(h.Time.Format("15:04:05"))
+}
+
 // ParseTime returns a Time object from its string representation in format 15:04:05
 func ParseTime(data string) Time {
 	t, err := time.Parse("15:04:05", data)
@@ -95,3 +100,14 @@ func (h Time) Add(duration time.Duration) Time {
 	newTime.Time = h.Time.Add(duration)
 	return newTime
 }
+
+// Sub returns the duration t-u. If the result exceeds the maximum (or minimum)
+// value that can be stored in a Duration, the maximum (or minimum) duration
+// will be returned.
+// To compute t-d for a duration d, use t.Add(-d).
+func (h Time) Sub(u Time) time.Duration {
+	return h.Time.Sub(u.Time)
+}
+
+var _ json.Marshaler = Time{}
+var _ json.Unmarshaler = new(Time)

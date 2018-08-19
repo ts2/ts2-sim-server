@@ -21,6 +21,7 @@ package simulation
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -129,14 +130,18 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 		}
 
 	}
+	if err := sim.checkTrackItemsLinks(); err != nil {
+		return err
+	}
+
 	sim.Options = rawSim.Options
 	sim.SignalLib = rawSim.SignalLib
 	sim.Routes = make(map[int]*Route)
 	for num, route := range rawSim.Routes {
 		route.setSimulation(sim)
 		route.initialize()
-		routeNum, err_route := strconv.Atoi(num)
-		if err_route != nil {
+		routeNum, errRoute := strconv.Atoi(num)
+		if errRoute != nil {
 			return fmt.Errorf("routeNum : `%s` is invalid", num)
 		}
 		sim.Routes[routeNum] = route
@@ -153,6 +158,19 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 	for _, t := range sim.Trains {
 		t.setSimulation(sim)
 	}
+	sort.Slice(sim.Trains, func(i, j int) bool {
+		switch {
+		case len(sim.Trains[i].Service().Lines) == 0 && len(sim.Trains[j].Service().Lines) == 0:
+			return sim.Trains[i].ServiceCode < sim.Trains[j].ServiceCode
+		case len(sim.Trains[i].Service().Lines) == 0:
+			return false
+		case len(sim.Trains[j].Service().Lines) == 0:
+			return true
+		default:
+			return sim.Trains[i].Service().Lines[0].ScheduledDepartureTime.Sub(
+				sim.Trains[j].Service().Lines[0].ScheduledDepartureTime) < 0
+		}
+	})
 	sim.MessageLogger = rawSim.MessageLogger
 	sim.MessageLogger.setSimulation(sim)
 	return nil
@@ -160,9 +178,11 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 
 // Initialize initializes the simulation.
 // This method must be called before Start.
-func (sim *Simulation) Initialize() {
+func (sim *Simulation) Initialize() error {
+	sim.MessageLogger.addMessage("Simulation initializing", softwareMsg)
 	sim.EventChan = make(chan *Event)
 	sim.stopChan = make(chan bool)
+	return nil
 }
 
 // Start runs the main loop of the simulation by making the clock tick and process each object.
@@ -206,4 +226,31 @@ func (sim *Simulation) increaseTime(step time.Duration) {
 	sim.Options.CurrentTime.Lock()
 	defer sim.Options.CurrentTime.Unlock()
 	sim.Options.CurrentTime = sim.Options.CurrentTime.Add(step)
+}
+
+// checks that all TrackItems are linked together.
+// Returns the first error met.
+func (sim *Simulation) checkTrackItemsLinks() error {
+	for _, ti := range sim.TrackItems {
+		switch ti.Type() {
+		case place, platformItem, textItem:
+			continue
+		case pointsItem:
+			pi := ti.(*PointsItem)
+			if pi.ReverseItem() == nil {
+				return ItemNotLinkedAtError{item: ti, pt: pi.Reverse()}
+			}
+			fallthrough
+		case lineItem, invisibleLinkItem, signalItem:
+			if ti.NextItem() == nil {
+				return ItemNotLinkedAtError{item: ti, pt: ti.End()}
+			}
+			fallthrough
+		case endItem:
+			if ti.PreviousItem() == nil {
+				return ItemNotLinkedAtError{item: ti, pt: ti.Origin()}
+			}
+		}
+	}
+	return nil
 }

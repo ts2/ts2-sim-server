@@ -59,8 +59,23 @@ type PointsItem struct {
 }
 
 // Type returns the name of the type of this item
-func (pi *PointsItem) Type() string {
-	return "PointsItem"
+func (pi *PointsItem) Type() trackItemType {
+	return pointsItem
+}
+
+// Origin are the two coordinates (x, y) of the origin, i.e. the absolute coordinates of the common end.
+func (pi *PointsItem) Origin() Point {
+	return pi.Center().Add(pi.CommonEnd())
+}
+
+// End returns the two coordinates (Xf, Yf) of the end, i.e. the absolute coordinates of the normal end.
+func (pi *PointsItem) End() Point {
+	return pi.Center().Add(pi.NormalEnd())
+}
+
+// Reverse returns the two (Xr, Yr) absolute coordinates of the reverse end.
+func (pi *PointsItem) Reverse() Point {
+	return pi.Center().Add(pi.ReverseEnd())
 }
 
 // Center point of this PointsItem in the scene coordinates

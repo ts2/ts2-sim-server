@@ -32,13 +32,13 @@ import (
 )
 
 func TestMain(m *testing.M) {
+	mainLogger := log.New()
+	InitializeLogger(mainLogger)
+	simulation.InitializeLogger(mainLogger)
 	data, _ := ioutil.ReadFile("../simulation/testdata/demo.json")
 	var s simulation.Simulation
 	json.Unmarshal(data, &s)
 	s.Initialize()
-	mainLogger := log.New()
-	InitializeLogger(mainLogger)
-	simulation.InitializeLogger(mainLogger)
 	go Run(&s, "0.0.0.0", "22222")
 	os.Exit(m.Run())
 }

@@ -97,11 +97,13 @@ OPTIONS:
 	}
 
 	var sim simulation.Simulation
-	errload := json.Unmarshal(data, &sim)
-	sim.Initialize()
+	if err = json.Unmarshal(data, &sim); err != nil {
+		logger.Error("Load Error", "file", simFile, "error", err)
+		return
+	}
 
-	if errload != nil {
-		logger.Error("Load Error", "file", simFile, "error", errload)
+	if err = sim.Initialize(); err != nil {
+		logger.Error("Invalid simulation", "file", simFile, "error", err)
 		return
 	}
 	logger.Info("Simulation loaded", "sim", sim.Options.Title)

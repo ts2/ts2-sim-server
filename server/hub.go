@@ -19,7 +19,6 @@
 package server
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/ts2/ts2-sim-server/simulation"
@@ -41,19 +40,17 @@ type Hub struct {
 
 	// Received requests channel
 	readChan chan *connection
+
+	objects map[string]hubObject
+}
+
+type hubObject interface {
+	dispatch(h *Hub, req Request, c *connection)
 }
 
 // run is the loop for handling dispatching requests and responses
 func (h *Hub) run(hubUp chan bool) {
 	logger.Info("Hub starting...", "submodule", "hub")
-	// make connection maps
-	h.clientConnections = make(map[*connection]bool)
-	// make registry map
-	h.registry = make(map[*registryEntry]bool)
-	// make channels
-	h.registerChan = make(chan *connection)
-	h.unregisterChan = make(chan *connection)
-	h.readChan = make(chan *connection)
 
 	hubUp <- true
 	var (
@@ -112,88 +109,29 @@ func (h *Hub) notifyClients(e *simulation.Event) {
 // - ch is the channel on which to send the response
 func (h *Hub) dispatchObject(conn *connection) {
 	req := conn.LastRequest
-	switch req.Object {
-	case "server":
-		h.dispatchServer(req, conn)
-	case "simulation":
-		h.dispatchSimulation(req, conn)
-		//	case "TrackItem":
-		//		h.dispatchTrackItem(req, ch)
-		//	case "Route":
-		//		h.dispatchRoute(req, ch)
-		//	case "TrainType":
-		//		h.dispatchTrainType(req, ch)
-		//	case "Service":
-		//		h.dispatchService(req, ch)
-		//	case "Train":
-		//		h.dispatchTrain(req, ch)
-	default:
-		conn.pushChan <- NewErrorResponse(fmt.Errorf("Unknwon object %s", req.Object))
+	obj, ok := h.objects[req.Object]
+	if !ok {
+		conn.pushChan <- NewErrorResponse(fmt.Errorf("unknwon object %s", req.Object))
 		logger.Debug("Request for unknown object received", "submodule", "hub", "object", req.Object)
 	}
+	obj.dispatch(h, req, conn)
 }
 
-// dispatchServer processes requests made on the Server object
-func (h *Hub) dispatchServer(req Request, conn *connection) {
-	ch := conn.pushChan
-	switch req.Action {
-	case "register":
-		ch <- NewErrorResponse(fmt.Errorf("can't call register when already registered"))
-		logger.Debug("Request for second register received", "submodule", "hub", "object", req.Object, "action", req.Action)
-	case "addListener":
-		logger.Debug("Request for addListener received", "submodule", "hub", "object", req.Object, "action", req.Action)
-		h.addRegistryEntry(req, conn)
-		ch <- NewOkResponse("Listener added successfully")
-	case "removeListener":
-		logger.Debug("Request for removeListener received", "submodule", "hub", "object", req.Object, "action", req.Action)
-		h.removeRegistryEntry(req, conn)
-		ch <- NewOkResponse("Listener removed successfully")
-	default:
-		ch <- NewErrorResponse(fmt.Errorf("Unknwon action %s/%s", req.Object, req.Action))
-		logger.Debug("Request for unknown action received", "submodule", "hub", "object", req.Object, "action", req.Action)
-	}
+// newHub returns a pointer to a new Hub instance
+func newHub() *Hub {
+	h := new(Hub)
+	// make connection maps
+	h.clientConnections = make(map[*connection]bool)
+	// make registry map
+	h.registry = make(map[*registryEntry]bool)
+	// make channels
+	h.registerChan = make(chan *connection)
+	h.unregisterChan = make(chan *connection)
+	h.readChan = make(chan *connection)
+	h.objects = make(map[string]hubObject)
+	return h
 }
 
-// dispatchSimulation processes requests made on the Simulation object
-func (h *Hub) dispatchSimulation(req Request, conn *connection) {
-	ch := conn.pushChan
-	switch req.Action {
-	case "start":
-		logger.Debug("Request for simulation start received", "submodule", "hub", "object", req.Object, "action", req.Action)
-		sim.Start()
-		ch <- NewOkResponse("Simulation started successfully")
-	case "pause":
-		logger.Debug("Request for simulation pause received", "submodule", "hub", "object", req.Object, "action", req.Action)
-		sim.Pause()
-		ch <- NewOkResponse("Simulation paused successfully")
-	default:
-		ch <- NewErrorResponse(fmt.Errorf("unknwon action %s/%s", req.Object, req.Action))
-		logger.Debug("Request for unknown action received", "submodule", "hub", "object", req.Object, "action", req.Action)
-	}
-}
-
-// Hub.addRegistryEntry adds the given registry entry to the registry.
-func (h *Hub) addRegistryEntry(req Request, conn *connection) {
-	var pl ParamsListener
-	if err := json.Unmarshal(req.Params, &pl); err != nil {
-		logger.Error("Unparsable request (addRegistryEntry)", "submodule", "hub", "request", req)
-	}
-	re := registryEntry{conn: conn, eventName: pl.Event, ids: pl.Ids}
-	h.registry[&re] = true
-	logger.Debug("Registry entry added", "submodule", "hub", "entry", re)
-}
-
-// Hub.removeRegistryEntry removes the given registry entry from the registry.
-func (h *Hub) removeRegistryEntry(req Request, conn *connection) {
-	var pl ParamsListener
-	if err := json.Unmarshal(req.Params, &pl); err != nil {
-		logger.Error("Unparsable request (addRegistryEntry)", "submodule", "hub", "request", req)
-	}
-	re := registryEntry{conn: conn, eventName: pl.Event}
-	for r := range h.registry {
-		if r.conn == re.conn && r.eventName == re.eventName {
-			delete(h.registry, r)
-			break
-		}
-	}
+func init() {
+	hub = newHub()
 }

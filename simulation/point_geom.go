@@ -25,6 +25,6 @@ type Point struct {
 }
 
 // Add returns the Point which is the application of Point p2 as a vector on Point p1.
-func Add(p1 Point, p2 Point) Point {
-	return Point{p1.X + p2.X, p1.Y + p2.Y}
+func (p Point) Add(p2 Point) Point {
+	return Point{p.X + p2.X, p.Y + p2.Y}
 }

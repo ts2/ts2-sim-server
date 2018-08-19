@@ -88,6 +88,9 @@ func TestLoadTrackItems(t *testing.T) {
 	if err := json.Unmarshal(loadSim(), &sim); err != nil {
 		t.Errorf("TrackItems: error while loading JSON: %s", err)
 	}
+	if err := sim.checkTrackItemsLinks(); err != nil {
+		t.Errorf("Error while checking track items: %s", err)
+	}
 	assertEqual(t, len(sim.TrackItems), 22, "TrackItems: Not all loaded")
 
 	ei1, ok := sim.TrackItems[1].(*EndItem)
