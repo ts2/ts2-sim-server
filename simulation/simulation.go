@@ -19,6 +19,7 @@
 package simulation
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -174,6 +175,54 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 	sim.MessageLogger = rawSim.MessageLogger
 	sim.MessageLogger.setSimulation(sim)
 	return nil
+}
+
+func (sim *Simulation) MarshalJSON() ([]byte, error) {
+	var res bytes.Buffer
+	res.WriteString(`{
+	"__type__": "Simulation",
+`)
+	res.WriteString(`	"messageLogger": `)
+	logr, _ := json.Marshal(sim.MessageLogger)
+	res.Write(logr)
+	res.WriteString(`,
+	"options": `)
+	opts, _ := json.Marshal(sim.Options)
+	res.Write(opts)
+	res.WriteString(`,
+	"routes": `)
+	rtes, _ := json.Marshal(sim.Routes)
+	res.Write(rtes)
+	res.WriteString(`,
+	"trainTypes": `)
+	tts, _ := json.Marshal(sim.TrainTypes)
+	res.Write(tts)
+	res.WriteString(`,
+    "services": `)
+	svs, _ := json.Marshal(sim.Services)
+	res.Write(svs)
+
+	tkis := make(map[string]TrackItem)
+	for k, v := range sim.TrackItems {
+		tkis[fmt.Sprintf("%d", k)] = v
+	}
+	for _, v := range sim.Places {
+		tkis[fmt.Sprintf("%d", v.TiID())] = v
+	}
+	res.WriteString(`,
+	"trackItems": `)
+	tkd, _ := json.Marshal(tkis)
+	res.Write(tkd)
+	res.WriteString(`,
+	"trains": `)
+	trns, _ := json.Marshal(sim.Trains)
+	res.Write(trns)
+	res.WriteString(`,
+	"signalLibrary": `)
+	sll, _ := json.Marshal(sim.SignalLib)
+	res.Write(sll)
+	res.WriteString(`}`)
+	return res.Bytes(), nil
 }
 
 // Initialize initializes the simulation.

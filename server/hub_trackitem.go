@@ -21,38 +21,51 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/ts2/ts2-sim-server/simulation"
 )
 
-type simulationObject struct{}
+type trackItemObject struct{}
 
 // dispatch processes requests made on the Simulation object
-func (s *simulationObject) dispatch(h *Hub, req Request, conn *connection) {
+func (s *trackItemObject) dispatch(h *Hub, req Request, conn *connection) {
 	ch := conn.pushChan
 	switch req.Action {
-	case "start":
-		logger.Debug("Request for simulation start received", "submodule", "hub", "object", req.Object, "action", req.Action)
-		sim.Start()
-		ch <- NewOkResponse(req.ID, "Simulation started successfully")
-	case "pause":
-		logger.Debug("Request for simulation pause received", "submodule", "hub", "object", req.Object, "action", req.Action)
-		sim.Pause()
-		ch <- NewOkResponse(req.ID, "Simulation paused successfully")
-	case "dump":
-		logger.Debug("Request for simulation dump received", "submodule", "hub", "object", req.Object, "action", req.Action)
-		data, err := json.Marshal(sim)
+	case "list":
+		logger.Debug("Request for trackitem list received", "submodule", "hub", "object", req.Object, "action", req.Action)
+		til, err := json.Marshal(sim.TrackItems)
 		if err != nil {
 			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
 			return
 		}
-		ch <- NewResponse(req.ID, data)
+		ch <- NewResponse(req.ID, til)
+	case "show":
+		var idsParams = struct {
+			IDs []int `json:"ids"`
+		}{}
+		err := json.Unmarshal(req.Params, &idsParams)
+		if err != nil {
+			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
+			return
+		}
+		tkis := make(map[string]simulation.TrackItem)
+		for _, id := range idsParams.IDs {
+			tkis[fmt.Sprintf("%d", id)] = sim.TrackItems[id]
+		}
+		tid, err := json.Marshal(tkis)
+		if err != nil {
+			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
+			return
+		}
+		ch <- NewResponse(req.ID, tid)
 	default:
 		ch <- NewErrorResponse(req.ID, fmt.Errorf("unknwon action %s/%s", req.Object, req.Action))
 		logger.Debug("Request for unknown action received", "submodule", "hub", "object", req.Object, "action", req.Action)
 	}
 }
 
-var _ hubObject = new(simulationObject)
+var _ hubObject = new(trackItemObject)
 
 func init() {
-	hub.objects["simulation"] = new(simulationObject)
+	hub.objects["trackItem"] = new(trackItemObject)
 }

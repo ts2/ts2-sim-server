@@ -69,7 +69,7 @@ login dials to the server and logs the client in
 */
 func register(t *testing.T, ct ClientType, mt ManagerType, token string) (*websocket.Conn, error) {
 	c := clientDial(t)
-	loginRequest := RequestRegister{"server", "register", ParamsRegister{ct, mt, token}}
+	loginRequest := RequestRegister{1234, "server", "register", ParamsRegister{ct, mt, token}}
 	if err := c.WriteJSON(loginRequest); err != nil {
 		return nil, err
 	}

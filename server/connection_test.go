@@ -34,13 +34,13 @@ func TestLogin(t *testing.T) {
 	}()
 
 	// Try to send something that is not a login request
-	badRequest := Request{"Dummy", "dummy", nil}
+	badRequest := Request{1234, "Dummy", "dummy", nil}
 	if err := c.WriteJSON(badRequest); err != nil {
 		t.Error(err)
 	}
 	var serverResponse ResponseStatus
 	c.ReadJSON(&serverResponse)
-	assertEqual(t, serverResponse, ResponseStatus{TypeResponse, DataStatus{Fail, "Error: register required"}}, "Register/Wrong request")
+	assertEqual(t, serverResponse, ResponseStatus{1234, TypeResponse, DataStatus{Fail, "Error: register required"}}, "Register/Wrong request")
 	_, _, err := c.ReadMessage()
 	if _, ok := err.(*websocket.CloseError); err == nil || !ok {
 		t.Errorf("Register/Wrong request/Connection should be closed")
@@ -77,7 +77,7 @@ func TestDoubleLogin(t *testing.T) {
 	if err != nil {
 		t.Errorf(err.Error())
 	} else {
-		c.WriteJSON(RequestRegister{"server", "register", ParamsRegister{Client, "", "client-secret"}})
+		c.WriteJSON(RequestRegister{1234, "server", "register", ParamsRegister{Client, "", "client-secret"}})
 		var expectedResponse ResponseStatus
 		c.ReadJSON(&expectedResponse)
 		if expectedResponse.Data.Status != Fail {

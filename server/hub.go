@@ -98,7 +98,7 @@ func (h *Hub) notifyClients(e *simulation.Event) {
 	logger.Debug("Notifying clients", "submodule", "hub", "event", e)
 	for re := range h.registry {
 		if re.eventName == e.Name {
-			re.conn.pushChan <- NewEventResponse(e)
+			re.conn.pushChan <- NewNotificationResponse(e)
 		}
 	}
 }
@@ -111,8 +111,9 @@ func (h *Hub) dispatchObject(conn *connection) {
 	req := conn.LastRequest
 	obj, ok := h.objects[req.Object]
 	if !ok {
-		conn.pushChan <- NewErrorResponse(fmt.Errorf("unknwon object %s", req.Object))
+		conn.pushChan <- NewErrorResponse(req.ID, fmt.Errorf("unknwon object %s", req.Object))
 		logger.Debug("Request for unknown object received", "submodule", "hub", "object", req.Object)
+		return
 	}
 	obj.dispatch(h, req, conn)
 }

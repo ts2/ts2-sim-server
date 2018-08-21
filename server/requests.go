@@ -28,6 +28,7 @@ import (
 //
 // It is used before dispatching and unmarshaling into a specific request type.
 type Request struct {
+	ID     int             `json:"id"`
 	Object string          `json:"object"`
 	Action string          `json:"action"`
 	Params json.RawMessage `json:"params"`
@@ -42,6 +43,7 @@ type ParamsRegister struct {
 
 // RequestRegister is a request made by a websocket client to log onto the server.
 type RequestRegister struct {
+	ID     int            `json:"id"`
 	Object string         `json:"object"`
 	Action string         `json:"action"`
 	Params ParamsRegister `json:"params"`
@@ -53,8 +55,9 @@ type ParamsListener struct {
 	Ids   []string             `json:"ids"`
 }
 
-// RequestLstener is a request made by a websocket client to add or remove a listener.
+// RequestListener is a request made by a websocket client to add or remove a listener.
 type RequestListener struct {
+	ID     int            `json:"id"`
 	Object string         `json:"object"`
 	Action string         `json:"action"`
 	Params ParamsListener `json:"params"`

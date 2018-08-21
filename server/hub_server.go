@@ -1,5 +1,20 @@
-// Copyright 2018 NDP Systèmes. All Rights Reserved.
-// See LICENSE file for full licensing details.
+// Copyright (C) 2008-2018 by Nicolas Piganeau and the TS2 TEAM
+// (See AUTHORS file)
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the
+// Free Software Foundation, Inc.,
+// 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 package server
 
@@ -15,18 +30,18 @@ func (s *serverObject) dispatch(h *Hub, req Request, conn *connection) {
 	ch := conn.pushChan
 	switch req.Action {
 	case "register":
-		ch <- NewErrorResponse(fmt.Errorf("can't call register when already registered"))
+		ch <- NewErrorResponse(req.ID, fmt.Errorf("can't call register when already registered"))
 		logger.Debug("Request for second register received", "submodule", "hub", "object", req.Object, "action", req.Action)
 	case "addListener":
 		logger.Debug("Request for addListener received", "submodule", "hub", "object", req.Object, "action", req.Action)
 		h.addRegistryEntry(req, conn)
-		ch <- NewOkResponse("Listener added successfully")
+		ch <- NewOkResponse(req.ID, "Listener added successfully")
 	case "removeListener":
 		logger.Debug("Request for removeListener received", "submodule", "hub", "object", req.Object, "action", req.Action)
 		h.removeRegistryEntry(req, conn)
-		ch <- NewOkResponse("Listener removed successfully")
+		ch <- NewOkResponse(req.ID, "Listener removed successfully")
 	default:
-		ch <- NewErrorResponse(fmt.Errorf("unknwon action %s/%s", req.Object, req.Action))
+		ch <- NewErrorResponse(req.ID, fmt.Errorf("unknwon action %s/%s", req.Object, req.Action))
 		logger.Debug("Request for unknown action received", "submodule", "hub", "object", req.Object, "action", req.Action)
 	}
 }

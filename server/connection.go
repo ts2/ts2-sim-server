@@ -47,9 +47,9 @@ type connection struct {
 // loop starts the reading and writing loops of the connection.
 func (conn *connection) loop(ctx context.Context) {
 	logger.Debug("New connection", "remote", conn.RemoteAddr())
-	if err := conn.registerClient(); err != nil {
+	if err, req := conn.registerClient(); err != nil {
 		// Try to notify client
-		conn.WriteJSON(NewErrorResponse(err))
+		conn.WriteJSON(NewErrorResponse(req.ID, err))
 		logger.Error("Error while login", "connection", conn.RemoteAddr(), "error", err)
 		return
 	}
@@ -59,7 +59,7 @@ func (conn *connection) loop(ctx context.Context) {
 	conn.processRead(loopCtx)
 }
 
-//processRead() performs all read operations from the connection and forwards to the hub
+// processRead performs all read operations from the connection and forwards to the hub
 func (conn *connection) processRead(ctx context.Context) {
 	for {
 		select {
@@ -75,7 +75,7 @@ func (conn *connection) processRead(ctx context.Context) {
 				return
 			} else {
 				logger.Info("Error while reading", "connection", conn.RemoteAddr(), "error", err)
-				conn.pushChan <- NewErrorResponse(err)
+				conn.pushChan <- NewErrorResponse(conn.LastRequest.ID, err)
 				continue
 			}
 		}
@@ -99,18 +99,18 @@ func (conn *connection) processWrite(ctx context.Context) {
 
 // registerClient() waits for a register request from the client, checks it and registers the connection
 // on the hub if it is valid. Otherwise it returns an error.
-func (conn *connection) registerClient() error {
+func (conn *connection) registerClient() (error, *Request) {
 	// Parse request
 	req := new(Request)
 	if err := conn.ReadJSON(req); err != nil {
-		return err
+		return err, req
 	}
 	if req.Object != "server" || req.Action != "register" {
-		return fmt.Errorf("register required")
+		return fmt.Errorf("register required"), req
 	}
 	registerParams := ParamsRegister{}
 	if err := json.Unmarshal(req.Params, &registerParams); err != nil {
-		return fmt.Errorf("unable to parse register params: %s", err)
+		return fmt.Errorf("unable to parse register params: %s", err), req
 	}
 
 	// Authenticate client and type
@@ -118,21 +118,19 @@ func (conn *connection) registerClient() error {
 		registerParams.Token == sim.Options.ClientToken {
 		conn.clientType = Client
 	} else {
-		return fmt.Errorf("invalid register parameters")
+		return fmt.Errorf("invalid register parameters"), req
 	}
 
 	// authenticated, so setup
-	if err := conn.WriteJSON(NewOkResponse("Successfully registered")); err != nil {
+	if err := conn.WriteJSON(NewOkResponse(req.ID, "Successfully registered")); err != nil {
 		logger.Info("Error while writing", "connection", conn.RemoteAddr(), "request", "NewOkResponse", "error", err)
 	}
 	hub.registerChan <- conn
 	logger.Info("Registered", "connection", conn.RemoteAddr(), "clientType", conn.clientType, "managerType", conn.ManagerType)
-	return nil
+	return nil, req
 }
 
-/*
-Close() terminates the websocket connection and closes associated resources
-*/
+// Close terminates the websocket connection and closes associated resources
 func (conn *connection) Close() error {
 	conn.Conn.Close()
 	hub.unregisterChan <- conn

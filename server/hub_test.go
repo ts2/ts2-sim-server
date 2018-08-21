@@ -87,9 +87,9 @@ func TestAddRemoveListeners(t *testing.T) {
 	}
 
 	// check we receive events
-	var clockEvent ResponseEvent
+	var clockEvent ResponseNotification
 	c.ReadJSON(&clockEvent)
-	if clockEvent.MsgType != TypeEvent || clockEvent.Data.Name != simulation.ClockEvent {
+	if clockEvent.MsgType != TypeNotification || clockEvent.Data.Name != simulation.ClockEvent {
 		t.Errorf("No clock event received from server !")
 	}
 
