@@ -59,8 +59,8 @@ type PointsItem struct {
 }
 
 // Type returns the name of the type of this item
-func (pi *PointsItem) Type() trackItemType {
-	return pointsItem
+func (pi *PointsItem) Type() TrackItemType {
+	return TypePoints
 }
 
 // Origin are the two coordinates (x, y) of the origin, i.e. the absolute coordinates of the common end.
@@ -127,6 +127,16 @@ func (pi *PointsItem) FollowingItem(precedingItem TrackItem, dir PointDirection)
 		}
 	}
 	return nil, ItemsNotLinkedError{pi, precedingItem}
+}
+
+// setActiveRoute sets the given route as active on this PointsItem.
+// previous gives the direction.
+func (pi *PointsItem) setActiveRoute(r *Route, previous TrackItem) {
+	pi.reversed = false
+	if r.Directions[pi.ID()] != 0 {
+		pi.reversed = true
+	}
+	pi.trackStruct.setActiveRoute(r, previous)
 }
 
 var _ TrackItem = new(PointsItem)

@@ -56,8 +56,8 @@ func TestLoadRoutes(t *testing.T) {
 	assertEqual(t, r1.BeginSignal(), si5, "Route 1/BeginSignal")
 	assertEqual(t, r1.EndSignal(), si11, "Route 1/EndSignal")
 	items := []int{5, 6, 7, 8, 9, 10, 11}
-	for i, pos := range r1.positions {
-		assertEqual(t, pos.TrackItem.TiID(), items[i], "Route 1/Positions")
+	for i, pos := range r1.Positions {
+		assertEqual(t, pos.TrackItem.ID(), items[i], "Route 1/Positions")
 	}
 	assertEqual(t, len(r1.Directions), 1, "Route 1/Directions")
 	d1, ok := r1.Directions[7]
@@ -65,8 +65,8 @@ func TestLoadRoutes(t *testing.T) {
 		t.Errorf("Route 1/No direction 7")
 	}
 	assertEqual(t, d1, PointDirection(normal), "Route 1/Direction 7")
-	assertEqual(t, r1.InitialState, activated, "Route 1/InitialState")
-	assertEqual(t, r1.State, activated, "Route 1/state")
+	assertEqual(t, r1.InitialState, Activated, "Route 1/InitialState")
+	assertEqual(t, r1.State, Activated, "Route 1/state")
 
 	r4, ok := sim.Routes[4]
 	assertTrue(t, ok, "Routes: 4 not loaded")
@@ -76,11 +76,11 @@ func TestLoadRoutes(t *testing.T) {
 	assertEqual(t, r4.BeginSignal(), si15, "Route 4/BeginSignal")
 	assertEqual(t, r4.EndSignal(), si3, "Route 4/EndSignal")
 	items = []int{15, 14, 7, 6, 5, 4, 3}
-	for i, pos := range r4.positions {
-		assertEqual(t, pos.TrackItem.TiID(), items[i], "Route 4/Positions")
+	for i, pos := range r4.Positions {
+		assertEqual(t, pos.TrackItem.ID(), items[i], "Route 4/Positions")
 	}
-	assertEqual(t, r4.InitialState, deactivated, "Route 4/InitialState")
-	assertEqual(t, r4.State, deactivated, "Route 4/state")
+	assertEqual(t, r4.InitialState, Deactivated, "Route 4/InitialState")
+	assertEqual(t, r4.State, Deactivated, "Route 4/state")
 }
 
 func TestLoadTrackItems(t *testing.T) {
@@ -148,7 +148,7 @@ func TestLoadTrackItems(t *testing.T) {
 	assertEqual(t, ei1.NextItem(), nil, "EndItem1/NextItem")
 	assertEqual(t, ei1.PreviousItem(), li2, "EndItem1/PreviousItem")
 	assertEqual(t, ei1.Origin(), Point{0.0, 0.0}, "EndItem1/Origin")
-	assertEqual(t, ei1.TiID(), 1, "EndItem/ID")
+	assertEqual(t, ei1.ID(), 1, "EndItem/ID")
 	assertEqual(t, li2.PreviousItem(), ei1, "LineItem2/PreviousItem")
 	assertEqual(t, li2.TrackCode(), "", "LineItem2/TrackCode")
 	assertEqual(t, li2.Place(), lft, "LineItem2/Place")

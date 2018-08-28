@@ -25,35 +25,35 @@ import (
 	"github.com/ts2/ts2-sim-server/simulation"
 )
 
-type trackItemObject struct{}
+type serviceObject struct{}
 
-// dispatch processes requests made on the TrackItem object
-func (s *trackItemObject) dispatch(h *Hub, req Request, conn *connection) {
+// dispatch processes requests made on the Service object
+func (s *serviceObject) dispatch(h *Hub, req Request, conn *connection) {
 	ch := conn.pushChan
 	switch req.Action {
 	case "list":
-		logger.Debug("Request for trackitem list received", "submodule", "hub", "object", req.Object, "action", req.Action)
-		til, err := json.Marshal(sim.TrackItems)
+		logger.Debug("Request for service list received", "submodule", "hub", "object", req.Object, "action", req.Action)
+		sl, err := json.Marshal(sim.Services)
 		if err != nil {
 			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
 			return
 		}
-		ch <- NewResponse(req.ID, til)
+		ch <- NewResponse(req.ID, sl)
 	case "show":
 		var idsParams = struct {
-			IDs []int `json:"ids"`
+			IDs []string `json:"ids"`
 		}{}
 		err := json.Unmarshal(req.Params, &idsParams)
-		logger.Debug("Request for trackItem show received", "submodule", "hub", "object", req.Object, "action", req.Action, "params", idsParams)
+		logger.Debug("Request for service show received", "submodule", "hub", "object", req.Object, "action", req.Action, "params", idsParams)
 		if err != nil {
 			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
 			return
 		}
-		tkis := make(map[string]simulation.TrackItem)
+		sl := make(map[string]*simulation.Service)
 		for _, id := range idsParams.IDs {
-			tkis[fmt.Sprintf("%d", id)] = sim.TrackItems[id]
+			sl[id] = sim.Services[id]
 		}
-		tid, err := json.Marshal(tkis)
+		tid, err := json.Marshal(sl)
 		if err != nil {
 			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
 			return
@@ -65,8 +65,8 @@ func (s *trackItemObject) dispatch(h *Hub, req Request, conn *connection) {
 	}
 }
 
-var _ hubObject = new(trackItemObject)
+var _ hubObject = new(serviceObject)
 
 func init() {
-	hub.objects["trackItem"] = new(trackItemObject)
+	hub.objects["service"] = new(serviceObject)
 }

@@ -118,11 +118,14 @@ type SignalItem struct {
 	Yb             float64 `json:"yn"`
 	SignalTypeCode string  `json:"signalType"`
 	Reverse        bool    `json:"reverse"`
+
+	previousActiveRoute *Route
+	nextActiveRoute     *Route
 }
 
 // Type returns the name of the type of this item
-func (si *SignalItem) Type() trackItemType {
-	return signalItem
+func (si *SignalItem) Type() TrackItemType {
+	return TypeSignal
 }
 
 // SignalType returns a pointer to the SignalType of this signal
@@ -139,6 +142,38 @@ func (si *SignalItem) Reversed() bool {
 // displayed by clients. Berths are where train descriptors are displayed.
 func (si *SignalItem) BerthOrigin() Point {
 	return Point{si.Xb, si.Yb}
+}
+
+// setActiveRoute sets the given route as active on this SignalItem.
+// previous gives the direction.
+func (si *SignalItem) setActiveRoute(r *Route, previous TrackItem) {
+	si.trackStruct.setActiveRoute(r, previous)
+	si.updateSignalState()
+}
+
+// updateSignalState updates the current signal aspect.
+func (si *SignalItem) updateSignalState() {
+
+}
+
+// resetNextActiveRoute information. If route is not nil, do
+// this only if the nextActiveRoute is equal to route.
+func (si *SignalItem) resetNextActiveRoute(r *Route) {
+	if r != nil && si.nextActiveRoute != nil && si.nextActiveRoute.ID != r.ID {
+		return
+	}
+	si.nextActiveRoute = nil
+	si.updateSignalState()
+}
+
+// resetPreviousActiveRoute information. If route is not nil, do
+// this only if the previousActiveRoute is equal to route.
+func (si *SignalItem) resetPreviousActiveRoute(r *Route) {
+	if r != nil && si.previousActiveRoute != nil && si.previousActiveRoute.ID != r.ID {
+		return
+	}
+	si.previousActiveRoute = nil
+	si.updateSignalState()
 }
 
 // SignalLibrary holds the information about the signal types and signal aspects

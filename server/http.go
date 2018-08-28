@@ -16,17 +16,20 @@
 // Free Software Foundation, Inc.,
 // 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+//go:generate statik -src=../static
+
 package server
 
 import (
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"net/http"
-
+	"os"
 	"time"
 
-	"os"
-
+	"github.com/rakyll/statik/fs"
+	_ "github.com/ts2/ts2-sim-server/server/statik"
 	"github.com/ts2/ts2-sim-server/simulation"
 	log "gopkg.in/inconshreveable/log15.v2"
 )
@@ -57,6 +60,7 @@ func Run(s *simulation.Simulation, addr, port string) {
 	select {
 	case <-hubUp:
 		HttpdStart(addr, port)
+		os.Exit(1)
 	case <-timer:
 		log.Crit("Hub did not start")
 		os.Exit(1)
@@ -70,11 +74,30 @@ func Run(s *simulation.Simulation, addr, port string) {
 //
 //    /ws - WebSocket endpoint for all TS2 clients and managers.
 func HttpdStart(addr, port string) {
+	statikFS, err := fs.New()
+	if err != nil {
+		logger.Crit("Unable to read statik FS", "error", err)
+		return
+	}
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(statikFS)))
+
+	homeTemplFile, err := statikFS.Open("/index.html")
+	if err != nil {
+		logger.Crit("Unable to read index.html from statikFS", "error", err)
+		return
+	}
+	homeTemplData, err := ioutil.ReadAll(homeTemplFile)
+	if err != nil {
+		logger.Crit("Unable to open index.html ", "error", err)
+		return
+	}
+	homeTempl = template.Must(template.New("").Parse(string(homeTemplData)))
+
 	http.HandleFunc("/", serveHome)
 	http.HandleFunc("/ws", serveWs)
 	serverAddress := fmt.Sprintf("%s:%s", addr, port)
 	logger.Info("Starting HTTP", "submodule", "http", "address", serverAddress)
-	err := http.ListenAndServe(serverAddress, nil)
+	err = http.ListenAndServe(serverAddress, nil)
 	logger.Crit("HTTP crashed", "submodule", "http", "error", err)
 }
 
@@ -102,196 +125,4 @@ func serveHome(w http.ResponseWriter, r *http.Request) {
 	homeTempl.Execute(w, data)
 }
 
-var homeTempl = template.Must(template.New("").Parse(`<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <link rel="icon" href="https://ts2.github.io/favicon.ico" type="image/x-icon"/>
-    <link rel="shortcut icon" href="https://ts2.github.io/favicon.ico" type="image/x-icon"/>
-    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet"
-          integrity="sha256-7s5uDGW3AHqw6xtJmNNtr+OBRJUlgkNJEo78P4b0yRw= sha512-nNo+yCHEyn0smMxSswnf/OnX6/KwJuZTlNZBjauKhTK0c+zT+q5JOCx0UFhXQ6rJR9jg6Es8gPuD2uZcYDLqSw=="
-          crossorigin="anonymous">
-    <script src="https://code.jquery.com/jquery-2.2.0.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"
-            integrity="sha256-KXn5puMvxCw+dAYznun+drMdG1IFl3agK0p/pqT9KAo= sha512-2e8qq0ETcfWRI4HJBzQiA3UoyFk6tbNyG+qSaIBZLyW9Xf3sWZHN/lxe9fTh1U45DpPf07yj94KsUHHWe4Yk1A=="
-            crossorigin="anonymous"></script>
-    <script>
-        function clearMessage() {
-            $('input').val("");
-            $('input').focus();
-        }
-
-        window.addEventListener("load", function (evt) {
-            var output = document.getElementById("output");
-            var input = document.getElementById("input");
-            var ws = null;
-            var print = function (message) {
-                $('#output').append(message + "\n")
-            };
-            var showConnected = function (connected) {
-                print(connected ? "# WS Connected" : "# WS Disconnected");
-                $('#lblStatus').text(connected ? "Connected" : "Disconnected");
-                $('#btnClose').prop("disabled", !connected);
-                $('#btnOpen').prop("disabled", connected);
-                $('#btnSend').prop("disabled", !connected);
-            };
-            document.getElementById("btnOpen").onclick = function (evt) {
-                if (ws) {
-                    return false;
-                }
-                ws = new WebSocket("{{.Host}}");
-                ws.onopen = function (evt) {
-                    showConnected(true);
-                };
-                ws.onclose = function (evt) {
-                    showConnected(false);
-                    ws = null;
-                };
-                ws.onmessage = function (evt) {
-                    print("< RESPONSE: " + evt.data);
-                };
-                ws.onerror = function (evt) {
-                    print("< ERROR: " + evt.data);
-                };
-                input.focus();
-                return false;
-            };
-            document.getElementById("btnSend").onclick = function (evt) {
-                if (!ws) {
-                    return false;
-                }
-                print("> SEND: " + input.value);
-                ws.send(input.value);
-                $('input').focus();
-                return false;
-            };
-            document.getElementById("btnClose").onclick = function (evt) {
-                if (ws) {
-                    ws.close();
-                }
-                return false;
-            };
-            document.getElementById("btnClear").onclick = function (evt) {
-                $('#output').empty();
-                return false;
-            };
-            // Templates
-            document.getElementById("loginTmpl").onclick = function (evt) {
-                input.value = '{"object": "server", "action": "register", "params": {"type": "client", "token": "client-secret"}}';
-                input.focus();
-                return false;
-            };
-            document.getElementById("addListenerTmpl").onclick = function (evt) {
-                input.value = '{"object": "server", "action": "addListener", "params": {"event": "clock", "ids": []}}';
-                input.focus();
-                return false;
-            };
-            document.getElementById("removeListenerTmpl").onclick = function (evt) {
-                input.value = '{"object": "server", "action": "removeListener", "params": {"event": "clock"}}';
-                input.focus();
-                return false;
-            };
-            document.getElementById("simStartTmpl").onclick = function (evt) {
-                input.value = '{"object": "simulation", "action": "start"}';
-                input.focus();
-                return false;
-            };
-            document.getElementById("simPauseTmpl").onclick = function (evt) {
-                input.value = '{"object": "simulation", "action": "pause"}';
-                input.focus();
-                return false;
-            };
-            showConnected(false);
-        });
-    </script>
-</head>
-<body>
-<nav class="navbar navbar-inverse xx-navbar-fixed-top">
-    <div class="container">
-        <div class="navbar-header">
-            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar"
-                    aria-expanded="false" aria-controls="navbar">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-            </button>
-            <a class="navbar-brand" href="#">TS2 Sim Server</a>
-        </div>
-        <div id="navbar" class="collapse navbar-collapse">
-            <ul class="nav navbar-nav">
-                <li class="active"><a href="/">Home</a></li>
-                <li><a href="https://godoc.org/github.com/ts2/ts2-sim-server" target="_godoc">godoc</a></li>
-            </ul>
-        </div><!--/.nav-collapse -->
-    </div>
-</nav>
-
-<div class="container">
-    <table class="table table-bordered table-condensed">
-        <caption>Loaded Simulation</caption>
-        <tr>
-            <th>Title:</th>
-            <td>{{ .Title }}</td>
-        </tr>
-        <tr>
-            <th>Description:</th>
-            <td>{{ .Description }}</td>
-        </tr>
-        <tr>
-            <th>WebSocket Server:</th>
-            <td>{{ .Host }}</td>
-        </tr>
-    </table>
-
-    <h3>Test WebSocket</h3>
-    <p>
-        Click "Open" to create a connection to the server,
-        "Send" to send a message to the server and "Close" to close the connection.
-        You can change the message and send multiple times.
-    </p>
-    <form>
-        <div class="form-row">
-            <div class="form-group">
-                <label id="lblStatus" style="width: 100px;">Closed</label>
-                <button id="btnOpen" type="button" class="btn btn-info">Open</button>
-                <button id="btnClose" type="button" class="btn btn-info">Close</button>
-                <input type="text" id="input" style="width:500px" placeHolder="Message">
-                <span class="glyphicon glyphicon-remove-circle" onclick="clearMessage()"></span>
-                <button id="btnSend" type="button" class="btn btn-success">Send</button>
-                <button id="btnClear" type="button" class="btn btn-default">Clear</button>
-            </div>
-        </div>
-        <div class="form-group form-row">
-            <label for="srvTmpl">Message templates</label>
-            <div class="btn-group">
-                <button id="srvTmpl" type="button" class="btn btn-default dropdown-toggle"
-                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Server
-                </button>
-                <ul class="dropdown-menu">
-                    <li><a id="loginTmpl" href="#">Login</a></li>
-                    <li><a id="addListenerTmpl" href="#">Add Listener</a></li>
-                    <li><a id="removeListenerTmpl" href="#">Remove Listener</a></li>
-                </ul>
-            </div>
-            <div class="btn-group">
-                <button id="srvTmpl" type="button" class="btn btn-default dropdown-toggle"
-                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Simulation
-                </button>
-                <ul class="dropdown-menu">
-                    <li><a id="simStartTmpl" href="#">Start</a></li>
-                    <li><a id="simPauseTmpl" href="#">Pause</a></li>
-                </ul>
-            </div>
-        </div>
-    </form>
-</div>
-<div class="container">
-    <form>
-        <textarea id="output" style="margin-top: 10px; width:100%; height:300px; overflow: auto;"
-                  placeHolder="Log"></textarea>
-    </form>
-</div>
-</body>
-</html>
-`))
+var homeTempl *template.Template

@@ -18,6 +18,11 @@
 
 package simulation
 
+import (
+	"fmt"
+	"reflect"
+)
+
 type options struct {
 	TrackCircuitBased       bool           `json:"trackCircuitBased"`
 	ClientToken             string         `json:"clientToken"`
@@ -28,9 +33,37 @@ type options struct {
 	DefaultMinimumStopTime  DelayGenerator `json:"defaultMinimumStopTime"`
 	DefaultSignalVisibility float64        `json:"defaultSignalVisibility"`
 	Description             string         `json:"description"`
-	ManagerToken            string         `json:"managerToken"`
 	TimeFactor              int            `json:"timeFactor"`
 	Title                   string         `json:"title"`
 	Version                 string         `json:"version"`
 	WarningSpeed            float64        `json:"warningSpeed"`
+}
+
+// Set the given option with the given value.
+//
+// option can be either the struct field name or the json key of the struct field.
+func (o *options) Set(option string, value interface{}) error {
+	stVal := reflect.ValueOf(o).Elem()
+	typ := stVal.Type()
+	_, ok := typ.FieldByName(option)
+	if ok {
+		stVal.FieldByName(option).Set(reflect.ValueOf(value))
+		return nil
+	}
+	for i := 0; i < typ.NumField(); i++ {
+		if typ.Field(i).Tag.Get("json") == option {
+			val := reflect.ValueOf(value)
+			valTyp := val.Type()
+			if valTyp.ConvertibleTo(typ.Field(i).Type) {
+				val = val.Convert(typ.Field(i).Type)
+				valTyp = val.Type()
+			}
+			if !valTyp.AssignableTo(typ.Field(i).Type) {
+				return fmt.Errorf("cannot assign %v (%T) to %s (%s)", value, value, option, typ.Field(i).Type.Name())
+			}
+			stVal.Field(i).Set(val)
+			return nil
+		}
+	}
+	return fmt.Errorf("unknown option %s", option)
 }

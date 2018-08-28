@@ -22,7 +22,12 @@ package simulation
 type EventName string
 
 const (
+	// A ClockEvent is fired at each clock tick. Note that the actual time may not have changed.
 	ClockEvent EventName = "clock"
+	// A RouteActivatedEvent is emitted each time a route is successfully activated.
+	RouteActivatedEvent EventName = "routeActivated"
+	// A RouteDeactivatedEvent is emitted each time a route is successfully deactivated.
+	RouteDeactivatedEvent EventName = "routeDeactivated"
 )
 
 // Event is a wrapper around an object that is sent to the server hub to notify clients of a change.

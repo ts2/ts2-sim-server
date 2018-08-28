@@ -27,18 +27,18 @@ import (
 // at maximum simulation speed.
 const bigFloat = 1000000000.0
 
-type trackItemType string
+type TrackItemType string
 
 const (
-	trackItem         trackItemType = "TrackItem"
-	lineItem          trackItemType = "LineItem"
-	invisibleLinkItem trackItemType = "InvisibleLinkItem"
-	endItem           trackItemType = "EndItem"
-	signalItem        trackItemType = "SignalItem"
-	pointsItem        trackItemType = "PointsItem"
-	place             trackItemType = "Place"
-	platformItem      trackItemType = "PlatformItem"
-	textItem          trackItemType = "TextItem"
+	TypeTrack         TrackItemType = "TrackItem"
+	TypeLine          TrackItemType = "LineItem"
+	TypeInvisibleLink TrackItemType = "InvisibleLinkItem"
+	TypeEnd           TrackItemType = "EndItem"
+	TypeSignal        TrackItemType = "SignalItem"
+	TypePoints        TrackItemType = "PointsItem"
+	TypePlace         TrackItemType = "Place"
+	TypePlatform      TrackItemType = "PlatformItem"
+	TypeText          TrackItemType = "TextItem"
 )
 
 type CustomProperty map[string][]int
@@ -63,7 +63,7 @@ type ItemNotLinkedAtError struct {
 
 // Error method for the ItemsNotLinkedError
 func (i ItemNotLinkedAtError) Error() string {
-	return fmt.Sprintf("trackItem %s is not linked at (%f, %f)", i.item, i.pt.X, i.pt.Y)
+	return fmt.Sprintf("TypeTrack %s is not linked at (%f, %f)", i.item, i.pt.X, i.pt.Y)
 }
 
 // A TrackItem is a piece of scenery and is "the base interface" for others
@@ -78,21 +78,15 @@ func (i ItemNotLinkedAtError) Error() string {
 // Every TrackItem has an Origin() Point defined by its X and Y values.
 type TrackItem interface {
 
-	// TiID returns the unique ID of this TrackItem, which is the index of this
+	// ID returns the unique ID of this TrackItem, which is the index of this
 	// item in the Simulation's TrackItems map.
-	TiID() int
+	ID() int
 
 	// Type returns the name of the type of this item
-	Type() trackItemType
+	Type() TrackItemType
 
 	// Name returns the human readable name of this item
 	Name() string
-
-	// setSimulation attaches this TrackItem to a Simulation instance
-	setSimulation(*Simulation)
-
-	// setID sets the item's internal id
-	setID(int)
 
 	// NextItem returns the next item of this TrackItem.
 	//
@@ -140,6 +134,19 @@ type TrackItem interface {
 
 	// CustomProperty returns the custom property with the given key
 	CustomProperty(string) CustomProperty
+
+	// setActiveRoute sets the given route as active on this TypeTrack.
+	// previous gives the direction.
+	setActiveRoute(r *Route, previous TrackItem)
+
+	// ActiveRoute returns a pointer to the route currently active on this item
+	ActiveRoute() *Route
+
+	// ActiveRoutePreviousItem returns the previous item in the active route direction
+	ActiveRoutePreviousItem() TrackItem
+
+	// underlying returns the underlying trackStruct object
+	underlying() *trackStruct
 }
 
 // trackStruct is an abstract struct the pointer of which implements TrackItem
@@ -164,60 +171,52 @@ type trackStruct struct {
 	trains         []*Train
 }
 
-func (ti *trackStruct) TiID() int {
-	return ti.tsId
+func (t *trackStruct) ID() int {
+	return t.tsId
 }
 
 // Type returns the name of the type of this item
-func (ti *trackStruct) Type() trackItemType {
-	return trackItem
+func (t *trackStruct) Type() TrackItemType {
+	return TypeTrack
 }
 
-func (ti *trackStruct) Name() string {
-	return ti.TsName
+func (t *trackStruct) Name() string {
+	return t.TsName
 }
 
-func (ti *trackStruct) setSimulation(sim *Simulation) {
-	ti.simulation = sim
+func (t *trackStruct) NextItem() TrackItem {
+	return t.simulation.TrackItems[t.NextTiId]
 }
 
-func (ti *trackStruct) setID(tiId int) {
-	ti.tsId = tiId
+func (t *trackStruct) PreviousItem() TrackItem {
+	return t.simulation.TrackItems[t.PreviousTiId]
 }
 
-func (ti *trackStruct) NextItem() TrackItem {
-	return ti.simulation.TrackItems[ti.NextTiId]
-}
-
-func (ti *trackStruct) PreviousItem() TrackItem {
-	return ti.simulation.TrackItems[ti.PreviousTiId]
-}
-
-func (ti *trackStruct) MaxSpeed() float64 {
-	if ti.TsMaxSpeed == 0 {
-		return ti.simulation.Options.DefaultMaxSpeed
+func (t *trackStruct) MaxSpeed() float64 {
+	if t.TsMaxSpeed == 0 {
+		return t.simulation.Options.DefaultMaxSpeed
 	}
-	return ti.TsMaxSpeed
+	return t.TsMaxSpeed
 }
 
-func (ti *trackStruct) RealLength() float64 {
-	return ti.TsRealLength
+func (t *trackStruct) RealLength() float64 {
+	return t.TsRealLength
 }
 
-func (ti *trackStruct) Origin() Point {
-	return Point{ti.X, ti.Y}
+func (t *trackStruct) Origin() Point {
+	return Point{t.X, t.Y}
 }
 
-func (ti *trackStruct) End() Point {
-	return Point{ti.X, ti.Y}
+func (t *trackStruct) End() Point {
+	return Point{t.X, t.Y}
 }
 
-func (ti *trackStruct) ConflictItem() TrackItem {
-	return ti.simulation.TrackItems[ti.ConflictTiId]
+func (t *trackStruct) ConflictItem() TrackItem {
+	return t.simulation.TrackItems[t.ConflictTiId]
 }
 
-func (ti *trackStruct) Place() *Place {
-	return ti.simulation.Places[ti.PlaceCode]
+func (t *trackStruct) Place() *Place {
+	return t.simulation.Places[t.PlaceCode]
 }
 
 // FollowingItem returns the following TrackItem linked to this one,
@@ -226,25 +225,46 @@ func (ti *trackStruct) Place() *Place {
 //
 // The second argument will return a ItemsNotLinkedError if the given
 // precedingItem is not linked to this item.
-func (ti *trackStruct) FollowingItem(precedingItem TrackItem, dir PointDirection) (TrackItem, error) {
-	if precedingItem == TrackItem(ti).PreviousItem() {
-		return ti.NextItem(), nil
+func (t *trackStruct) FollowingItem(precedingItem TrackItem, dir PointDirection) (TrackItem, error) {
+	if precedingItem == TrackItem(t).PreviousItem() {
+		return t.NextItem(), nil
 	}
-	if precedingItem == TrackItem(ti).NextItem() {
-		return ti.PreviousItem(), nil
+	if precedingItem == TrackItem(t).NextItem() {
+		return t.PreviousItem(), nil
 	}
-	return nil, ItemsNotLinkedError{ti, precedingItem}
+	return nil, ItemsNotLinkedError{t, precedingItem}
 }
 
-func (ti *trackStruct) IsConnected(oti TrackItem) bool {
-	if TrackItem(ti).NextItem() == oti || TrackItem(ti).PreviousItem() == ti {
+func (t *trackStruct) IsConnected(oti TrackItem) bool {
+	if TrackItem(t).NextItem() == oti || TrackItem(t).PreviousItem() == t {
 		return true
 	}
 	return false
 }
 
-func (ti *trackStruct) CustomProperty(key string) CustomProperty {
-	return ti.CustomProperties[key]
+func (t *trackStruct) CustomProperty(key string) CustomProperty {
+	return t.CustomProperties[key]
+}
+
+func (t *trackStruct) underlying() *trackStruct {
+	return t
+}
+
+// setActiveRoute sets the given route as active on this TypeTrack.
+// previous gives the direction.
+func (t *trackStruct) setActiveRoute(r *Route, previous TrackItem) {
+	t.activeRoute = r
+	t.arPreviousItem = previous
+}
+
+// ActiveRoute returns a pointer to the route currently active on this item
+func (t *trackStruct) ActiveRoute() *Route {
+	return t.activeRoute
+}
+
+// ActiveRoutePreviousItem returns the previous item in the active route direction
+func (t *trackStruct) ActiveRoutePreviousItem() TrackItem {
+	return t.arPreviousItem
 }
 
 var _ TrackItem = new(trackStruct)
@@ -256,8 +276,8 @@ type Place struct {
 }
 
 // Type returns the name of the type of this item
-func (pl *Place) Type() trackItemType {
-	return place
+func (pl *Place) Type() TrackItemType {
+	return TypePlace
 }
 
 var _ TrackItem = new(Place)
@@ -272,12 +292,12 @@ type LineItem struct {
 }
 
 // Type returns the name of the type of this item
-func (li *LineItem) Type() trackItemType {
-	return lineItem
+func (li *LineItem) Type() TrackItemType {
+	return TypeLine
 }
 
 // TrackCode returns the track number of this LineItem, if it is part of a
-// place and if it has one.
+// TypePlace and if it has one.
 func (li *LineItem) TrackCode() string {
 	return li.TsTrackCode
 }
@@ -297,8 +317,8 @@ type InvisibleLinkItem struct {
 }
 
 // Type returns the name of the type of this item
-func (ili *InvisibleLinkItem) Type() trackItemType {
-	return invisibleLinkItem
+func (ili *InvisibleLinkItem) Type() TrackItemType {
+	return TypeInvisibleLink
 }
 
 var _ TrackItem = new(InvisibleLinkItem)
@@ -312,8 +332,8 @@ type EndItem struct {
 }
 
 // Type returns the name of the type of this item
-func (ei *EndItem) Type() trackItemType {
-	return endItem
+func (ei *EndItem) Type() TrackItemType {
+	return TypeEnd
 }
 
 // RealLength() is the length in meters that this TrackItem has in real life track length
@@ -329,8 +349,8 @@ type PlatformItem struct {
 	LineItem
 }
 
-func (pfi *PlatformItem) Type() trackItemType {
-	return platformItem
+func (pfi *PlatformItem) Type() TrackItemType {
+	return TypePlatform
 }
 
 var _ TrackItem = new(PlatformItem)
@@ -341,8 +361,8 @@ type TextItem struct {
 }
 
 // Type returns the name of the type of this item
-func (ti *TextItem) Type() trackItemType {
-	return textItem
+func (ti *TextItem) Type() TrackItemType {
+	return TypeText
 }
 
 var _ TrackItem = new(TextItem)

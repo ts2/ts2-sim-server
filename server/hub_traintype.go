@@ -25,35 +25,35 @@ import (
 	"github.com/ts2/ts2-sim-server/simulation"
 )
 
-type trackItemObject struct{}
+type trainTypeObject struct{}
 
-// dispatch processes requests made on the TrackItem object
-func (s *trackItemObject) dispatch(h *Hub, req Request, conn *connection) {
+// dispatch processes requests made on the TrainType object
+func (s *trainTypeObject) dispatch(h *Hub, req Request, conn *connection) {
 	ch := conn.pushChan
 	switch req.Action {
 	case "list":
-		logger.Debug("Request for trackitem list received", "submodule", "hub", "object", req.Object, "action", req.Action)
-		til, err := json.Marshal(sim.TrackItems)
+		logger.Debug("Request for trainType list received", "submodule", "hub", "object", req.Object, "action", req.Action)
+		tts, err := json.Marshal(sim.TrainTypes)
 		if err != nil {
 			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
 			return
 		}
-		ch <- NewResponse(req.ID, til)
+		ch <- NewResponse(req.ID, tts)
 	case "show":
 		var idsParams = struct {
-			IDs []int `json:"ids"`
+			IDs []string `json:"ids"`
 		}{}
 		err := json.Unmarshal(req.Params, &idsParams)
-		logger.Debug("Request for trackItem show received", "submodule", "hub", "object", req.Object, "action", req.Action, "params", idsParams)
+		logger.Debug("Request for trainType show received", "submodule", "hub", "object", req.Object, "action", req.Action, "params", idsParams)
 		if err != nil {
 			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
 			return
 		}
-		tkis := make(map[string]simulation.TrackItem)
+		tts := make(map[string]*simulation.TrainType)
 		for _, id := range idsParams.IDs {
-			tkis[fmt.Sprintf("%d", id)] = sim.TrackItems[id]
+			tts[id] = sim.TrainTypes[id]
 		}
-		tid, err := json.Marshal(tkis)
+		tid, err := json.Marshal(tts)
 		if err != nil {
 			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
 			return
@@ -65,8 +65,8 @@ func (s *trackItemObject) dispatch(h *Hub, req Request, conn *connection) {
 	}
 }
 
-var _ hubObject = new(trackItemObject)
+var _ hubObject = new(trainTypeObject)
 
 func init() {
-	hub.objects["trackItem"] = new(trackItemObject)
+	hub.objects["trainType"] = new(trainTypeObject)
 }

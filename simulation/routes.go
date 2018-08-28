@@ -24,35 +24,46 @@ import (
 	"strconv"
 )
 
+// A RoutesManager checks if a route is activable or deactivable.
+type RoutesManager interface {
+	// Name returns a description of this routesManager that can be displayed
+	// to the user if one of this managers method returns false.
+	Name() string
+	// CanActivate returns true if the given route can be Activated
+	CanActivate(r *Route) bool
+	// CanDeactivate returns true if the given route can be Deactivated
+	CanDeactivate(r *Route) bool
+}
+
 // RouteState represents the state of a Route at a given time and instance
 type RouteState uint8
 
 const (
-	// deactivated =  The route is not active
-	deactivated RouteState = 0
+	// Deactivated =  The route is not active
+	Deactivated RouteState = 0
 
-	// activated =  The route is active but will be destroyed by the first train using it
-	activated RouteState = 1
+	// Activated =  The route is active but will be destroyed by the first train using it
+	Activated RouteState = 1
 
-	// persistent =  The route is set and will remain after train passage
-	persistent RouteState = 2
+	// Persistent =  The route is set and will remain after train passage
+	Persistent RouteState = 2
 )
 
 // A Route is a path between two signals.
 //
-// If a route is activated, the path is selected, and the signals at the beginning
+// If a route is Activated, the path is selected, and the signals at the beginning
 // and the end of the route are changed and the conflicting possible other routes
 // are inhibited. Routes are static and defined in the game file. The player can
 // only activate or deactivate them.
 type Route struct {
+	ID            int
 	simulation    *Simulation
-	BeginSignalId int
-	EndSignalId   int
-	InitialState  RouteState
-	Directions    map[int]PointDirection
-
-	State     RouteState
-	positions []Position
+	BeginSignalId int                    `json:"beginSignal"`
+	EndSignalId   int                    `json:"endSignal"`
+	InitialState  RouteState             `json:"initialState"`
+	Directions    map[int]PointDirection `json:"directions"`
+	State         RouteState             `json:"state"`
+	Positions     []Position             `json:"-"`
 }
 
 // BeginSignal returns the SignalItem at which this Route starts.
@@ -65,24 +76,72 @@ func (r *Route) EndSignal() *SignalItem {
 	return r.simulation.TrackItems[r.EndSignalId].(*SignalItem)
 }
 
+// Activate the given route. If the route cannot be Activated, an error is returned.
+func (r *Route) Activate(persistent bool) error {
+	for _, rm := range routesManagers {
+		if !rm.CanActivate(r) {
+			return fmt.Errorf("%s vetoed route activation", rm.Name())
+		}
+	}
+	for _, pos := range r.Positions {
+		pos.TrackItem.underlying().setActiveRoute(r, pos.PreviousItem)
+	}
+	r.EndSignal().previousActiveRoute = r
+	r.BeginSignal().nextActiveRoute = r
+	r.State = Activated
+	if persistent {
+		r.State = Persistent
+	}
+	r.simulation.sendEvent(&Event{
+		Name:   RouteActivatedEvent,
+		Object: r,
+	})
+	return nil
+}
+
+func (r *Route) Deactivate() error {
+	for _, rm := range routesManagers {
+		if !rm.CanDeactivate(r) {
+			return fmt.Errorf("%s vetoed route deactivation", rm.Name())
+		}
+	}
+	r.BeginSignal().resetNextActiveRoute(r)
+	r.EndSignal().resetPreviousActiveRoute(nil)
+	for _, pos := range r.Positions {
+		if pos.TrackItem.ActiveRoute() != nil && pos.TrackItem.ActiveRoute().ID != r.ID {
+			continue
+		}
+		pos.TrackItem.underlying().setActiveRoute(nil, nil)
+	}
+	r.State = Deactivated
+	r.simulation.sendEvent(&Event{
+		Name:   RouteDeactivatedEvent,
+		Object: r,
+	})
+	return nil
+}
+
 // setSimulation sets the Simulation this Route is part of.
 func (r *Route) setSimulation(sim *Simulation) {
 	r.simulation = sim
 }
 
 // initialize does initial steps necessary to use this route
-func (r *Route) initialize() error {
+func (r *Route) initialize(routeNum int) error {
+	// Set route ID
+	r.ID = routeNum
+
 	// Initialize state to initial state
 	r.State = r.InitialState
 
-	// Populate positions slice
+	// Populate Positions slice
 	pos := Position{r.BeginSignal(), r.BeginSignal().PreviousItem(), 0}
 	for !pos.IsOut() {
-		r.positions = append(r.positions, pos)
+		r.Positions = append(r.Positions, pos)
 		if pos.TrackItem == r.EndSignal() {
 			return nil
 		}
-		dir, ok := r.Directions[pos.TrackItem.TiID()]
+		dir, ok := r.Directions[pos.TrackItem.ID()]
 		if !ok {
 			dir = PointDirection(normal)
 		}

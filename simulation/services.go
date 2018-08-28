@@ -44,7 +44,7 @@ type ServiceAction struct {
 
 // ServiceLine is a line of the definition of the Service.
 //
-// It consists of a place (usually a station) with a track number
+// It consists of a TypePlace (usually a station) with a track number
 // and scheduled times to arrive at and depart from this station.
 type ServiceLine struct {
 	MustStop               bool   `json:"mustStop"`

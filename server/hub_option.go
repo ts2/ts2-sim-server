@@ -21,52 +21,47 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-
-	"github.com/ts2/ts2-sim-server/simulation"
 )
 
-type trackItemObject struct{}
+type optionObject struct{}
 
-// dispatch processes requests made on the TrackItem object
-func (s *trackItemObject) dispatch(h *Hub, req Request, conn *connection) {
+// dispatch processes requests made on the Option object
+func (s *optionObject) dispatch(h *Hub, req Request, conn *connection) {
 	ch := conn.pushChan
 	switch req.Action {
 	case "list":
-		logger.Debug("Request for trackitem list received", "submodule", "hub", "object", req.Object, "action", req.Action)
-		til, err := json.Marshal(sim.TrackItems)
+		logger.Debug("Request for option list received", "submodule", "hub", "object", req.Object, "action", req.Action)
+		opts, err := json.Marshal(sim.Options)
 		if err != nil {
 			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
 			return
 		}
-		ch <- NewResponse(req.ID, til)
-	case "show":
-		var idsParams = struct {
-			IDs []int `json:"ids"`
+		ch <- NewResponse(req.ID, opts)
+	case "set":
+		var setParams = struct {
+			Name  string      `json:"name"`
+			Value interface{} `json:"value"`
 		}{}
-		err := json.Unmarshal(req.Params, &idsParams)
-		logger.Debug("Request for trackItem show received", "submodule", "hub", "object", req.Object, "action", req.Action, "params", idsParams)
+		err := json.Unmarshal(req.Params, &setParams)
+		logger.Debug("Request for option set received", "submodule", "hub", "object", req.Object, "action", req.Action, "params", req.Params)
 		if err != nil {
-			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
+			ch <- NewErrorResponse(req.ID, fmt.Errorf("error on parameters: %s", err))
 			return
 		}
-		tkis := make(map[string]simulation.TrackItem)
-		for _, id := range idsParams.IDs {
-			tkis[fmt.Sprintf("%d", id)] = sim.TrackItems[id]
-		}
-		tid, err := json.Marshal(tkis)
+		err = sim.Options.Set(setParams.Name, setParams.Value)
 		if err != nil {
-			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
+			ch <- NewErrorResponse(req.ID, fmt.Errorf("error while setting option: %s", err))
 			return
 		}
-		ch <- NewResponse(req.ID, tid)
+		ch <- NewOkResponse(req.ID, fmt.Sprintf("option %s set successfully to %v", setParams.Name, setParams.Value))
 	default:
 		ch <- NewErrorResponse(req.ID, fmt.Errorf("unknwon action %s/%s", req.Object, req.Action))
 		logger.Debug("Request for unknown action received", "submodule", "hub", "object", req.Object, "action", req.Action)
 	}
 }
 
-var _ hubObject = new(trackItemObject)
+var _ hubObject = new(optionObject)
 
 func init() {
-	hub.objects["trackItem"] = new(trackItemObject)
+	hub.objects["option"] = new(optionObject)
 }

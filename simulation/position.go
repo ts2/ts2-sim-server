@@ -52,7 +52,7 @@ func (pos Position) IsValid() bool {
 
 // IsOut is true if this position is out of the scene and moving forward
 func (pos Position) IsOut() bool {
-	if pos.TrackItem.Type() == endItem && pos.PreviousItem != nil {
+	if pos.TrackItem.Type() == TypeEnd && pos.PreviousItem != nil {
 		return true
 	}
 	return false

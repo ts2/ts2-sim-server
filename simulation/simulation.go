@@ -32,7 +32,10 @@ import (
 
 const timeStep = 500 * time.Millisecond
 
-var logger log.Logger
+var (
+	logger         log.Logger
+	routesManagers []RoutesManager
+)
 
 // InitializeLogger creates the logger for the simulation module
 func InitializeLogger(parentLogger log.Logger) {
@@ -92,8 +95,8 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 			if errconv != nil {
 				return fmt.Errorf("unable to convert %s", errconv)
 			}
-			ti.setSimulation(sim)
-			ti.setID(tiId)
+			ti.underlying().simulation = sim
+			ti.underlying().tsId = tiId
 			sim.TrackItems[tiId] = ti
 			return nil
 		}
@@ -140,12 +143,12 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 	sim.Routes = make(map[int]*Route)
 	for num, route := range rawSim.Routes {
 		route.setSimulation(sim)
-		route.initialize()
 		routeNum, errRoute := strconv.Atoi(num)
 		if errRoute != nil {
 			return fmt.Errorf("routeNum : `%s` is invalid", num)
 		}
 		sim.Routes[routeNum] = route
+		route.initialize(routeNum)
 	}
 	sim.TrainTypes = rawSim.TrainTypes
 	for _, tt := range sim.TrainTypes {
@@ -207,7 +210,7 @@ func (sim *Simulation) MarshalJSON() ([]byte, error) {
 		tkis[fmt.Sprintf("%d", k)] = v
 	}
 	for _, v := range sim.Places {
-		tkis[fmt.Sprintf("%d", v.TiID())] = v
+		tkis[fmt.Sprintf("%d", v.ID())] = v
 	}
 	res.WriteString(`,
 	"trackItems": `)
@@ -282,24 +285,33 @@ func (sim *Simulation) increaseTime(step time.Duration) {
 func (sim *Simulation) checkTrackItemsLinks() error {
 	for _, ti := range sim.TrackItems {
 		switch ti.Type() {
-		case place, platformItem, textItem:
+		case TypePlace, TypePlatform, TypeText:
 			continue
-		case pointsItem:
+		case TypePoints:
 			pi := ti.(*PointsItem)
 			if pi.ReverseItem() == nil {
 				return ItemNotLinkedAtError{item: ti, pt: pi.Reverse()}
 			}
 			fallthrough
-		case lineItem, invisibleLinkItem, signalItem:
+		case TypeLine, TypeInvisibleLink, TypeSignal:
 			if ti.NextItem() == nil {
 				return ItemNotLinkedAtError{item: ti, pt: ti.End()}
 			}
 			fallthrough
-		case endItem:
+		case TypeEnd:
 			if ti.PreviousItem() == nil {
 				return ItemNotLinkedAtError{item: ti, pt: ti.Origin()}
 			}
 		}
 	}
 	return nil
+}
+
+// RegisterRoutesManager registers the given route manager in the simulation.
+//
+// When several routes managers are registered, all of them are called in turn.
+// If all of them respond true, then the response is true. If one responds false,
+// the response is false.
+func RegisterRoutesManager(rm RoutesManager) {
+	routesManagers = append(routesManagers, rm)
 }

@@ -19,7 +19,6 @@
 		"defaultMinimumStopTime": [[20,40,90],[40,120,10]],
 		"defaultSignalVisibility": 100,
 		"description": "This is a developers test/demo simulation!",
-        "managerToken": "manager-secret",
 		"timeFactor": 5,
 		"title": "TS2 - Demo & Test Sim",
 		"trackCircuitBased": false,

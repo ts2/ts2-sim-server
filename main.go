@@ -16,7 +16,6 @@
 // Free Software Foundation, Inc.,
 // 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-// Main ts2-sim-server command
 package main
 
 import (
@@ -27,6 +26,7 @@ import (
 	"os"
 	"os/signal"
 
+	_ "github.com/ts2/ts2-sim-server/plugins/routes"
 	"github.com/ts2/ts2-sim-server/server"
 	"github.com/ts2/ts2-sim-server/simulation"
 	log "gopkg.in/inconshreveable/log15.v2"
