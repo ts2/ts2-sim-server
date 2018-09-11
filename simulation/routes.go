@@ -84,7 +84,7 @@ func (r *Route) Activate(persistent bool) error {
 		}
 	}
 	for _, pos := range r.Positions {
-		pos.TrackItem.underlying().setActiveRoute(r, pos.PreviousItem)
+		pos.TrackItem().underlying().setActiveRoute(r, pos.PreviousItem())
 	}
 	r.EndSignal().previousActiveRoute = r
 	r.BeginSignal().nextActiveRoute = r
@@ -99,6 +99,7 @@ func (r *Route) Activate(persistent bool) error {
 	return nil
 }
 
+// Deactivate the given route. If the route cannot be Deactivated, an error is returned.
 func (r *Route) Deactivate() error {
 	for _, rm := range routesManagers {
 		if !rm.CanDeactivate(r) {
@@ -108,10 +109,10 @@ func (r *Route) Deactivate() error {
 	r.BeginSignal().resetNextActiveRoute(r)
 	r.EndSignal().resetPreviousActiveRoute(nil)
 	for _, pos := range r.Positions {
-		if pos.TrackItem.ActiveRoute() != nil && pos.TrackItem.ActiveRoute().ID != r.ID {
+		if pos.TrackItem().ActiveRoute() != nil && pos.TrackItem().ActiveRoute().ID != r.ID {
 			continue
 		}
-		pos.TrackItem.underlying().setActiveRoute(nil, nil)
+		pos.TrackItem().underlying().setActiveRoute(nil, nil)
 	}
 	r.State = Deactivated
 	r.simulation.sendEvent(&Event{
@@ -135,15 +136,19 @@ func (r *Route) initialize(routeNum int) error {
 	r.State = r.InitialState
 
 	// Populate Positions slice
-	pos := Position{r.BeginSignal(), r.BeginSignal().PreviousItem(), 0}
+	pos := Position{
+		TrackItemID:    r.BeginSignal().ID(),
+		PreviousItemID: r.BeginSignal().PreviousItem().ID(),
+		PositionOnTI:   0,
+		simulation:     r.simulation}
 	for !pos.IsOut() {
 		r.Positions = append(r.Positions, pos)
-		if pos.TrackItem == r.EndSignal() {
+		if pos.TrackItem().ID() == r.EndSignal().ID() {
 			return nil
 		}
-		dir, ok := r.Directions[pos.TrackItem.ID()]
+		dir, ok := r.Directions[pos.TrackItem().ID()]
 		if !ok {
-			dir = PointDirection(normal)
+			dir = PointDirection(DirectionNormal)
 		}
 		pos = pos.Next(dir)
 	}

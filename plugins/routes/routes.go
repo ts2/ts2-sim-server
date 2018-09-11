@@ -31,14 +31,14 @@ type StandardManager struct{}
 func (sm StandardManager) CanActivate(r *simulation.Route) bool {
 	var flag bool
 	for _, pos := range r.Positions {
-		if pos.TrackItem.ID() == r.BeginSignalId || pos.TrackItem.ID() == r.EndSignalId {
+		if pos.TrackItem().ID() == r.BeginSignalId || pos.TrackItem().ID() == r.EndSignalId {
 			continue
 		}
-		if pos.TrackItem.ConflictItem() != nil && pos.TrackItem.ConflictItem().ActiveRoute() != nil {
+		if pos.TrackItem().ConflictItem() != nil && pos.TrackItem().ConflictItem().ActiveRoute() != nil {
 			// Our trackItem has a conflicting item with an active route
 			return false
 		}
-		if pos.TrackItem.ActiveRoute() == nil {
+		if pos.TrackItem().ActiveRoute() == nil {
 			if flag {
 				// We had a route with same direction but does not end with the same signal
 				return false
@@ -46,16 +46,16 @@ func (sm StandardManager) CanActivate(r *simulation.Route) bool {
 			continue
 		}
 		// The track item has an active route already
-		if pos.TrackItem.Type() == simulation.TypePoints && !flag {
+		if pos.TrackItem().Type() == simulation.TypePoints && !flag {
 			// The trackItem is a pointsItem and it is the first
 			// trackItem with active route that we meet
 			return false
 		}
-		if pos.PreviousItem.ID() != pos.TrackItem.ActiveRoutePreviousItem().ID() {
+		if pos.PreviousItem().ID() != pos.TrackItem().ActiveRoutePreviousItem().ID() {
 			// The direction of route r is different from that of the active route of the TI
 			return false
 		}
-		if pos.TrackItem.ActiveRoute().ID == r.ID {
+		if pos.TrackItem().ActiveRoute().ID == r.ID {
 			// Always allow to setup the same route again
 			return true
 		}
@@ -73,6 +73,7 @@ func (sm StandardManager) CanDeactivate(r *simulation.Route) bool {
 	return true
 }
 
+// Name of this manager
 func (sm StandardManager) Name() string {
 	return "Standard Manager"
 }

@@ -19,7 +19,7 @@
 package simulation
 
 import (
-	//	"encoding/json"
+	"errors"
 	"fmt"
 )
 
@@ -34,68 +34,148 @@ import (
 //  - one starting from one end of the TrackItem.
 //  - the other starting from the other end.
 //
-//You can get the other Position by calling Reversed()
+// You can get the other Position by calling Reversed()
 type Position struct {
-	TrackItem    TrackItem
-	PreviousItem TrackItem
-	PositionOnTI float64
+	simulation *Simulation
+
+	TrackItemID    int     `json:"trackItem"`
+	PreviousItemID int     `json:"previousTI"`
+	PositionOnTI   float64 `json:"positionOnTI"`
+}
+
+// TrackItem of this Position
+func (pos Position) TrackItem() TrackItem {
+	return pos.simulation.TrackItems[pos.TrackItemID]
+}
+
+// PreviousItem of this Position
+func (pos Position) PreviousItem() TrackItem {
+	return pos.simulation.TrackItems[pos.PreviousItemID]
 }
 
 // IsValid returns true if this is a valid position (i.e. items are connected, and
 // distance is positive), false otherwise.
 func (pos Position) IsValid() bool {
-	if !pos.TrackItem.IsConnected(pos.PreviousItem) {
+	if pos.IsNull() {
+		// A null position with simulation is valid
+		return true
+	}
+	if pos.simulation == nil {
+		return false
+	}
+	if pos.TrackItemID == 0 {
+		return false
+	}
+	if pos.PositionOnTI > pos.TrackItem().RealLength() || pos.PositionOnTI < 0 {
+		return false
+	}
+	if !pos.TrackItem().IsConnected(pos.PreviousItem()) {
 		return true
 	}
 	return false
+}
+
+// IsNull returns true if this Position is null.
+func (pos Position) IsNull() bool {
+	return pos.TrackItemID == 0 &&
+		pos.PreviousItemID == 0 &&
+		pos.PositionOnTI == 0
 }
 
 // IsOut is true if this position is out of the scene and moving forward
 func (pos Position) IsOut() bool {
-	if pos.TrackItem.Type() == TypeEnd && pos.PreviousItem != nil {
+	if pos.TrackItem().Type() == TypeEnd && pos.PreviousItem() != nil {
 		return true
 	}
 	return false
 }
 
-// Next is the Position on the next TrackItem with regard to this Position
+// Next is the first Position on the next TrackItem with regard to this Position
 func (pos Position) Next(dir PointDirection) Position {
-	nextTi, _ := pos.TrackItem.FollowingItem(pos.PreviousItem, dir)
-	return Position{nextTi, pos.TrackItem, 0}
+	nextTi, _ := pos.TrackItem().FollowingItem(pos.PreviousItem(), dir)
+	return Position{
+		simulation:     pos.simulation,
+		TrackItemID:    nextTi.ID(),
+		PreviousItemID: pos.TrackItemID,
+		PositionOnTI:   0,
+	}
 }
 
 // Reversed returns the position that is at the same position but in the
 // opposite direction.
 func (pos Position) Reversed() Position {
-	ti := pos.TrackItem
-	pti := pos.PreviousItem
+	ti := pos.TrackItem()
+	pti := pos.PreviousItem()
 	nti, _ := ti.FollowingItem(pti, 0)
-	distance := pos.TrackItem.RealLength() - pos.PositionOnTI
-	return Position{ti, nti, distance}
+	distance := pos.TrackItem().RealLength() - pos.PositionOnTI
+	return Position{
+		simulation:     pos.simulation,
+		TrackItemID:    ti.ID(),
+		PreviousItemID: nti.ID(),
+		PositionOnTI:   distance,
+	}
 }
 
-// NewPosition returns a pointer to a Position defined by the given Simulation
-// pointer and PositionRepr.
-func NewPosition(sim *Simulation, posRepr PositionRepr) (*Position, error) {
-	ti, ok := sim.TrackItems[posRepr.TrackItemId]
-	if !ok {
-		return nil, fmt.Errorf("unknown item with ID: %d", posRepr.TrackItemId)
-	}
-	pti, ok := sim.TrackItems[posRepr.PreviousItemId]
-	if !ok {
-		return nil, fmt.Errorf("unknown item with ID: %d", posRepr.PreviousItemId)
-	}
-	newPos := Position{ti, pti, posRepr.PositionOnTi}
-	if !newPos.IsValid() {
-		return nil, fmt.Errorf("position (%d, %d, %f) is not valid", posRepr.TrackItemId, posRepr.PreviousItemId, posRepr.PositionOnTi)
-	}
-	return &newPos, nil
+// Equals returns true if this position is the same as pos2.
+func (pos Position) Equals(pos2 Position) bool {
+	return pos.TrackItemID == pos2.TrackItemID &&
+		pos.PreviousItemID == pos2.PreviousItemID &&
+		pos.PositionOnTI == pos2.PositionOnTI
 }
 
-// PositionRepr is a representation of a Position that is independant of a Simulation
-// Object.
-type PositionRepr struct {
-	TrackItemId    int     `json:"trackItem"`
-	PreviousItemId int     `json:"previousTI"`
-	PositionOnTi   float64 `json:"positionOnTI"`
+// Add returns the Position that is length ahead of this position.
+// If length is negative, find the position backwards.
+func (pos Position) Add(length float64) Position {
+	if pos.PositionOnTI+length < pos.TrackItem().RealLength() {
+		return Position{
+			simulation:     pos.simulation,
+			TrackItemID:    pos.TrackItemID,
+			PreviousItemID: pos.PreviousItemID,
+			PositionOnTI:   pos.PositionOnTI + length,
+		}
+	}
+	return pos.Next(DirectionCurrent).Add(length + pos.PositionOnTI - pos.TrackItem().RealLength())
+}
+
+// Sub returns the distance between orig and this position.
+//
+// It returns an error if both pos is not ahead of orig,
+// and in the same direction
+func (pos Position) Sub(orig Position) (float64, error) {
+	if orig.TrackItemID == pos.TrackItemID {
+		if orig.PreviousItemID != pos.TrackItemID {
+			return 0, errors.New("position is not in the same direction as orig")
+		}
+		if orig.PositionOnTI > pos.PositionOnTI {
+			return 0, errors.New("position is not ahead of orig")
+		}
+		return pos.PositionOnTI - orig.PositionOnTI, nil
+	}
+	d, err := pos.Sub(orig.Next(DirectionCurrent))
+	if err != nil {
+		return 0, nil
+	}
+	return d + orig.TrackItem().RealLength() - orig.PositionOnTI, nil
+}
+
+// trackItemsToPosition returns a list of all the trackItems between this position and
+// position p including the trackItem of this position and the trackItem of position p
+func (pos Position) trackItemsToPosition(p Position) []TrackItem {
+	var res []TrackItem
+	for cur := pos; cur.TrackItemID != p.TrackItemID && !cur.IsOut(); cur = cur.Next(DirectionCurrent) {
+		res = append(res, cur.TrackItem())
+	}
+	res = append(res, p.TrackItem())
+	return res
+}
+
+// String method for the Position type
+func (pos Position) String() string {
+	if pos.IsNull() {
+		return "<Null Position>"
+	}
+	if pos.IsValid() {
+		return fmt.Sprintf("(%d, %d, %0.2f)", pos.TrackItemID, pos.PreviousItemID, pos.PositionOnTI)
+	}
+	return fmt.Sprintf("<Invalid Position: (%v) %d, %d, %0.2f>", pos.simulation != nil, pos.TrackItemID, pos.PreviousItemID, pos.PositionOnTI)
 }

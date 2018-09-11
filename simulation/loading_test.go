@@ -281,7 +281,7 @@ func TestLoadTrains(t *testing.T) {
 	assertEqual(t, tr.InitialSpeed, 5.0, "Train1/InitialSpeed")
 	assertEqual(t, tr.Speed, 5.0, "Train1/Speed")
 	assertEqual(t, tr.NextPlaceIndex, 0, "Train1/NextPlaceIndex")
-	assertEqual(t, tr.Status, inactive, "Train1/Status")
+	assertEqual(t, tr.Status, Inactive, "Train1/Status")
 	assertEqual(t, tr.StoppedTime, 0, "Train1/StoppedTime")
 }
 
@@ -312,7 +312,7 @@ func TestLoadSignalLibrary(t *testing.T) {
 	assertEqual(t, bufferAspect.Shapes, [6]signalShape{noneShape, noneShape, noneShape, noneShape, noneShape, noneShape}, "SignalLibrary/Aspects/Shapes")
 	assertEqual(t, bufferAspect.ShapesColors, [6]Color{black, black, black, black, black, black}, "SignalLibrary/Aspects/Colors")
 	assertEqual(t, len(bufferAspect.Actions), 1, "SignalLibrary/Aspects: Not all actions loaded")
-	assertEqual(t, bufferAspect.Actions[0].Target, beforeThisSignal, "SignalLibrary/Aspects/Actions/Target")
+	assertEqual(t, bufferAspect.Actions[0].Target, BeforeThisSignal, "SignalLibrary/Aspects/Actions/Target")
 	assertEqual(t, bufferAspect.Actions[0].Speed, 0.0, "SignalLibrary/Aspects/Actions/Speed")
 	dangerAspect, ok := sim.SignalLib.Aspects["UK_DANGER"]
 	if !ok {
@@ -326,6 +326,6 @@ func TestLoadSignalLibrary(t *testing.T) {
 	if !ok {
 		t.Errorf("SignalLibrary: no UK_CAUTION in aspects")
 	}
-	assertEqual(t, cautionAspect.Actions[0].Target, beforeNextSignal, "SignalLibrary/Aspects/Actions/Target")
+	assertEqual(t, cautionAspect.Actions[0].Target, BeforeNextSignal, "SignalLibrary/Aspects/Actions/Target")
 	assertEqual(t, cautionAspect.Actions[0].Speed, 0.0, "SignalLibrary/Aspects/Actions/Speed")
 }

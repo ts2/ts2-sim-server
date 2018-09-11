@@ -33,8 +33,10 @@ import (
 const timeStep = 500 * time.Millisecond
 
 var (
-	logger         log.Logger
-	routesManagers []RoutesManager
+	logger              log.Logger
+	routesManagers      []RoutesManager
+	trainsManagers      map[string]TrainsManager
+	defaultTrainManager TrainsManager
 )
 
 // InitializeLogger creates the logger for the simulation module
@@ -159,9 +161,6 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 		s.setSimulation(sim)
 	}
 	sim.Trains = rawSim.Trains
-	for _, t := range sim.Trains {
-		t.setSimulation(sim)
-	}
 	sort.Slice(sim.Trains, func(i, j int) bool {
 		switch {
 		case len(sim.Trains[i].Service().Lines) == 0 && len(sim.Trains[j].Service().Lines) == 0:
@@ -175,11 +174,15 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 				sim.Trains[j].Service().Lines[0].ScheduledDepartureTime) < 0
 		}
 	})
+	for i, t := range sim.Trains {
+		t.setSimulation(sim, i)
+	}
 	sim.MessageLogger = rawSim.MessageLogger
 	sim.MessageLogger.setSimulation(sim)
 	return nil
 }
 
+// MarshalJSON for the Simulation type
 func (sim *Simulation) MarshalJSON() ([]byte, error) {
 	var res bytes.Buffer
 	res.WriteString(`{
@@ -258,6 +261,7 @@ func (sim *Simulation) run() {
 		case <-sim.clockTicker.C:
 			sim.increaseTime(timeStep)
 			sim.sendEvent(&Event{ClockEvent, sim.Options.CurrentTime})
+			sim.updateTrains()
 		}
 	}
 }
@@ -307,6 +311,17 @@ func (sim *Simulation) checkTrackItemsLinks() error {
 	return nil
 }
 
+// updateTrains update all trains information such as status, position, speed, etc.
+func (sim *Simulation) updateTrains() {
+	for _, train := range sim.Trains {
+		if !train.IsActive() {
+			continue
+		}
+		train.activate(sim.Options.CurrentTime)
+		train.advance(timeStep)
+	}
+}
+
 // RegisterRoutesManager registers the given route manager in the simulation.
 //
 // When several routes managers are registered, all of them are called in turn.
@@ -314,4 +329,17 @@ func (sim *Simulation) checkTrackItemsLinks() error {
 // the response is false.
 func RegisterRoutesManager(rm RoutesManager) {
 	routesManagers = append(routesManagers, rm)
+}
+
+// RegisterTrainsManager registers the given trains manager in the simulation.
+//
+// There can be several trains managers registered, but each train will use only one.
+// If a train has not been explicitly set to a trains manager, it will use the default
+// one. Default trains manager is the first registered manager.
+func RegisterTrainsManager(tm TrainsManager) {
+	if trainsManagers == nil {
+		trainsManagers = make(map[string]TrainsManager)
+		defaultTrainManager = tm
+	}
+	trainsManagers[tm.Name()] = tm
 }

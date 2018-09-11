@@ -19,14 +19,17 @@
 package simulation
 
 // PointDirection are constants that represent the "physical state" of a PointsItem
-type PointDirection uint8
+type PointDirection int8
 
 const (
-	// normal : Point is set at normal
-	normal PointDirection = 0
+	// DirectionCurrent : special position used in functions so as not to change points position
+	DirectionCurrent PointDirection = -1
 
-	// reversed : Point is set for cross over
-	reversed PointDirection = 1
+	// DirectionNormal : Point is set at normal
+	DirectionNormal PointDirection = 0
+
+	// DirectionReversed : Point is set for cross over
+	DirectionReversed PointDirection = 1
 )
 
 // A PointsItem is a three-way railway junction (known as Point, Switch, Turnout..)
@@ -120,7 +123,7 @@ func (pi *PointsItem) FollowingItem(precedingItem TrackItem, dir PointDirection)
 		return pi.PreviousItem(), nil
 	}
 	if precedingItem == pi.PreviousItem() {
-		if dir == reversed {
+		if dir == DirectionReversed {
 			return pi.ReverseItem(), nil
 		} else {
 			return pi.NextItem(), nil

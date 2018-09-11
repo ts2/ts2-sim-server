@@ -24,10 +24,10 @@ import (
 )
 
 // Equals is a comparison function for DelayGenerator objects.
-func (a DelayGenerator) Equals(b DelayGenerator) bool {
-	for i := 0; i < len(a.data); i++ {
+func (dg DelayGenerator) Equals(b DelayGenerator) bool {
+	for i := 0; i < len(dg.data); i++ {
 		for j := 0; j < 3; j++ {
-			if a.data[i][j] != b.data[i][j] {
+			if dg.data[i][j] != b.data[i][j] {
 				return false
 			}
 		}

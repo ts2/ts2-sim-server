@@ -21,11 +21,16 @@ package simulation
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"sync"
 	"time"
 )
 
-type delayTuplet [3]int
+type delayTuplet struct {
+	low  int
+	high int
+	prob int
+}
 
 // DelayGenerator is a probability distribution for a duration in seconds
 // and is used to generate random delays for trains.
@@ -43,20 +48,66 @@ type DelayGenerator struct {
 	data []delayTuplet
 }
 
+// UnmarshalJSON method for the DelayGenerator type
 func (dg *DelayGenerator) UnmarshalJSON(data []byte) error {
-	var field []delayTuplet
-	if err := json.Unmarshal(data, &field); err != nil {
-		// Failed with delayTuplet[], so try a single value eg 0
+	var field [][3]int
+	err := json.Unmarshal(data, &field)
+	if err != nil {
+		// Failed with [][3]int, so try a single value eg 0
 		var single int
 		if err := json.Unmarshal(data, &single); err != nil {
 			return fmt.Errorf("DelayGenerator.UnmarshalJSON(): Unparsable JSON: %s", data)
 		}
-		dg.data = []delayTuplet{{single, single, 100}}
-
-	} else {
-		dg.data = field
+		dg.data = []delayTuplet{{low: single, high: single, prob: 100}}
+		return nil
+	}
+	for _, v := range field {
+		dg.data = append(dg.data, delayTuplet{
+			low:  v[0],
+			high: v[1],
+			prob: v[2],
+		})
 	}
 	return nil
+}
+
+// MarshalJSON for the DelayGenerator type
+func (dg DelayGenerator) MarshalJSON() ([]byte, error) {
+	data := make([][3]int, len(dg.data))
+	for i, d := range dg.data {
+		data[i] = [3]int{
+			0: d.low,
+			1: d.high,
+			2: d.prob,
+		}
+	}
+	return json.Marshal(data)
+}
+
+// Yield a delay from this DelayGenerator
+func (dg DelayGenerator) Yield() time.Duration {
+	probas := []int{0}
+	for _, p := range dg.data {
+		probas = append(probas, p.high)
+	}
+
+	// First determine our segment
+	r0 := rand.Intn(100)
+	seg := 0
+	for i := range probas {
+		if probas[i] < r0 && r0 < probas[i+1] {
+			break
+		}
+		seg += 1
+	}
+	if seg >= len(probas) {
+		// Overflow, we return the max value
+		return time.Duration(dg.data[len(dg.data)-1].high) * time.Second
+	}
+
+	// Then pick up a number inside our segment
+	r1 := rand.Intn(1)
+	return time.Duration(r1*(dg.data[seg].high-dg.data[seg].low)+dg.data[seg].low) * time.Second
 }
 
 // Time type for the simulation (HH:MM:SS).
@@ -107,6 +158,16 @@ func (h Time) Add(duration time.Duration) Time {
 // To compute t-d for a duration d, use t.Add(-d).
 func (h Time) Sub(u Time) time.Duration {
 	return h.Time.Sub(u.Time)
+}
+
+// Before reports whether the time instant h is before u.
+func (h Time) Before(u Time) bool {
+	return h.Time.Before(u.Time)
+}
+
+// After reports whether the time instant h is after u.
+func (h Time) After(u Time) bool {
+	return h.Time.After(u.Time)
 }
 
 var _ json.Marshaler = Time{}

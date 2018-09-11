@@ -163,6 +163,16 @@
                 input.focus();
                 return false;
             };
+            document.getElementById("trainListTmpl").onclick = function (evt) {
+                input.value = '{"object": "train", "action": "list"}';
+                input.focus();
+                return false;
+            };
+            document.getElementById("trainShowTmpl").onclick = function (evt) {
+                input.value = '{"object": "train", "action": "show", "params": {"ids": [1]}}';
+                input.focus();
+                return false;
+            };
             showConnected(false);
         });
     </script>
@@ -262,6 +272,15 @@
                                 <div class="dropdown-divider"></div>
                                 <a id="routeActivateTmpl" class="dropdown-item" href="#">Activate</a>
                                 <a id="routeDeactivateTmpl" class="dropdown-item" href="#">Deactivate</a>
+                            </div>
+                        </div>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-default dropdown-toggle"
+                                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Trains
+                            </button>
+                            <div class="dropdown-menu">
+                                <a id="trainListTmpl" class="dropdown-item" href="#">List</a>
+                                <a id="trainShowTmpl" class="dropdown-item" href="#">Show</a>
                             </div>
                         </div>
                         <div class="btn-group">

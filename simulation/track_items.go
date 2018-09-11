@@ -27,6 +27,9 @@ import (
 // at maximum simulation speed.
 const bigFloat = 1000000000.0
 
+// NoMorePlace is a large float used to represent a non existent service line index
+const NoMorePlace = 9999
+
 type TrackItemType string
 
 const (
@@ -144,6 +147,19 @@ type TrackItem interface {
 
 	// ActiveRoutePreviousItem returns the previous item in the active route direction
 	ActiveRoutePreviousItem() TrackItem
+
+	// trainHeadActions performs the actions to be done when a train head reaches this TrackItem
+	trainHeadActions(*Train)
+
+	// trainTailActions performs the actions to be done when a train tail reaches this TrackItem
+	trainTailActions(*Train)
+
+	// resetActiveRoute resets route information on this item.
+	resetActiveRoute()
+
+	// IsOnPosition returns true if this track item is the track item of the given position.
+	// When applicable, also checks if the item is in the same direction as the position.
+	IsOnPosition(Position) bool
 
 	// underlying returns the underlying trackStruct object
 	underlying() *trackStruct
@@ -265,6 +281,42 @@ func (t *trackStruct) ActiveRoute() *Route {
 // ActiveRoutePreviousItem returns the previous item in the active route direction
 func (t *trackStruct) ActiveRoutePreviousItem() TrackItem {
 	return t.arPreviousItem
+}
+
+// trainHeadActions performs the actions to be done when a train head reaches this TrackItem
+func (t *trackStruct) trainHeadActions(train *Train) {}
+
+// trainTailActions performs the actions to be done when a train tail reaches this TrackItem
+//
+// Implementation here handles automatic release of the route if applicable.
+func (t *trackStruct) trainTailActions(train *Train) {
+	if t.activeRoute == nil {
+		return
+	}
+	if t.activeRoute.State != Persistent {
+		return
+	}
+	beginSignalNextRoute := t.activeRoute.BeginSignal().nextActiveRoute
+	if beginSignalNextRoute != nil && beginSignalNextRoute.ID == t.activeRoute.ID {
+		// same route has been set again
+		return
+	}
+	if t.ActiveRoutePreviousItem().ActiveRoute() == nil || t.ActiveRoutePreviousItem().ActiveRoute().ID != t.activeRoute.ID {
+		// previous item has been already set to a new route which is not ours
+		return
+	}
+	t.ActiveRoutePreviousItem().resetActiveRoute()
+}
+
+// resetActiveRoute resets route information on this item.
+func (t *trackStruct) resetActiveRoute() {
+	t.activeRoute = nil
+	t.arPreviousItem = nil
+}
+
+// IsOnPosition returns true if this track item is the track item of the given position.
+func (t *trackStruct) IsOnPosition(pos Position) bool {
+	return pos.TrackItemID == t.ID()
 }
 
 var _ TrackItem = new(trackStruct)

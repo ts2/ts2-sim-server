@@ -59,10 +59,11 @@ const (
 // applied.
 type ActionTarget uint8
 
+// Possible action targets for trains to apply signal actions
 const (
-	//asap             ActionTarget = 0
-	beforeThisSignal ActionTarget = 1
-	beforeNextSignal ActionTarget = 2
+	ASAP             ActionTarget = 0
+	BeforeThisSignal ActionTarget = 1
+	BeforeNextSignal ActionTarget = 2
 )
 
 // SignalAction defines an action that must be performed by a train when seeing a
@@ -95,6 +96,22 @@ type SignalAspect struct {
 	Actions      []SignalAction  `json:"actions"`
 }
 
+// MeansProceed returns true if this aspect is a proceed aspect, returns false if
+// this aspect requires to stop
+func (sa *SignalAspect) MeansProceed() bool {
+	if len(sa.Actions) == 0 {
+		// No actions means the driver discards the signal
+		return true
+	}
+	if sa.Actions[0].Speed != 0 {
+		return true
+	}
+	if sa.Actions[0].Target == BeforeNextSignal {
+		return true
+	}
+	return false
+}
+
 // A SignalState is an aspect of a signal with a set of conditions to display this
 // aspect.
 type SignalState struct {
@@ -118,9 +135,11 @@ type SignalItem struct {
 	Yb             float64 `json:"yn"`
 	SignalTypeCode string  `json:"signalType"`
 	Reverse        bool    `json:"reverse"`
+	TrainID        int     `json:"trainID"`
 
 	previousActiveRoute *Route
 	nextActiveRoute     *Route
+	activeAspect        *SignalAspect
 }
 
 // Type returns the name of the type of this item
@@ -142,6 +161,11 @@ func (si *SignalItem) Reversed() bool {
 // displayed by clients. Berths are where train descriptors are displayed.
 func (si *SignalItem) BerthOrigin() Point {
 	return Point{si.Xb, si.Yb}
+}
+
+// ActiveAspect returns the current aspect of the signal
+func (si *SignalItem) ActiveAspect() *SignalAspect {
+	return si.activeAspect
 }
 
 // setActiveRoute sets the given route as active on this SignalItem.
