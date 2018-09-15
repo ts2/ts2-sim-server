@@ -59,6 +59,9 @@ const (
 // It is higher than the highest possible train speed ever.
 const VeryHighSpeed = 999
 
+// minRunningSpeed is the minimum speed at which a train is considered running
+const minRunningSpeed float64 = 0.25
+
 // Train is a stock of `TrainType` running on a track at a certain speed and to which
 // is assigned a `Service`.
 type Train struct {
@@ -192,11 +195,17 @@ func (t *Train) executeActions(advanceLength float64) {
 	}
 }
 
-// nextSignalPosition returns the position of the next signal in front of this train
+// NextSignalPosition returns the position of the next signal in front of this train
 //
 // Returns a null position if there is no signal ahead.
-func (t *Train) nextSignalPosition() Position {
-	pos := t.TrainHead
+func (t *Train) NextSignalPosition() Position {
+	return NextSignalPosition(t.TrainHead)
+}
+
+// NextSignalPosition returns he position of the next signal in front of the given position.
+//
+// Returns a null position if there is no signal ahead.
+func NextSignalPosition(pos Position) Position {
 	if pos.TrackItem().Type() == TypeEnd {
 		return Position{}
 	}
@@ -208,17 +217,18 @@ func (t *Train) nextSignalPosition() Position {
 		cur = cur.Next(DirectionCurrent)
 	}
 	return Position{}
+
 }
 
 // findNextSignal returns the next signal in front of this Train
 func (t *Train) findNextSignal() *SignalItem {
-	return t.nextSignalPosition().TrackItem().(*SignalItem)
+	return t.NextSignalPosition().TrackItem().(*SignalItem)
 }
 
 // updateSignalActions updates the applicable signal actions list based on the position
 // of the train and the visible signal.
 func (t *Train) updateSignalActions() {
-	nsp := t.nextSignalPosition()
+	nsp := t.NextSignalPosition()
 	if nsp.Equals(Position{}) {
 		// No more signal ahead
 		t.signalActions = []SignalAction{{
@@ -253,15 +263,14 @@ func (t *Train) updateSignalActions() {
 		}
 	}
 
-	applicableAction := t.signalActions[t.actionIndex]
 	currentTime := t.simulation.Options.CurrentTime
-	if math.Abs(t.Speed-applicableAction.Speed) < 0.1 {
+	if math.Abs(t.Speed-t.ApplicableAction().Speed) < 0.1 {
 		// We have achieved the action's target speed.
 		if t.actionTime.IsZero() {
 			// Start the waiting time
 			t.actionTime = currentTime
 		}
-		if currentTime.After(t.actionTime.Add(applicableAction.Duration)) {
+		if currentTime.After(t.actionTime.Add(t.ApplicableAction().Duration)) {
 			// We have waited enough, so we go to next action if any
 			if len(t.signalActions) > t.actionIndex+1 {
 				t.actionIndex += 1
@@ -330,4 +339,98 @@ func (t *Train) reverse() {
 	if newSignalAhead := t.findNextSignal(); newSignalAhead != nil {
 		newSignalAhead.TrainID = t.ID
 	}
+}
+
+// Shunting returns true if this train is currently shunting.
+func (t *Train) Shunting() bool {
+	return false
+}
+
+// ApplicableAction returns the current signal action that this train is following
+func (t *Train) ApplicableAction() SignalAction {
+	return t.signalActions[t.actionIndex]
+}
+
+// LastSeenSignal returns the last signal seen by the driver. It may still be in front
+// of the train head.
+func (t *Train) LastSeenSignal() *SignalItem {
+	return t.lastSignal
+}
+
+// updateStatus of the train
+func (t *Train) updateStatus(timeElapsed time.Duration) {
+	if !t.IsActive() {
+		return
+	}
+	if t.Speed > minRunningSpeed {
+		// Speed is not null, the train is running
+		t.Status = Running
+		return
+	}
+	if t.Service() == nil || t.NextPlaceIndex == NoMorePlace {
+		// Train is stopped but not assigned any service
+		t.Status = Waiting
+		return
+	}
+	// The train is operating on a service that is not over
+	line := t.Service().Lines[t.NextPlaceIndex]
+	thi := t.TrainHead.TrackItem()
+	if thi.Type() != TypeLine || thi.Place() == nil || thi.Place().PlaceCode != line.PlaceCode {
+		// Train is stopped but not assigned any service
+		t.Status = Waiting
+		return
+	}
+	// Train is stopped at the scheduled nextStop place
+	if t.Status == Running {
+		// Train just stopped
+		t.Status = Stopped
+		t.StoppedTime = 0
+		t.simulation.sendEvent(&Event{
+			Name:   TrainStoppedAtStationEvent,
+			Object: t,
+		})
+		return
+	}
+	if t.Status != Stopped {
+		// Typically end of service
+		return
+	}
+	// Train is already stopped at the place
+	if line.ScheduledDepartureTime.Sub(t.simulation.Options.CurrentTime) > 0 ||
+		t.StoppedTime < int(t.minStopTime/time.Second) ||
+		line.ScheduledDepartureTime.IsZero() {
+		// Conditions to depart are not met
+		t.Status = Stopped
+		t.StoppedTime += int(timeElapsed / time.Second)
+		return
+	}
+	// Train departs
+	oldServiceCode := t.ServiceCode
+	t.jumpToNextServiceLine()
+	if oldServiceCode != t.ServiceCode {
+		// The service has changed
+		if t.TrainHead.TrackItem().Place().PlaceCode != t.Service().Lines[t.NextPlaceIndex].PlaceCode {
+			// The first scheduled place of this new service is not here, so we depart
+			t.Status = Running
+			t.simulation.sendEvent(&Event{
+				Name:   TrainDepartedFromStationEvent,
+				Object: t,
+			})
+			return
+		}
+		// This is also the first scheduled place of the new service
+		t.Status = Stopped
+		return
+	}
+	if t.NextPlaceIndex == NoMorePlace {
+		// No other place to call at
+		t.Status = EndOfService
+		return
+	}
+	// There are still places to call at
+	t.Status = Running
+	t.simulation.sendEvent(&Event{
+		Name:   TrainDepartedFromStationEvent,
+		Object: t,
+	})
 }

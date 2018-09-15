@@ -18,9 +18,7 @@
 
 package simulation
 
-import (
-	"fmt"
-)
+import "fmt"
 
 // bigFloat is a large number used for the length of an EndItem. It must be bigger
 // than the maximum distance the fastest train can travel during the game time step
@@ -161,6 +159,11 @@ type TrackItem interface {
 	// When applicable, also checks if the item is in the same direction as the position.
 	IsOnPosition(Position) bool
 
+	// DistanceToTrainEnd returns the distance to the closest end (either train head or
+	// train tail) of the closest train when on pos. If no train is on this item, the
+	// distance will be 0, and the second argument will be false.
+	DistanceToTrainEnd(Position) (float64, bool)
+
 	// underlying returns the underlying trackStruct object
 	underlying() *trackStruct
 }
@@ -169,8 +172,8 @@ type TrackItem interface {
 type trackStruct struct {
 	TiType           string                    `json:"__type__"`
 	TsName           string                    `json:"name"`
-	NextTiId         int                       `json:"nextTiId"`
-	PreviousTiId     int                       `json:"previousTiId"`
+	NextTiID         int                       `json:"nextTiId"`
+	PreviousTiID     int                       `json:"previousTiId"`
 	TsMaxSpeed       float64                   `json:"maxSpeed"`
 	TsRealLength     float64                   `json:"realLength"`
 	X                float64                   `json:"x"`
@@ -185,6 +188,8 @@ type trackStruct struct {
 	arPreviousItem TrackItem
 	selected       bool
 	trains         []*Train
+	trainEndsFW    []float64
+	trainEndsBK    []float64
 }
 
 func (t *trackStruct) ID() int {
@@ -201,11 +206,11 @@ func (t *trackStruct) Name() string {
 }
 
 func (t *trackStruct) NextItem() TrackItem {
-	return t.simulation.TrackItems[t.NextTiId]
+	return t.simulation.TrackItems[t.NextTiID]
 }
 
 func (t *trackStruct) PreviousItem() TrackItem {
-	return t.simulation.TrackItems[t.PreviousTiId]
+	return t.simulation.TrackItems[t.PreviousTiID]
 }
 
 func (t *trackStruct) MaxSpeed() float64 {
@@ -317,6 +322,34 @@ func (t *trackStruct) resetActiveRoute() {
 // IsOnPosition returns true if this track item is the track item of the given position.
 func (t *trackStruct) IsOnPosition(pos Position) bool {
 	return pos.TrackItemID == t.ID()
+}
+
+// DistanceToTrainEnd returns the distance to the closest end (either train head or
+// train tail) of the closest train when on pos. If no train is on this item, the
+// distance will be 0, and the second argument will be false.
+func (t *trackStruct) DistanceToTrainEnd(pos Position) (float64, bool) {
+	var (
+		minDist float64
+		mdSet   bool
+	)
+	if pos.PreviousItemID == t.PreviousTiID {
+		for _, teb := range t.trainEndsBK {
+			x := teb - pos.PositionOnTI
+			if x > 0 && x < minDist {
+				minDist = x
+				mdSet = true
+			}
+		}
+		return minDist, mdSet
+	}
+	for _, tef := range t.trainEndsFW {
+		x := t.RealLength() - tef - pos.PositionOnTI
+		if x > 0 && x < minDist {
+			minDist = x
+			mdSet = true
+		}
+	}
+	return minDist, mdSet
 }
 
 var _ TrackItem = new(trackStruct)

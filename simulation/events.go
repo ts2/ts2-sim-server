@@ -28,6 +28,10 @@ const (
 	RouteActivatedEvent EventName = "routeActivated"
 	// A RouteDeactivatedEvent is emitted each time a route is successfully deactivated.
 	RouteDeactivatedEvent EventName = "routeDeactivated"
+	// TrainStoppedAtStationEvent is emitted each time a train arrives and stops at a scheduled station
+	TrainStoppedAtStationEvent EventName = "trainStoppedAtStation"
+	// TrainDepartedFromStationEvent is emitted each time a train departs from a station
+	TrainDepartedFromStationEvent EventName = "trainDepartedFromStation"
 )
 
 // Event is a wrapper around an object that is sent to the server hub to notify clients of a change.
