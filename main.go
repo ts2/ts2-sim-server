@@ -26,7 +26,10 @@ import (
 	"os"
 	"os/signal"
 
+	_ "github.com/ts2/ts2-sim-server/plugins/points"
 	_ "github.com/ts2/ts2-sim-server/plugins/routes"
+	_ "github.com/ts2/ts2-sim-server/plugins/signals"
+	_ "github.com/ts2/ts2-sim-server/plugins/trains"
 	"github.com/ts2/ts2-sim-server/server"
 	"github.com/ts2/ts2-sim-server/simulation"
 	log "gopkg.in/inconshreveable/log15.v2"

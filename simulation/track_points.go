@@ -18,6 +18,20 @@
 
 package simulation
 
+// A PointsItemManager simulates the physical points, in particular delay in points
+// position and breakdowns
+type PointsItemManager interface {
+	// Name returns a description of this PointsItemManager that is used for the UI.
+	Name() string
+	// Direction returns the direction of the points
+	Direction(*PointsItem) PointDirection
+	// SetDirection tries to set the given PointsItem to the given direction
+	//
+	// You should not assume that the direction has been set, since this can be
+	// delayed or failed. Call Direction to check.
+	SetDirection(*PointsItem, PointDirection)
+}
+
 // PointDirection are constants that represent the "physical state" of a PointsItem
 type PointDirection int8
 
@@ -30,6 +44,13 @@ const (
 
 	// DirectionReversed : Point is set for cross over
 	DirectionReversed PointDirection = 1
+
+	// DirectionUnknown : No direction is returned by the points sensors.
+	// Usually means points are moving
+	DirectionUnknown PointDirection = 2
+
+	// DirectionFailed : Points or points sensors have a failure
+	DirectionFailed PointDirection = 3
 )
 
 // A PointsItem is a three-way railway junction (known as Point, Switch, Turnout..)
@@ -58,7 +79,6 @@ type PointsItem struct {
 	Xr          float64 `json:"xr"`
 	Yr          float64 `json:"yr"`
 	ReverseTiId int     `json:"reverseTiId"`
-	reversed    bool
 }
 
 // Type returns the name of the type of this item
@@ -109,7 +129,8 @@ func (pi *PointsItem) ReverseItem() TrackItem {
 // Reversed returns true if the points are in the reversed position, false
 // otherwise
 func (pi *PointsItem) Reversed() bool {
-	return pi.reversed
+	dir := pointsItemManager.Direction(pi)
+	return dir == DirectionReversed
 }
 
 // FollowingItem returns the following TrackItem linked to this one,
@@ -135,10 +156,13 @@ func (pi *PointsItem) FollowingItem(precedingItem TrackItem, dir PointDirection)
 // setActiveRoute sets the given route as active on this PointsItem.
 // previous gives the direction.
 func (pi *PointsItem) setActiveRoute(r *Route, previous TrackItem) {
-	pi.reversed = false
+	dir := DirectionNormal
 	if r.Directions[pi.ID()] != 0 {
-		pi.reversed = true
+		dir = DirectionReversed
 	}
+	pointsItemManager.SetDirection(pi, dir)
+	// TODO We should check here whether the points have failed or not
+	// and delay route activation.
 	pi.trackStruct.setActiveRoute(r, previous)
 }
 

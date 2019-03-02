@@ -18,7 +18,9 @@
 
 package simulation
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // bigFloat is a large number used for the length of an EndItem. It must be bigger
 // than the maximum distance the fastest train can travel during the game time step
@@ -28,8 +30,10 @@ const bigFloat = 1000000000.0
 // NoMorePlace is a large float used to represent a non existent service line index
 const NoMorePlace = 9999
 
+// A TrackItemType holds the type of a track item
 type TrackItemType string
 
+// Available track item types.
 const (
 	TypeTrack         TrackItemType = "TrackItem"
 	TypeLine          TrackItemType = "LineItem"
@@ -42,6 +46,7 @@ const (
 	TypeText          TrackItemType = "TextItem"
 )
 
+// A CustomProperty is a map to hold track item properties that are defined by the user.
 type CustomProperty map[string][]int
 
 // An ItemsNotLinkedError is returned when two TrackItem instances that are assumed
@@ -49,6 +54,14 @@ type CustomProperty map[string][]int
 type ItemsNotLinkedError struct {
 	item1 TrackItem
 	item2 TrackItem
+}
+
+// A LineItemManager manages breakdowns of line track circuits
+type LineItemManager interface {
+	// Name returns a description of this lineItemManager that is used for the UI.
+	Name() string
+	// IsFailed returns true if the given LineItem has a track circuit failure
+	IsFailed(*LineItem) bool
 }
 
 // Error method for the ItemsNotLinkedError
@@ -78,7 +91,6 @@ func (i ItemNotLinkedAtError) Error() string {
 //
 // Every TrackItem has an Origin() Point defined by its X and Y values.
 type TrackItem interface {
-
 	// ID returns the unique ID of this TrackItem, which is the index of this
 	// item in the Simulation's TrackItems map.
 	ID() int
@@ -155,6 +167,9 @@ type TrackItem interface {
 	// resetActiveRoute resets route information on this item.
 	resetActiveRoute()
 
+	// TrainPresent returns true if at least one train is present on this TrackItem
+	TrainPresent() bool
+
 	// IsOnPosition returns true if this track item is the track item of the given position.
 	// When applicable, also checks if the item is in the same direction as the position.
 	IsOnPosition(Position) bool
@@ -163,6 +178,17 @@ type TrackItem interface {
 	// train tail) of the closest train when on pos. If no train is on this item, the
 	// distance will be 0, and the second argument will be false.
 	DistanceToTrainEnd(Position) (float64, bool)
+
+	// Equals returns true if this track item and the given one are the same
+	// (i.e. they have the same ID)
+	Equals(TrackItem) bool
+
+	// addTrigger adds the given function to the list of functions that will be
+	// called when a trains enters this TrackItem.
+	addTrigger(func(TrackItem))
+
+	// Simulation returns the Simulation object that this TrackItem belongs to.
+	Simulation() *Simulation
 
 	// underlying returns the underlying trackStruct object
 	underlying() *trackStruct
@@ -190,8 +216,11 @@ type trackStruct struct {
 	trains         []*Train
 	trainEndsFW    []float64
 	trainEndsBK    []float64
+	triggers       []func(TrackItem)
 }
 
+// ID returns the unique ID of this TrackItem, which is the index of this
+// item in the Simulation's TrackItems map.
 func (t *trackStruct) ID() int {
 	return t.tsId
 }
@@ -201,18 +230,26 @@ func (t *trackStruct) Type() TrackItemType {
 	return TypeTrack
 }
 
+// Name returns the human readable name of this item
 func (t *trackStruct) Name() string {
 	return t.TsName
 }
 
+// NextItem returns the next item of this TrackItem.
+//
+// The next item is usually the item connected to the end of the item that is not the Origin
 func (t *trackStruct) NextItem() TrackItem {
 	return t.simulation.TrackItems[t.NextTiID]
 }
 
+// PreviousItem returns the previous item of this TrackItem.
+//
+// The previous item is usually the item connected to the Origin() of this item.
 func (t *trackStruct) PreviousItem() TrackItem {
 	return t.simulation.TrackItems[t.PreviousTiID]
 }
 
+// MaxSpeed is the maximum allowed speed on this TrackItem in meters per second.
 func (t *trackStruct) MaxSpeed() float64 {
 	if t.TsMaxSpeed == 0 {
 		return t.simulation.Options.DefaultMaxSpeed
@@ -220,22 +257,31 @@ func (t *trackStruct) MaxSpeed() float64 {
 	return t.TsMaxSpeed
 }
 
+// RealLength is the length in meters that this TrackItem has in real life track length
 func (t *trackStruct) RealLength() float64 {
 	return t.TsRealLength
 }
 
+// Origin are the two coordinates (x, y) of the origin point of this TrackItem.
 func (t *trackStruct) Origin() Point {
 	return Point{t.X, t.Y}
 }
 
+// End are the two coordinates (xf, yf) of the end point of this TrackItem.
 func (t *trackStruct) End() Point {
 	return Point{t.X, t.Y}
 }
 
+// ConflictItem returns the conflicting item of this TrackItem. The conflicting
+// item is another item of the scenery on which a route must not be set if
+// one is already active on this TrackItem (and vice-versa). This is
+// particularly the case when two TrackItems cross over with no points.
 func (t *trackStruct) ConflictItem() TrackItem {
 	return t.simulation.TrackItems[t.ConflictTiId]
 }
 
+// Place returns the TrackItem of type Place associated with this item
+// (as defined by PlaceCode).
 func (t *trackStruct) Place() *Place {
 	return t.simulation.Places[t.PlaceCode]
 }
@@ -256,6 +302,8 @@ func (t *trackStruct) FollowingItem(precedingItem TrackItem, dir PointDirection)
 	return nil, ItemsNotLinkedError{t, precedingItem}
 }
 
+// IsConnected returns true if this TrackItem is connected to the given
+// TrackItem, false otherwise
 func (t *trackStruct) IsConnected(oti TrackItem) bool {
 	if TrackItem(t).NextItem() == oti || TrackItem(t).PreviousItem() == t {
 		return true
@@ -263,8 +311,20 @@ func (t *trackStruct) IsConnected(oti TrackItem) bool {
 	return false
 }
 
+// CustomProperty returns the custom property with the given key
 func (t *trackStruct) CustomProperty(key string) CustomProperty {
 	return t.CustomProperties[key]
+}
+
+// addTrigger adds the given function to the list of functions that will be
+// called when a trains enters this TrackItem.
+func (t *trackStruct) addTrigger(trigger func(TrackItem)) {
+	t.triggers = append(t.triggers, trigger)
+}
+
+// Simulation returns the Simulation object that this TrackItem belongs to.
+func (t *trackStruct) Simulation() *Simulation {
+	return t.simulation
 }
 
 func (t *trackStruct) underlying() *trackStruct {
@@ -289,7 +349,11 @@ func (t *trackStruct) ActiveRoutePreviousItem() TrackItem {
 }
 
 // trainHeadActions performs the actions to be done when a train head reaches this TrackItem
-func (t *trackStruct) trainHeadActions(train *Train) {}
+func (t *trackStruct) trainHeadActions(train *Train) {
+	for _, trigger := range t.triggers {
+		trigger(t)
+	}
+}
 
 // trainTailActions performs the actions to be done when a train tail reaches this TrackItem
 //
@@ -301,7 +365,7 @@ func (t *trackStruct) trainTailActions(train *Train) {
 	if t.activeRoute.State != Persistent {
 		return
 	}
-	beginSignalNextRoute := t.activeRoute.BeginSignal().nextActiveRoute
+	beginSignalNextRoute := t.activeRoute.BeginSignal().NextActiveRoute
 	if beginSignalNextRoute != nil && beginSignalNextRoute.ID == t.activeRoute.ID {
 		// same route has been set again
 		return
@@ -311,6 +375,11 @@ func (t *trackStruct) trainTailActions(train *Train) {
 		return
 	}
 	t.ActiveRoutePreviousItem().resetActiveRoute()
+}
+
+// TrainPresent returns true if at least one train is present on this TrackItem
+func (t *trackStruct) TrainPresent() bool {
+	return len(t.trains) > 0
 }
 
 // resetActiveRoute resets route information on this item.
@@ -350,6 +419,12 @@ func (t *trackStruct) DistanceToTrainEnd(pos Position) (float64, bool) {
 		}
 	}
 	return minDist, mdSet
+}
+
+// Equals returns true if this track item and the given one are the same
+// (i.e. they have the same ID)
+func (t *trackStruct) Equals(ti TrackItem) bool {
+	return t.ID() == ti.ID()
 }
 
 var _ TrackItem = new(trackStruct)
@@ -434,6 +509,7 @@ type PlatformItem struct {
 	LineItem
 }
 
+// Type returns the name of the type of this item
 func (pfi *PlatformItem) Type() TrackItemType {
 	return TypePlatform
 }

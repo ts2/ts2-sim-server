@@ -18,6 +18,7 @@
 
 package simulation
 
+// MessageType defines the type of message of the logger
 type MessageType uint8
 
 const (

@@ -112,7 +112,7 @@ func (m StandardManager) Speed(t *simulation.Train, timeElapsed time.Duration) f
 
 // Name of this manager, for use in UI messages
 func (m StandardManager) Name() string {
-	return "StandardManager"
+	return "Standard Manager"
 }
 
 // distanceToNextSignal returns the distance to the next signal by looking forward of

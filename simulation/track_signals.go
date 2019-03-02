@@ -24,6 +24,14 @@ import (
 	"time"
 )
 
+// A SignalItemManager is in charge of computing the aspect of a signal
+type SignalItemManager interface {
+	// Name returns a description of this signalItemManager that is used for the UI.
+	Name() string
+	// GetAspect returns the aspect of the given signal that should be active
+	GetAspect(*SignalItem) *SignalAspect
+}
+
 // signalLineStyle holds the possible representation shapes for the line at the
 // base of the signal.
 type signalLineStyle uint8
@@ -96,6 +104,12 @@ type SignalAspect struct {
 	Actions      []SignalAction  `json:"actions"`
 }
 
+// Equals returns true if this aspect is the same as the other aspect,
+// i.e. they have the same name.
+func (sa *SignalAspect) Equals(other *SignalAspect) bool {
+	return sa.Name == other.Name
+}
+
 // MeansProceed returns true if this aspect is a proceed aspect, returns false if
 // this aspect requires to stop
 func (sa *SignalAspect) MeansProceed() bool {
@@ -112,11 +126,75 @@ func (sa *SignalAspect) MeansProceed() bool {
 	return false
 }
 
+// A ConditionType is a type of condition that can be used for defining a signal state.
+type ConditionType interface {
+	// Code of the ConditionType, uniquely defines this ConditionType
+	Code() string
+	// SetupTriggers installs needed triggers for the given SignalItem, with the
+	// given parameters.
+	SetupTriggers(*SignalItem, []int)
+	// Solve returns if the condition is met for the given SignalItem and parameters
+	Solve(*SignalItem, []string, []int) bool
+}
+
+// A Condition on the current simulation context used for defining signal state.
+type Condition struct {
+	Type   ConditionType
+	Values []string
+}
+
+// IsMet returns true if this condition is met for the given SignalItem
+func (c Condition) IsMet(item *SignalItem, params []int) bool {
+	return c.Type.Solve(item, c.Values, params)
+}
+
 // A SignalState is an aspect of a signal with a set of conditions to display this
 // aspect.
 type SignalState struct {
-	Aspect     SignalAspect
-	Conditions map[string][]string
+	Aspect     *SignalAspect
+	Conditions map[string]Condition
+}
+
+// conditionsMet returns true if all conditions of this SignalState are met (or if
+// there is no conditions) on the given signalItem instance.
+func (s *SignalState) conditionsMet(signal *SignalItem) bool {
+	for _, c := range s.Conditions {
+		var params []int
+		props, ok := signal.CustomProperties[c.Type.Code()]
+		if ok {
+			params = props[s.Aspect.Name]
+		}
+		if !c.IsMet(signal, params) {
+			return false
+		}
+	}
+	return true
+}
+
+// UnmarshalJSON for the SignalState Type
+func (s *SignalState) UnmarshalJSON(data []byte) error {
+	var rawSignalState struct {
+		Aspect     *SignalAspect
+		Conditions map[string][]string
+	}
+	if err := json.Unmarshal(data, &rawSignalState); err != nil {
+		return fmt.Errorf("unable to read signal state: %s (%s)", data, err)
+	}
+	s.Aspect = rawSignalState.Aspect
+	if s.Conditions == nil {
+		s.Conditions = make(map[string]Condition)
+	}
+	for k, v := range rawSignalState.Conditions {
+		ct, ok := signalConditionTypes[k]
+		if !ok {
+			return fmt.Errorf("unknown condition type: %s", k)
+		}
+		s.Conditions[k] = Condition{
+			Type:   ct,
+			Values: v,
+		}
+	}
+	return nil
 }
 
 // A SignalType describes a type of signals which can have different aspects and
@@ -124,6 +202,24 @@ type SignalState struct {
 type SignalType struct {
 	Name   string
 	States []SignalState
+}
+
+// getCustomParams
+func (st *SignalType) getDefaultAspect() *SignalAspect {
+	if len(st.States) == 0 {
+		panic(fmt.Errorf("SignalType %s has no states", st.Name))
+	}
+	return st.States[len(st.States)-1].Aspect
+}
+
+// GetAspect returns the aspect that signal should show according to this SignalType logic.
+func (st *SignalType) GetAspect(signal *SignalItem) *SignalAspect {
+	for _, state := range st.States {
+		if state.conditionsMet(signal) {
+			return state.Aspect
+		}
+	}
+	return st.getDefaultAspect()
 }
 
 // SignalItem is the "logical" item for signals.
@@ -137,8 +233,8 @@ type SignalItem struct {
 	Reverse        bool    `json:"reverse"`
 	TrainID        int     `json:"trainID"`
 
-	previousActiveRoute *Route
-	nextActiveRoute     *Route
+	PreviousActiveRoute *Route
+	NextActiveRoute     *Route
 	activeAspect        *SignalAspect
 }
 
@@ -175,28 +271,136 @@ func (si *SignalItem) setActiveRoute(r *Route, previous TrackItem) {
 	si.updateSignalState()
 }
 
+// IsOnPosition returns true if this signal item is the track item of
+// the given position and the position is in the direction of the signal.
+func (si *SignalItem) IsOnPosition(pos Position) bool {
+	return pos.TrackItem().Equals(si) && pos.PreviousItem().Equals(si.PreviousItem())
+}
+
+// Position returns the position of the origin of this signal
+func (si *SignalItem) Position() Position {
+	return Position{
+		simulation:     si.simulation,
+		TrackItemID:    si.ID(),
+		PreviousItemID: si.PreviousTiID,
+		PositionOnTI:   0,
+	}
+}
+
+// getNextSignal is a helper function that returns the next signal after this one.
+//
+// If a route starts from this signal, the next signal is the end signal
+// of this route. Otherwise, it is the next signal found on the line.
+func (si *SignalItem) getNextSignal() *SignalItem {
+	if si.NextActiveRoute != nil {
+		return si.NextActiveRoute.EndSignal()
+	}
+	for pos := si.Position(); !pos.IsOut(); pos = pos.Next(DirectionCurrent) {
+		if pos.TrackItem().Type() == TypeSignal && pos.TrackItem().IsOnPosition(pos) {
+			return pos.TrackItem().(*SignalItem)
+		}
+	}
+	return nil
+}
+
+// trainHeadActions performs the actions to be done when a train head reaches this signal item.
+//
+// In particular, pushes the train code to the next signal.
+func (si *SignalItem) trainHeadActions(train *Train) {
+	// Check that signal is in same direction as trainHead to push the train
+	// descriptor only in this case. For this, we move backwards from the train
+	// head to this signal.
+	// We do not use isOut, because we are backwards
+	for pos := train.TrainHead; pos.TrackItem().Type() != TypeEnd; pos = pos.Previous() {
+		if !pos.TrackItem().Equals(si) {
+			continue
+		}
+		if !si.IsOnPosition(pos) {
+			// Our signal is the wrong way, so we don't do anything
+			return
+		}
+		if nextSignal := si.getNextSignal(); nextSignal != nil {
+			nextSignal.TrainID = train.ID
+		}
+		if si.TrainID == train.ID {
+			// Only reset train descriptor if it is ours, as it may
+			// be the one of a train behind in the same block
+			si.TrainID = 0
+		}
+	}
+	si.updateSignalState()
+	si.trackStruct.trainHeadActions(train)
+}
+
+// trainTailActions performs the actions to be done when a train tail reaches this signal item.
+//
+// In particular, deactivate route if auto-cancellable.
+func (si *SignalItem) trainTailActions(train *Train) {
+	if si.activeRoute != nil &&
+		!si.ActiveRoutePreviousItem().Equals(si.PreviousItem()) &&
+		!si.activeRoute.BeginSignal().Equals(si) &&
+		!si.activeRoute.EndSignal().Equals(si) {
+		// The line is highlighted by an opposite direction route or this
+		// signal is not the starting/ending signal of this route.
+		// => nothing particular to do for this signal
+		si.trackStruct.trainTailActions(train)
+		return
+	}
+	// For cleaning purposes: activeRoute not used in this direction
+	si.resetActiveRoute()
+
+	if si.PreviousActiveRoute != nil && si.PreviousActiveRoute.State != Persistent {
+		beginSignalNextRoute := si.PreviousActiveRoute.BeginSignal().NextActiveRoute
+		if beginSignalNextRoute == nil || beginSignalNextRoute.Equals(si.PreviousActiveRoute) {
+			// Only reset previous route if the user did not reactivate it in the meantime
+			si.PreviousItem().resetActiveRoute()
+			si.resetPreviousActiveRoute(nil)
+		}
+	}
+	if si.NextActiveRoute != nil && si.NextActiveRoute.State != Persistent {
+		si.resetNextActiveRoute(nil)
+	}
+	si.updateSignalState()
+	// TODO: trigger previous signal recalculation ?
+}
+
 // updateSignalState updates the current signal aspect.
 func (si *SignalItem) updateSignalState() {
-
+	oldAspect := si.activeAspect
+	switch signalItemManager {
+	case nil:
+		si.activeAspect = si.SignalType().GetAspect(si)
+	default:
+		si.activeAspect = signalItemManager.GetAspect(si)
+	}
+	if !oldAspect.Equals(si.activeAspect) {
+		si.simulation.sendEvent(&Event{
+			Name:   SignalaspectChanged,
+			Object: si,
+		})
+	}
+	if si.PreviousActiveRoute != nil {
+		si.PreviousActiveRoute.BeginSignal().updateSignalState()
+	}
 }
 
 // resetNextActiveRoute information. If route is not nil, do
-// this only if the nextActiveRoute is equal to route.
+// this only if the NextActiveRoute is equal to route.
 func (si *SignalItem) resetNextActiveRoute(r *Route) {
-	if r != nil && si.nextActiveRoute != nil && si.nextActiveRoute.ID != r.ID {
+	if r != nil && si.NextActiveRoute != nil && si.NextActiveRoute.ID != r.ID {
 		return
 	}
-	si.nextActiveRoute = nil
+	si.NextActiveRoute = nil
 	si.updateSignalState()
 }
 
 // resetPreviousActiveRoute information. If route is not nil, do
-// this only if the previousActiveRoute is equal to route.
+// this only if the PreviousActiveRoute is equal to route.
 func (si *SignalItem) resetPreviousActiveRoute(r *Route) {
-	if r != nil && si.previousActiveRoute != nil && si.previousActiveRoute.ID != r.ID {
+	if r != nil && si.PreviousActiveRoute != nil && si.PreviousActiveRoute.ID != r.ID {
 		return
 	}
-	si.previousActiveRoute = nil
+	si.PreviousActiveRoute = nil
 	si.updateSignalState()
 }
 

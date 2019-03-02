@@ -1,4 +1,4 @@
-// Copyright (C) 2008-2018 by Nicolas Piganeau and the TS2 TEAM
+// Copyright (C) 2008-2019 by Nicolas Piganeau and the TS2 TEAM
 // (See AUTHORS file)
 //
 // This program is free software; you can redistribute it and/or modify
@@ -16,36 +16,25 @@
 // Free Software Foundation, Inc.,
 // 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-package simulation
+package lines
 
-import (
-	"io/ioutil"
-	"testing"
-)
+import "github.com/ts2/ts2-sim-server/simulation"
 
-// Equals is a comparison function for DelayGenerator objects.
-func (dg DelayGenerator) Equals(b DelayGenerator) bool {
-	for i := 0; i < len(dg.data); i++ {
-		if dg.data[i] != b.data[i] {
-			return false
-		}
-	}
-	return true
+// StandardManager is a lines manager that never fails.
+type StandardManager struct{}
+
+// IsFailed returns whether the track circuit of the given line item is failed or not
+func (sm StandardManager) IsFailed(p *simulation.LineItem) bool {
+	return false
 }
 
-func assertTrue(t *testing.T, expr bool, msg string) {
-	if !expr {
-		t.Errorf("%v: expression is false", msg)
-	}
+// Name returns a description of this manager that is used for the UI.
+func (sm StandardManager) Name() string {
+	return "Standard Manager"
 }
 
-func assertEqual(t *testing.T, a interface{}, b interface{}, msg string) {
-	if a != b {
-		t.Errorf("%v: %v(%T) is not equal to %v(%T)", msg, a, a, b, b)
-	}
-}
+var _ simulation.LineItemManager = StandardManager{}
 
-func loadSim() []byte {
-	data, _ := ioutil.ReadFile("testdata/demo.json")
-	return data
+func init() {
+	simulation.RegisterLineItemManager(StandardManager{})
 }

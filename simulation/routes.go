@@ -64,6 +64,8 @@ type Route struct {
 	Directions    map[int]PointDirection `json:"directions"`
 	State         RouteState             `json:"state"`
 	Positions     []Position             `json:"-"`
+
+	triggers []func(*Route)
 }
 
 // BeginSignal returns the SignalItem at which this Route starts.
@@ -76,6 +78,23 @@ func (r *Route) EndSignal() *SignalItem {
 	return r.simulation.TrackItems[r.EndSignalId].(*SignalItem)
 }
 
+// Equals returns true if this Route is the same as other, that is they
+// have the same ID.
+func (r *Route) Equals(other *Route) bool {
+	return r.ID == other.ID
+}
+
+// IsActive returns true if this Route is active
+func (r *Route) IsActive() bool {
+	return r.State == Activated || r.State == Persistent
+}
+
+// addTrigger adds the given function to the list of function that will be
+// called when this Route is activated or deactivated.
+func (r *Route) addTrigger(trigger func(*Route)) {
+	r.triggers = append(r.triggers, trigger)
+}
+
 // Activate the given route. If the route cannot be Activated, an error is returned.
 func (r *Route) Activate(persistent bool) error {
 	for _, rm := range routesManagers {
@@ -86,11 +105,14 @@ func (r *Route) Activate(persistent bool) error {
 	for _, pos := range r.Positions {
 		pos.TrackItem().underlying().setActiveRoute(r, pos.PreviousItem())
 	}
-	r.EndSignal().previousActiveRoute = r
-	r.BeginSignal().nextActiveRoute = r
+	r.EndSignal().PreviousActiveRoute = r
+	r.BeginSignal().NextActiveRoute = r
 	r.State = Activated
 	if persistent {
 		r.State = Persistent
+	}
+	for _, t := range r.triggers {
+		t(r)
 	}
 	r.simulation.sendEvent(&Event{
 		Name:   RouteActivatedEvent,
@@ -115,6 +137,9 @@ func (r *Route) Deactivate() error {
 		pos.TrackItem().underlying().setActiveRoute(nil, nil)
 	}
 	r.State = Deactivated
+	for _, t := range r.triggers {
+		t(r)
+	}
 	r.simulation.sendEvent(&Event{
 		Name:   RouteDeactivatedEvent,
 		Object: r,

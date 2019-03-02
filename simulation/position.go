@@ -101,6 +101,17 @@ func (pos Position) Next(dir PointDirection) Position {
 	}
 }
 
+// Previous is the last Position on the previous TrackItem with regard to this Position
+func (pos Position) Previous() Position {
+	previousTI, _ := pos.PreviousItem().FollowingItem(pos.TrackItem(), DirectionCurrent)
+	return Position{
+		simulation:     pos.simulation,
+		TrackItemID:    pos.PreviousItemID,
+		PreviousItemID: previousTI.ID(),
+		PositionOnTI:   pos.PreviousItem().RealLength(),
+	}
+}
+
 // Reversed returns the position that is at the same position but in the
 // opposite direction.
 func (pos Position) Reversed() Position {

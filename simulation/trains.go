@@ -332,7 +332,9 @@ func (t *Train) reverse() {
 		signalAhead.TrainID = 0
 	}
 	if activeRoute := t.TrainHead.TrackItem().ActiveRoute(); activeRoute != nil {
-		activeRoute.Deactivate()
+		if err := activeRoute.Deactivate(); err != nil {
+			t.simulation.MessageLogger.addMessage(err.Error(), simulationMsg)
+		}
 	}
 	trainTail := t.TrainHead.Add(-t.TrainType().Length)
 	t.TrainHead = trainTail.Reversed()

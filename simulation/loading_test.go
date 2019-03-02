@@ -57,14 +57,14 @@ func TestLoadRoutes(t *testing.T) {
 	assertEqual(t, r1.EndSignal(), si11, "Route 1/EndSignal")
 	items := []int{5, 6, 7, 8, 9, 10, 11}
 	for i, pos := range r1.Positions {
-		assertEqual(t, pos.TrackItem.ID(), items[i], "Route 1/Positions")
+		assertEqual(t, pos.TrackItem().ID(), items[i], "Route 1/Positions")
 	}
 	assertEqual(t, len(r1.Directions), 1, "Route 1/Directions")
 	d1, ok := r1.Directions[7]
 	if !ok {
 		t.Errorf("Route 1/No direction 7")
 	}
-	assertEqual(t, d1, PointDirection(normal), "Route 1/Direction 7")
+	assertEqual(t, d1, PointDirection(DirectionNormal), "Route 1/Direction 7")
 	assertEqual(t, r1.InitialState, Activated, "Route 1/InitialState")
 	assertEqual(t, r1.State, Activated, "Route 1/state")
 
@@ -77,7 +77,7 @@ func TestLoadRoutes(t *testing.T) {
 	assertEqual(t, r4.EndSignal(), si3, "Route 4/EndSignal")
 	items = []int{15, 14, 7, 6, 5, 4, 3}
 	for i, pos := range r4.Positions {
-		assertEqual(t, pos.TrackItem.ID(), items[i], "Route 4/Positions")
+		assertEqual(t, pos.TrackItem().ID(), items[i], "Route 4/Positions")
 	}
 	assertEqual(t, r4.InitialState, Deactivated, "Route 4/InitialState")
 	assertEqual(t, r4.State, Deactivated, "Route 4/state")
@@ -275,7 +275,7 @@ func TestLoadTrains(t *testing.T) {
 	tr := sim.Trains[0]
 	assertEqual(t, tr.Service(), sim.Services["S001"], "Train1/Service")
 	assertEqual(t, tr.TrainType(), sim.TrainTypes["UT"], "Train1/TrainType")
-	assertEqual(t, *tr.TrainHead, Position{sim.TrackItems[2], sim.TrackItems[1], 3.0}, "Train1/TrainHead")
+	assertTrue(t, tr.TrainHead.Equals(Position{&sim, sim.TrackItems[2].ID(), sim.TrackItems[1].ID(), 3.0}), "Train1/TrainHead")
 	assertEqual(t, tr.AppearTime, ParseTime("06:00:00"), "Train1/AppearTime")
 	assertTrue(t, tr.InitialDelay.Equals(DelayGenerator{[]delayTuplet{{-60, 60, 60}, {60, 180, 40}}}), "Train1/AppearTime")
 	assertEqual(t, tr.InitialSpeed, 5.0, "Train1/InitialSpeed")

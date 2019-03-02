@@ -33,10 +33,14 @@ import (
 const timeStep = 500 * time.Millisecond
 
 var (
-	logger              log.Logger
-	routesManagers      []RoutesManager
-	trainsManagers      map[string]TrainsManager
-	defaultTrainManager TrainsManager
+	logger               log.Logger
+	routesManagers       []RoutesManager
+	trainsManagers       map[string]TrainsManager
+	lineItemManager      LineItemManager
+	pointsItemManager    PointsItemManager
+	signalItemManager    SignalItemManager
+	defaultTrainManager  TrainsManager
+	signalConditionTypes map[string]ConditionType
 )
 
 // InitializeLogger creates the logger for the simulation module
@@ -342,4 +346,25 @@ func RegisterTrainsManager(tm TrainsManager) {
 		defaultTrainManager = tm
 	}
 	trainsManagers[tm.Name()] = tm
+}
+
+// RegisterLineItemManager registers the given line manager in the simulation.
+//
+// If a line manager was already registered, it is replaced by lim.
+func RegisterLineItemManager(lim LineItemManager) {
+	lineItemManager = lim
+}
+
+// RegisterPointsItemManager registers the given points manager in the simulation.
+//
+// If a points manager was already registered, it is replaced by pim.
+func RegisterPointsItemManager(pim PointsItemManager) {
+	pointsItemManager = pim
+}
+
+// RegisterSignalItemManager registers the signal manager in the simulation.
+//
+// If a signals manager was already registered, it is replaced by sim.
+func RegisterSignalItemManager(sim SignalItemManager) {
+	signalItemManager = sim
 }
