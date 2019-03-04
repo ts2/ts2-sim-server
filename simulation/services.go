@@ -18,22 +18,22 @@
 
 package simulation
 
-type serviceActionCode uint8
+type serviceActionCode string
 
 const (
 	// actionReverse the train
-	actionReverse serviceActionCode = 1
+	actionReverse serviceActionCode = "REVERSE"
 
 	// actionSetService set the given service. ActionParam is the new service code
-	actionSetService serviceActionCode = 2
+	actionSetService serviceActionCode = "SET_SERVICE"
 
 	// actionSplit the train at the given position. ActionParam is the element after
 	// which to split (integer).
-	actionSplit serviceActionCode = 3
+	actionSplit serviceActionCode = "SPLIT"
 
 	// actionJoin the train. ActionParam is 'ahead' if to join with the train in
 	// front or 'behind' otherwise.
-	actionJoin serviceActionCode = 4
+	actionJoin serviceActionCode = "JOIN"
 )
 
 // A ServiceAction is an action that can be performed on a train
@@ -51,7 +51,7 @@ type ServiceLine struct {
 	PlaceCode              string `json:"placeCode"`
 	ScheduledArrivalTime   Time   `json:"scheduledArrivalTime"`
 	ScheduledDepartureTime Time   `json:"scheduledDepartureTime"`
-	TrackCode              string `json:"TrackCode"`
+	TrackCode              string `json:"trackCode"`
 
 	service *Service
 }

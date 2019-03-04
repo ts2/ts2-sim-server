@@ -133,6 +133,18 @@ func (pi *PointsItem) Reversed() bool {
 	return dir == DirectionReversed
 }
 
+// IsConnected returns true if this TrackItem is connected to the given
+// TrackItem, false otherwise
+func (pi *PointsItem) IsConnected(oti TrackItem) bool {
+	if pi.trackStruct.IsConnected(oti) {
+		return true
+	}
+	if pi.ReverseTiId == oti.ID() {
+		return true
+	}
+	return false
+}
+
 // FollowingItem returns the following TrackItem linked to this one,
 // knowing we come from precedingItem(). Returned is either NextItem or
 // PreviousItem, depending which way we come from.

@@ -126,7 +126,7 @@ func (conn *connection) registerClient() (error, *Request) {
 		logger.Info("Error while writing", "connection", conn.RemoteAddr(), "request", "NewOkResponse", "error", err)
 	}
 	hub.registerChan <- conn
-	logger.Info("Registered", "connection", conn.RemoteAddr(), "clientType", conn.clientType, "managerType", conn.ManagerType)
+	logger.Info("Registered client", "connection", conn.RemoteAddr(), "clientType", conn.clientType, "managerType", conn.ManagerType)
 	return nil, req
 }
 

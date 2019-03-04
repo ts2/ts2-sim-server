@@ -131,9 +131,8 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 			unmarshalItem(&ti)
 		case `"Place"`:
 			var pl Place
-			if err := json.Unmarshal(tiString, &pl); err != nil {
-				return fmt.Errorf("unable to decode Place: %s. %s", tiString, err)
-			}
+			unmarshalItem(&pl)
+			delete(sim.TrackItems, pl.ID())
 			sim.Places[pl.PlaceCode] = &pl
 		default:
 			return fmt.Errorf("unknown TrackItem type: %s", rawItem["__type__"])
@@ -300,15 +299,24 @@ func (sim *Simulation) checkTrackItemsLinks() error {
 			if pi.ReverseItem() == nil {
 				return ItemNotLinkedAtError{item: ti, pt: pi.Reverse()}
 			}
+			if !pi.ReverseItem().IsConnected(pi) {
+				return ItemInconsistentLinkError{item1: pi, item2: pi.ReverseItem(), pt: pi.Reverse()}
+			}
 			fallthrough
 		case TypeLine, TypeInvisibleLink, TypeSignal:
 			if ti.NextItem() == nil {
 				return ItemNotLinkedAtError{item: ti, pt: ti.End()}
 			}
+			if !ti.NextItem().IsConnected(ti) {
+				return ItemInconsistentLinkError{item1: ti, item2: ti.NextItem(), pt: ti.End()}
+			}
 			fallthrough
 		case TypeEnd:
 			if ti.PreviousItem() == nil {
 				return ItemNotLinkedAtError{item: ti, pt: ti.Origin()}
+			}
+			if !ti.PreviousItem().IsConnected(ti) {
+				return ItemInconsistentLinkError{item1: ti, item2: ti.PreviousItem(), pt: ti.End()}
 			}
 		}
 	}

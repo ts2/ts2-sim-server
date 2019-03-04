@@ -106,11 +106,11 @@
             "plannedTrainType": "UT",
             "postActions": [
             	{
-            		"actionCode": 1,
+            		"actionCode": "REVERSE",
             		"actionParam": null
             	},
             	{
-            		"actionCode": 2,
+            		"actionCode": "SET_SERVICE",
             		"actionParam": "S002"
             	}
             ]
@@ -312,9 +312,9 @@
             "conflictTiId": null,
             "maxSpeed": 0.0,
             "name": null,
-            "nextTiId": 11,
+            "nextTiId": 13,
             "placeCode": "RGT",
-            "previousTiId": 10,
+            "previousTiId": 11,
             "realLength": 400.0,
             "trackCode": null,
             "x": 400.0,

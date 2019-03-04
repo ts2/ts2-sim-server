@@ -49,13 +49,6 @@ const (
 // A CustomProperty is a map to hold track item properties that are defined by the user.
 type CustomProperty map[string][]int
 
-// An ItemsNotLinkedError is returned when two TrackItem instances that are assumed
-// to be linked are not.
-type ItemsNotLinkedError struct {
-	item1 TrackItem
-	item2 TrackItem
-}
-
 // A LineItemManager manages breakdowns of line track circuits
 type LineItemManager interface {
 	// Name returns a description of this lineItemManager that is used for the UI.
@@ -64,9 +57,16 @@ type LineItemManager interface {
 	IsFailed(*LineItem) bool
 }
 
+// An ItemsNotLinkedError is returned when two TrackItem instances that are assumed
+// to be linked are not.
+type ItemsNotLinkedError struct {
+	item1 TrackItem
+	item2 TrackItem
+}
+
 // Error method for the ItemsNotLinkedError
 func (e ItemsNotLinkedError) Error() string {
-	return fmt.Sprintf("TrackItems %s and %s are not linked", e.item1, e.item2)
+	return fmt.Sprintf("TrackItems %d and %d are not linked", e.item1.ID(), e.item2.ID())
 }
 
 // An ItemNotLinkedAtError is returned when a TrackItem instance has no connected item at the given end.
@@ -77,7 +77,20 @@ type ItemNotLinkedAtError struct {
 
 // Error method for the ItemsNotLinkedError
 func (i ItemNotLinkedAtError) Error() string {
-	return fmt.Sprintf("TypeTrack %s is not linked at (%f, %f)", i.item, i.pt.X, i.pt.Y)
+	return fmt.Sprintf("TrackItem %d is not linked at (%f, %f)", i.item.ID(), i.pt.X, i.pt.Y)
+}
+
+// ItemInconsistentLinkError is returned when a TrackItem is linked to another one, but
+// the latter is not linked to the former.
+type ItemInconsistentLinkError struct {
+	item1 TrackItem
+	item2 TrackItem
+	pt    Point
+}
+
+// Error method for the ItemInconsistentLinkError
+func (i ItemInconsistentLinkError) Error() string {
+	return fmt.Sprintf("inconsistent link at (%f, %f) between %d and %d", i.pt.X, i.pt.Y, i.item1.ID(), i.item2.ID())
 }
 
 // A TrackItem is a piece of scenery and is "the base interface" for others
@@ -305,7 +318,7 @@ func (t *trackStruct) FollowingItem(precedingItem TrackItem, dir PointDirection)
 // IsConnected returns true if this TrackItem is connected to the given
 // TrackItem, false otherwise
 func (t *trackStruct) IsConnected(oti TrackItem) bool {
-	if TrackItem(t).NextItem() == oti || TrackItem(t).PreviousItem() == t {
+	if t.NextTiID == oti.ID() || t.PreviousTiID == oti.ID() {
 		return true
 	}
 	return false

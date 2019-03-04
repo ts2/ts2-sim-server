@@ -56,8 +56,7 @@ const (
 // are inhibited. Routes are static and defined in the game file. The player can
 // only activate or deactivate them.
 type Route struct {
-	ID            int
-	simulation    *Simulation
+	ID            int                    `json:"-"`
 	BeginSignalId int                    `json:"beginSignal"`
 	EndSignalId   int                    `json:"endSignal"`
 	InitialState  RouteState             `json:"initialState"`
@@ -65,7 +64,8 @@ type Route struct {
 	State         RouteState             `json:"state"`
 	Positions     []Position             `json:"-"`
 
-	triggers []func(*Route)
+	simulation *Simulation
+	triggers   []func(*Route)
 }
 
 // BeginSignal returns the SignalItem at which this Route starts.
