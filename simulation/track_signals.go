@@ -151,6 +151,7 @@ func (c Condition) IsMet(item *SignalItem, params []int) bool {
 // A SignalState is an aspect of a signal with a set of conditions to display this
 // aspect.
 type SignalState struct {
+	AspectName string
 	Aspect     *SignalAspect
 	Conditions map[string]Condition
 }
@@ -174,13 +175,13 @@ func (s *SignalState) conditionsMet(signal *SignalItem) bool {
 // UnmarshalJSON for the SignalState Type
 func (s *SignalState) UnmarshalJSON(data []byte) error {
 	var rawSignalState struct {
-		Aspect     *SignalAspect
+		AspectName string
 		Conditions map[string][]string
 	}
 	if err := json.Unmarshal(data, &rawSignalState); err != nil {
 		return fmt.Errorf("unable to read signal state: %s (%s)", data, err)
 	}
-	s.Aspect = rawSignalState.Aspect
+	s.AspectName = rawSignalState.AspectName
 	if s.Conditions == nil {
 		s.Conditions = make(map[string]Condition)
 	}
@@ -236,6 +237,12 @@ type SignalItem struct {
 	PreviousActiveRoute *Route
 	NextActiveRoute     *Route
 	activeAspect        *SignalAspect
+}
+
+// initialize this signalItem
+func (si *SignalItem) initialize() error {
+	si.activeAspect = si.SignalType().getDefaultAspect()
+	return nil
 }
 
 // Type returns the name of the type of this item
@@ -409,6 +416,20 @@ func (si *SignalItem) resetPreviousActiveRoute(r *Route) {
 type SignalLibrary struct {
 	Aspects map[string]*SignalAspect `json:"signalAspects"`
 	Types   map[string]*SignalType   `json:"signalTypes"`
+}
+
+// initialize this SignalLibrary
+func (sl *SignalLibrary) initialize() error {
+	for _, t := range sl.Types {
+		for i, s := range t.States {
+			asp, ok := sl.Aspects[s.AspectName]
+			if !ok {
+				return fmt.Errorf("not aspect with code %s found", s.AspectName)
+			}
+			t.States[i].Aspect = asp
+		}
+	}
+	return nil
 }
 
 var _ TrackItem = new(SignalItem)

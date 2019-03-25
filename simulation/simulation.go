@@ -84,6 +84,11 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &rawSim); err != nil {
 		return fmt.Errorf("unable to decode simulation JSON: %s", err)
 	}
+	sim.SignalLib = rawSim.SignalLib
+	if err := sim.SignalLib.initialize(); err != nil {
+		logger.Crit("error initializing signal Library", "error", err)
+		panic(err)
+	}
 	sim.TrackItems = make(map[int]TrackItem)
 	sim.Places = make(map[string]*Place)
 	for tiId, tiString := range rawSim.TrackItems {
@@ -103,6 +108,9 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 			}
 			ti.underlying().simulation = sim
 			ti.underlying().tsId = tiId
+			if err := ti.initialize(); err != nil {
+				return err
+			}
 			sim.TrackItems[tiId] = ti
 			return nil
 		}
@@ -144,7 +152,6 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 	}
 
 	sim.Options = rawSim.Options
-	sim.SignalLib = rawSim.SignalLib
 	sim.Routes = make(map[int]*Route)
 	for num, route := range rawSim.Routes {
 		route.setSimulation(sim)
@@ -153,7 +160,10 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 			return fmt.Errorf("routeNum : `%s` is invalid", num)
 		}
 		sim.Routes[routeNum] = route
-		route.initialize(routeNum)
+		if err := route.initialize(routeNum); err != nil {
+			logger.Crit("error initializing route", "route", route.ID, "error", err)
+			panic(err)
+		}
 	}
 	sim.TrainTypes = rawSim.TrainTypes
 	for _, tt := range sim.TrainTypes {

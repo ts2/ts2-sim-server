@@ -203,6 +203,9 @@ type TrackItem interface {
 	// Simulation returns the Simulation object that this TrackItem belongs to.
 	Simulation() *Simulation
 
+	// initialize this TrackItem
+	initialize() error
+
 	// underlying returns the underlying trackStruct object
 	underlying() *trackStruct
 }
@@ -438,6 +441,11 @@ func (t *trackStruct) DistanceToTrainEnd(pos Position) (float64, bool) {
 // (i.e. they have the same ID)
 func (t *trackStruct) Equals(ti TrackItem) bool {
 	return t.ID() == ti.ID()
+}
+
+// initialize this track item
+func (t *trackStruct) initialize() error {
+	return nil
 }
 
 var _ TrackItem = new(trackStruct)
