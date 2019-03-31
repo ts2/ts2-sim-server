@@ -294,7 +294,7 @@ func (sim *Simulation) sendEvent(evt *Event) {
 func (sim *Simulation) increaseTime(step time.Duration) {
 	sim.Options.CurrentTime.Lock()
 	defer sim.Options.CurrentTime.Unlock()
-	sim.Options.CurrentTime = sim.Options.CurrentTime.Add(step)
+	sim.Options.CurrentTime = sim.Options.CurrentTime.Add(time.Duration(sim.Options.TimeFactor) * step)
 }
 
 // checks that all TrackItems are linked together.

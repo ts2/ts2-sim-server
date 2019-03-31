@@ -213,7 +213,7 @@
             "reverse": false,
             "signalType": "UK_3_ASPECTS",
             "x": 190.0,
-            "xn": 195.0,
+            "xn": 205.0,
             "y": 0.0,
             "yn": 5.0
         },
@@ -420,7 +420,7 @@
             "placeCode": "STN",
             "previousTiId": null,
             "x": 320.0,
-            "y": 10.0
+            "y": 0.0
         },
         "21": {
  			"__type__": "Place",
