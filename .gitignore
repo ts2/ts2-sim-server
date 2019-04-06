@@ -30,3 +30,4 @@ _testmain.go
 ts2-sim-server
 docker/demo.json
 docker/ts2-sim-server
+coverage.txt

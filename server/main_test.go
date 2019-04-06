@@ -33,6 +33,7 @@ import (
 
 func TestMain(m *testing.M) {
 	mainLogger := log.New()
+	mainLogger.SetHandler(log.DiscardHandler())
 	InitializeLogger(mainLogger)
 	simulation.InitializeLogger(mainLogger)
 	data, _ := ioutil.ReadFile("../simulation/testdata/demo.json")

@@ -61,6 +61,7 @@ type Simulation struct {
 
 	clockTicker *time.Ticker
 	stopChan    chan bool
+	started     bool
 }
 
 // UnmarshalJSON for the Simulation type
@@ -248,20 +249,25 @@ func (sim *Simulation) Start() {
 	if sim.stopChan == nil || sim.EventChan == nil {
 		panic("You must call Initialize before starting the simulation")
 	}
-	sim.clockTicker = time.NewTicker(timeStep)
+	if sim.started {
+		logger.Debug("Simulation already started")
+		return
+	}
+	sim.started = true
 	go sim.run()
 	logger.Info("Simulation started")
 }
 
 // run enters the main loop of the simulation
 func (sim *Simulation) run() {
+	clockTicker := time.NewTicker(timeStep)
 	for {
 		select {
 		case <-sim.stopChan:
-			sim.clockTicker.Stop()
+			clockTicker.Stop()
 			logger.Info("Simulation paused")
 			return
-		case <-sim.clockTicker.C:
+		case <-clockTicker.C:
 			sim.increaseTime(timeStep)
 			sim.sendEvent(&Event{ClockEvent, sim.Options.CurrentTime})
 			sim.updateTrains()
@@ -272,6 +278,7 @@ func (sim *Simulation) run() {
 // Pause holds the simulation by stopping the clock ticker. Call Start again to restart the simulation.
 func (sim *Simulation) Pause() {
 	sim.stopChan <- true
+	sim.started = false
 }
 
 // sendEvent sends the given event on the event channel to notify clients.
