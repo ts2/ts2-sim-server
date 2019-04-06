@@ -69,7 +69,7 @@ OPTIONS:
 	if *logFile != "" {
 		outputHandler = log.Must.FileHandler(*logFile, log.LogfmtFormat())
 	} else {
-		outputHandler = log.StderrHandler
+		outputHandler = log.StreamHandler(os.Stdout, log.TerminalFormat())
 	}
 	logLvl, err_level := log.LvlFromString(*logLevel)
 	if err_level != nil {

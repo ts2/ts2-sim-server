@@ -19,7 +19,6 @@
 package server
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/ts2/ts2-sim-server/simulation"
@@ -42,9 +41,9 @@ const (
 
 // Response is a status message sent to a websocket client
 type Response struct {
-	ID      int             `json:"id"`
-	MsgType MessageType     `json:"msgType"`
-	Data    json.RawMessage `json:"data"`
+	ID      int         `json:"id"`
+	MsgType MessageType `json:"msgType"`
+	Data    RawJSON     `json:"data"`
 }
 
 // DataStatus is the Data part of a ResponseStatus message
@@ -73,7 +72,7 @@ type ResponseNotification struct {
 }
 
 // NewResponse returns a Response with the given data
-func NewResponse(id int, data json.RawMessage) *Response {
+func NewResponse(id int, data RawJSON) *Response {
 	r := Response{
 		ID:      id,
 		MsgType: TypeResponse,

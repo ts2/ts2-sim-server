@@ -41,7 +41,7 @@ type connection struct {
 	pushChan    chan interface{}
 	clientType  ClientType
 	ManagerType ManagerType
-	LastRequest Request
+	Requests    []Request
 }
 
 // loop starts the reading and writing loops of the connection.
@@ -49,7 +49,7 @@ func (conn *connection) loop(ctx context.Context) {
 	logger.Debug("New connection", "remote", conn.RemoteAddr())
 	if err, req := conn.registerClient(); err != nil {
 		// Try to notify client
-		conn.WriteJSON(NewErrorResponse(req.ID, err))
+		_ = conn.WriteJSON(NewErrorResponse(req.ID, err))
 		logger.Error("Error while login", "connection", conn.RemoteAddr(), "error", err)
 		return
 	}
@@ -67,18 +67,20 @@ func (conn *connection) processRead(ctx context.Context) {
 			return
 		default:
 		}
-		err := conn.ReadJSON(&conn.LastRequest)
+		var req Request
+		err := conn.ReadJSON(&req)
 		if err != nil {
 			if _, ok := err.(*websocket.CloseError); ok {
 				logger.Debug("Connection closed by peer", "connection", conn.RemoteAddr())
-				conn.Close()
+				// We don't close connection here because the WS server will take care of it
 				return
 			} else {
 				logger.Info("Error while reading", "connection", conn.RemoteAddr(), "error", err)
-				conn.pushChan <- NewErrorResponse(conn.LastRequest.ID, err)
+				conn.pushChan <- NewErrorResponse(req.ID, err)
 				continue
 			}
 		}
+		conn.Requests = append(conn.Requests, req)
 		hub.readChan <- conn
 	}
 }
@@ -132,7 +134,7 @@ func (conn *connection) registerClient() (error, *Request) {
 
 // Close terminates the websocket connection and closes associated resources
 func (conn *connection) Close() error {
-	conn.Conn.Close()
+	_ = conn.Conn.Close()
 	hub.unregisterChan <- conn
 	return nil
 }

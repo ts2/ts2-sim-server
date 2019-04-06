@@ -20,18 +20,45 @@ package server
 
 import (
 	"encoding/json"
+	"errors"
 
 	"github.com/ts2/ts2-sim-server/simulation"
 )
+
+// RawJSON is a json.RawMessage (i.e. []byte) that prints itself
+// as a string to be human readable in logs
+type RawJSON json.RawMessage
+
+// String function for the RawJSON type
+func (r RawJSON) String() string {
+	return string(r)
+}
+
+// MarshalJSON returns m as the JSON encoding of r.
+func (r RawJSON) MarshalJSON() ([]byte, error) {
+	if r == nil {
+		return []byte("null"), nil
+	}
+	return r, nil
+}
+
+// UnmarshalJSON sets *r to a copy of data.
+func (r *RawJSON) UnmarshalJSON(data []byte) error {
+	if r == nil {
+		return errors.New("RawJSON: UnmarshalJSON on nil pointer")
+	}
+	*r = append((*r)[0:0], data...)
+	return nil
+}
 
 // Request is a generic request made by a websocket client.
 //
 // It is used before dispatching and unmarshaling into a specific request type.
 type Request struct {
-	ID     int             `json:"id"`
-	Object string          `json:"object"`
-	Action string          `json:"action"`
-	Params json.RawMessage `json:"params"`
+	ID     int     `json:"id"`
+	Object string  `json:"object"`
+	Action string  `json:"action"`
+	Params RawJSON `json:"params"`
 }
 
 // ParamsRegister is the struct of the Request Params for a RequestRegister

@@ -33,14 +33,14 @@ func (s *serverObject) dispatch(h *Hub, req Request, conn *connection) {
 		ch <- NewErrorResponse(req.ID, fmt.Errorf("can't call register when already registered"))
 		logger.Debug("Request for second register received", "submodule", "hub", "object", req.Object, "action", req.Action)
 	case "addListener":
-		logger.Debug("Request for addListener received", "submodule", "hub", "object", req.Object, "action", req.Action)
+		logger.Debug("Request for addListener received", "submodule", "hub", "object", req.Object, "action", req.Action, "params", req.Params)
 		if err := h.addRegistryEntry(req, conn); err != nil {
 			ch <- NewErrorResponse(req.ID, err)
 			return
 		}
 		ch <- NewOkResponse(req.ID, "Listener added successfully")
 	case "removeListener":
-		logger.Debug("Request for removeListener received", "submodule", "hub", "object", req.Object, "action", req.Action)
+		logger.Debug("Request for removeListener received", "submodule", "hub", "object", req.Object, "action", req.Action, "params", req.Params)
 		if err := h.removeRegistryEntry(req, conn); err != nil {
 			ch <- NewErrorResponse(req.ID, err)
 			return
@@ -48,7 +48,7 @@ func (s *serverObject) dispatch(h *Hub, req Request, conn *connection) {
 		ch <- NewOkResponse(req.ID, "Listener removed successfully")
 	default:
 		ch <- NewErrorResponse(req.ID, fmt.Errorf("unknwon action %s/%s", req.Object, req.Action))
-		logger.Debug("Request for unknown action received", "submodule", "hub", "object", req.Object, "action", req.Action)
+		logger.Debug("Request for unknown action received", "submodule", "hub", "object", req.Object, "action", req.Action, "params", req.Params)
 	}
 }
 
@@ -57,7 +57,7 @@ func (h *Hub) addRegistryEntry(req Request, conn *connection) error {
 	var pl ParamsListener
 	if err := json.Unmarshal(req.Params, &pl); err != nil {
 		logger.Error("Unparsable request (addRegistryEntry)", "submodule", "hub", "error", err, "request", req)
-		return fmt.Errorf("unparsable request: %s (%s)", err, string(req.Params))
+		return fmt.Errorf("unparsable request: %s (%s)", err, req.Params)
 	}
 	if len(pl.IDs) == 0 {
 		re := registryEntry{eventName: pl.Event, id: ""}
@@ -84,7 +84,7 @@ func (h *Hub) removeRegistryEntry(req Request, conn *connection) error {
 	var pl ParamsListener
 	if err := json.Unmarshal(req.Params, &pl); err != nil {
 		logger.Error("Unparsable request (addRegistryEntry)", "submodule", "hub", "error", err, "request", req)
-		return fmt.Errorf("unparsable request: %s (%s)", err, string(req.Params))
+		return fmt.Errorf("unparsable request: %s (%s)", err, req.Params)
 	}
 	if len(pl.IDs) == 0 {
 		re := registryEntry{eventName: pl.Event, id: ""}

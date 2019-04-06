@@ -60,16 +60,16 @@ func (h *Hub) run(hubUp chan bool) {
 	for {
 		select {
 		case e = <-sim.EventChan:
-			logger.Debug("Received event from simulation", "submodule", "hub", "object", e)
+			logger.Debug("Received event from simulation", "submodule", "hub", "event", e.Name, "object", e.Object)
 			h.notifyClients(e)
 		case c = <-h.readChan:
-			logger.Debug("Reading request from client", "submodule", "hub", "object", c.LastRequest)
+			logger.Debug("Reading request from client", "submodule", "hub", "data", c.Requests[0])
 			go h.dispatchObject(c)
 		case c = <-h.registerChan:
 			logger.Debug("Registering connection", "submodule", "hub", "connection", c.RemoteAddr())
 			h.register(c)
 		case c = <-h.unregisterChan:
-			logger.Debug("Unregistering connection", "submodule", "hub", "connection", c.RemoteAddr())
+			logger.Info("Unregistering connection", "submodule", "hub", "connection", c.RemoteAddr())
 			h.unregister(c)
 		}
 	}
@@ -89,6 +89,11 @@ func (h *Hub) unregister(c *connection) {
 	case Client:
 		if _, ok := h.clientConnections[c]; ok {
 			delete(h.clientConnections, c)
+		}
+		for re, rv := range h.registry {
+			if _, ok := rv[c]; ok {
+				delete(h.registry, re)
+			}
 		}
 	}
 }
@@ -115,7 +120,8 @@ func (h *Hub) notifyClients(e *simulation.Event) {
 // - req is the request to process
 // - ch is the channel on which to send the response
 func (h *Hub) dispatchObject(conn *connection) {
-	req := conn.LastRequest
+	req := conn.Requests[0]
+	conn.Requests = conn.Requests[1:]
 	obj, ok := h.objects[req.Object]
 	if !ok {
 		conn.pushChan <- NewErrorResponse(req.ID, fmt.Errorf("unknwon object %s", req.Object))

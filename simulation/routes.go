@@ -177,10 +177,22 @@ func (r *Route) initialize(routeNum string) error {
 		if pos.TrackItem().ID() == r.EndSignal().ID() {
 			return nil
 		}
-		dir, ok := r.Directions[pos.TrackItem().ID()]
-		if !ok {
-			dir = PointDirection(DirectionNormal)
+		dir := DirectionCurrent
+		if pi, ok := pos.TrackItem().(*PointsItem); ok {
+			dir, ok = r.Directions[pi.ID()]
+			if !ok {
+				switch pos.PreviousItemID {
+				case pi.ReverseTiId:
+					dir = DirectionReversed
+				case pi.PreviousTiID, pi.NextTiID:
+					dir = DirectionNormal
+				default:
+					return fmt.Errorf("route Error: unable to find direction for points %s", pi.ID())
+				}
+				r.Directions[pi.ID()] = dir
+			}
 		}
+
 		pos = pos.Next(dir)
 	}
 
