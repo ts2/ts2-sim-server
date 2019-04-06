@@ -23,7 +23,7 @@ import "github.com/ts2/ts2-sim-server/simulation"
 // StandardManager is a points manager that performs points change
 // immediately and never fails.
 type StandardManager struct {
-	directions map[int]simulation.PointDirection
+	directions map[string]simulation.PointDirection
 }
 
 // Direction returns the direction of the points
@@ -36,6 +36,9 @@ func (sm StandardManager) Direction(p *simulation.PointsItem) simulation.PointDi
 // You should not assume that the direction has been set, since this can be
 // delayed or failed. Call Direction to check.
 func (sm *StandardManager) SetDirection(p *simulation.PointsItem, dir simulation.PointDirection) {
+	if dir == simulation.DirectionCurrent {
+		return
+	}
 	sm.directions[p.ID()] = dir
 }
 
@@ -49,7 +52,7 @@ var _ simulation.PointsItemManager = new(StandardManager)
 // newStandardManager returns a pointer to a new StandardManager.
 func newStandardManager() *StandardManager {
 	return &StandardManager{
-		directions: make(map[int]simulation.PointDirection),
+		directions: make(map[string]simulation.PointDirection),
 	}
 }
 

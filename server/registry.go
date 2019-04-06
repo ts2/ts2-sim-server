@@ -20,9 +20,9 @@ package server
 
 import "github.com/ts2/ts2-sim-server/simulation"
 
-// registryEntry is a line of the event registry. An entry registers a client for a given event.
+// registryEntry is a line of the event registry.
+// An entry registers an event and lists connections that subscribed to this event.
 type registryEntry struct {
-	conn      *connection
 	eventName simulation.EventName
-	ids       []string
+	id        string
 }

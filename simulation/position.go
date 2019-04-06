@@ -38,8 +38,8 @@ import (
 type Position struct {
 	simulation *Simulation
 
-	TrackItemID    int     `json:"trackItem"`
-	PreviousItemID int     `json:"previousTI"`
+	TrackItemID    string  `json:"trackItem"`
+	PreviousItemID string  `json:"previousTI"`
 	PositionOnTI   float64 `json:"positionOnTI"`
 }
 
@@ -63,7 +63,7 @@ func (pos Position) IsValid() bool {
 	if pos.simulation == nil {
 		return false
 	}
-	if pos.TrackItemID == 0 {
+	if pos.TrackItemID == "" {
 		return false
 	}
 	if pos.PositionOnTI > pos.TrackItem().RealLength() || pos.PositionOnTI < 0 {
@@ -77,8 +77,8 @@ func (pos Position) IsValid() bool {
 
 // IsNull returns true if this Position is null.
 func (pos Position) IsNull() bool {
-	return pos.TrackItemID == 0 &&
-		pos.PreviousItemID == 0 &&
+	return pos.TrackItemID == "" &&
+		pos.PreviousItemID == "" &&
 		pos.PositionOnTI == 0
 }
 
@@ -186,7 +186,7 @@ func (pos Position) String() string {
 		return "<Null Position>"
 	}
 	if pos.IsValid() {
-		return fmt.Sprintf("(%d, %d, %0.2f)", pos.TrackItemID, pos.PreviousItemID, pos.PositionOnTI)
+		return fmt.Sprintf("(%s, %s, %0.2f)", pos.TrackItemID, pos.PreviousItemID, pos.PositionOnTI)
 	}
-	return fmt.Sprintf("<Invalid Position: (%v) %d, %d, %0.2f>", pos.simulation != nil, pos.TrackItemID, pos.PreviousItemID, pos.PositionOnTI)
+	return fmt.Sprintf("<Invalid Position: (%v) %s, %s, %0.2f>", pos.simulation != nil, pos.TrackItemID, pos.PreviousItemID, pos.PositionOnTI)
 }

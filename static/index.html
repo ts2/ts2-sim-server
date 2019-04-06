@@ -119,7 +119,7 @@
                 return false;
             };
             document.getElementById("tiShowTmpl").onclick = function (evt) {
-                input.value = '{"object": "trackItem", "action": "show", "params": {"ids": [23, 24]}}';
+                input.value = '{"object": "trackItem", "action": "show", "params": {"ids": ["23", "24"]}}';
                 input.focus();
                 return false;
             };
@@ -149,17 +149,17 @@
                 return false;
             };
             document.getElementById("routeShowTmpl").onclick = function (evt) {
-                input.value = '{"object": "route", "action": "show", "params": {"ids": [1, 3]}}';
+                input.value = '{"object": "route", "action": "show", "params": {"ids": ["1", "3"]}}';
                 input.focus();
                 return false;
             };
             document.getElementById("routeActivateTmpl").onclick = function (evt) {
-                input.value = '{"object": "route", "action": "activate", "params": {"id": 1}}';
+                input.value = '{"object": "route", "action": "activate", "params": {"id": "1"}}';
                 input.focus();
                 return false;
             };
             document.getElementById("routeDeactivateTmpl").onclick = function (evt) {
-                input.value = '{"object": "route", "action": "deactivate", "params": {"id": 1}}';
+                input.value = '{"object": "route", "action": "deactivate", "params": {"id": "1"}}';
                 input.focus();
                 return false;
             };
@@ -169,7 +169,7 @@
                 return false;
             };
             document.getElementById("trainShowTmpl").onclick = function (evt) {
-                input.value = '{"object": "train", "action": "show", "params": {"ids": [1]}}';
+                input.value = '{"object": "train", "action": "show", "params": {"ids": ["1"]}}';
                 input.focus();
                 return false;
             };

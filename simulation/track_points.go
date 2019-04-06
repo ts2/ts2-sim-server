@@ -18,6 +18,8 @@
 
 package simulation
 
+import "encoding/json"
+
 // A PointsItemManager simulates the physical points, in particular delay in points
 // position and breakdowns
 type PointsItemManager interface {
@@ -78,7 +80,7 @@ type PointsItem struct {
 	Yn          float64 `json:"yn"`
 	Xr          float64 `json:"xr"`
 	Yr          float64 `json:"yr"`
-	ReverseTiId int     `json:"reverseTiId"`
+	ReverseTiId string  `json:"reverseTiId"`
 }
 
 // Type returns the name of the type of this item
@@ -168,14 +170,39 @@ func (pi *PointsItem) FollowingItem(precedingItem TrackItem, dir PointDirection)
 // setActiveRoute sets the given route as active on this PointsItem.
 // previous gives the direction.
 func (pi *PointsItem) setActiveRoute(r *Route, previous TrackItem) {
-	dir := DirectionNormal
-	if r.Directions[pi.ID()] != 0 {
-		dir = DirectionReversed
+	if r != nil {
+		pointsItemManager.SetDirection(pi, r.Directions[pi.ID()])
 	}
-	pointsItemManager.SetDirection(pi, dir)
 	// TODO We should check here whether the points have failed or not
 	// and delay route activation.
 	pi.trackStruct.setActiveRoute(r, previous)
+}
+
+// MarshalJSON method for PointsItem
+func (pi *PointsItem) MarshalJSON() ([]byte, error) {
+	type auxPI struct {
+		jsonTrackStruct
+		Xc          float64 `json:"xf"`
+		Yc          float64 `json:"yf"`
+		Xn          float64 `json:"xn"`
+		Yn          float64 `json:"yn"`
+		Xr          float64 `json:"xr"`
+		Yr          float64 `json:"yr"`
+		ReverseTiId string  `json:"reverseTiId"`
+		Reversed    bool    `json:"reversed"`
+	}
+	aPI := auxPI{
+		jsonTrackStruct: pi.asJSONStruct(),
+		Xc:              pi.Xc,
+		Yc:              pi.Yc,
+		Xn:              pi.Xn,
+		Yn:              pi.Yn,
+		Xr:              pi.Xr,
+		Yr:              pi.Yr,
+		ReverseTiId:     pi.ReverseTiId,
+		Reversed:        pi.Reversed(),
+	}
+	return json.Marshal(aPI)
 }
 
 var _ TrackItem = new(PointsItem)

@@ -41,7 +41,7 @@ func (s *trackItemObject) dispatch(h *Hub, req Request, conn *connection) {
 		ch <- NewResponse(req.ID, til)
 	case "show":
 		var idsParams = struct {
-			IDs []int `json:"ids"`
+			IDs []string `json:"ids"`
 		}{}
 		err := json.Unmarshal(req.Params, &idsParams)
 		logger.Debug("Request for trackItem show received", "submodule", "hub", "object", req.Object, "action", req.Action, "params", idsParams)
@@ -51,7 +51,7 @@ func (s *trackItemObject) dispatch(h *Hub, req Request, conn *connection) {
 		}
 		tkis := make(map[string]simulation.TrackItem)
 		for _, id := range idsParams.IDs {
-			tkis[fmt.Sprintf("%d", id)] = sim.TrackItems[id]
+			tkis[id] = sim.TrackItems[id]
 		}
 		tid, err := json.Marshal(tkis)
 		if err != nil {

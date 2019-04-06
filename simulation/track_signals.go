@@ -132,9 +132,9 @@ type ConditionType interface {
 	Code() string
 	// SetupTriggers installs needed triggers for the given SignalItem, with the
 	// given parameters.
-	SetupTriggers(*SignalItem, []int)
+	SetupTriggers(*SignalItem, []string)
 	// Solve returns if the condition is met for the given SignalItem and parameters
-	Solve(*SignalItem, []string, []int) bool
+	Solve(*SignalItem, []string, []string) bool
 }
 
 // A Condition on the current simulation context used for defining signal state.
@@ -144,7 +144,7 @@ type Condition struct {
 }
 
 // IsMet returns true if this condition is met for the given SignalItem
-func (c Condition) IsMet(item *SignalItem, params []int) bool {
+func (c Condition) IsMet(item *SignalItem, params []string) bool {
 	return c.Type.Solve(item, c.Values, params)
 }
 
@@ -160,7 +160,7 @@ type SignalState struct {
 // there is no conditions) on the given signalItem instance.
 func (s *SignalState) conditionsMet(signal *SignalItem) bool {
 	for _, c := range s.Conditions {
-		var params []int
+		var params []string
 		props, ok := signal.CustomProperties[c.Type.Code()]
 		if ok {
 			params = props[s.Aspect.Name]
@@ -232,10 +232,10 @@ type SignalItem struct {
 	Yb             float64 `json:"yn"`
 	SignalTypeCode string  `json:"signalType"`
 	Reverse        bool    `json:"reverse"`
-	TrainID        int     `json:"trainID"`
+	TrainID        string  `json:"trainID"`
 
-	PreviousActiveRoute *Route
-	NextActiveRoute     *Route
+	previousActiveRoute *Route
+	nextActiveRoute     *Route
 	activeAspect        *SignalAspect
 }
 
@@ -299,8 +299,8 @@ func (si *SignalItem) Position() Position {
 // If a route starts from this signal, the next signal is the end signal
 // of this route. Otherwise, it is the next signal found on the line.
 func (si *SignalItem) getNextSignal() *SignalItem {
-	if si.NextActiveRoute != nil {
-		return si.NextActiveRoute.EndSignal()
+	if si.nextActiveRoute != nil {
+		return si.nextActiveRoute.EndSignal()
 	}
 	for pos := si.Position(); !pos.IsOut(); pos = pos.Next(DirectionCurrent) {
 		if pos.TrackItem().Type() == TypeSignal && pos.TrackItem().IsOnPosition(pos) {
@@ -327,12 +327,12 @@ func (si *SignalItem) trainHeadActions(train *Train) {
 			return
 		}
 		if nextSignal := si.getNextSignal(); nextSignal != nil {
-			nextSignal.TrainID = train.ID
+			nextSignal.TrainID = train.trainID
 		}
-		if si.TrainID == train.ID {
+		if si.TrainID == train.trainID {
 			// Only reset train descriptor if it is ours, as it may
 			// be the one of a train behind in the same block
-			si.TrainID = 0
+			si.TrainID = ""
 		}
 	}
 	si.updateSignalState()
@@ -356,15 +356,15 @@ func (si *SignalItem) trainTailActions(train *Train) {
 	// For cleaning purposes: activeRoute not used in this direction
 	si.resetActiveRoute()
 
-	if si.PreviousActiveRoute != nil && si.PreviousActiveRoute.State != Persistent {
-		beginSignalNextRoute := si.PreviousActiveRoute.BeginSignal().NextActiveRoute
-		if beginSignalNextRoute == nil || beginSignalNextRoute.Equals(si.PreviousActiveRoute) {
+	if si.previousActiveRoute != nil && si.previousActiveRoute.State != Persistent {
+		beginSignalNextRoute := si.previousActiveRoute.BeginSignal().nextActiveRoute
+		if beginSignalNextRoute == nil || beginSignalNextRoute.Equals(si.previousActiveRoute) {
 			// Only reset previous route if the user did not reactivate it in the meantime
 			si.PreviousItem().resetActiveRoute()
 			si.resetPreviousActiveRoute(nil)
 		}
 	}
-	if si.NextActiveRoute != nil && si.NextActiveRoute.State != Persistent {
+	if si.nextActiveRoute != nil && si.nextActiveRoute.State != Persistent {
 		si.resetNextActiveRoute(nil)
 	}
 	si.updateSignalState()
@@ -386,28 +386,32 @@ func (si *SignalItem) updateSignalState() {
 			Object: si,
 		})
 	}
-	if si.PreviousActiveRoute != nil {
-		si.PreviousActiveRoute.BeginSignal().updateSignalState()
+	if si.previousActiveRoute != nil {
+		si.previousActiveRoute.BeginSignal().updateSignalState()
 	}
+	si.simulation.sendEvent(&Event{
+		Name:   TrackItemChanged,
+		Object: si,
+	})
 }
 
 // resetNextActiveRoute information. If route is not nil, do
-// this only if the NextActiveRoute is equal to route.
+// this only if the nextActiveRoute is equal to route.
 func (si *SignalItem) resetNextActiveRoute(r *Route) {
-	if r != nil && si.NextActiveRoute != nil && si.NextActiveRoute.ID != r.ID {
+	if r != nil && si.nextActiveRoute != nil && si.nextActiveRoute.routeID != r.routeID {
 		return
 	}
-	si.NextActiveRoute = nil
+	si.nextActiveRoute = nil
 	si.updateSignalState()
 }
 
 // resetPreviousActiveRoute information. If route is not nil, do
-// this only if the PreviousActiveRoute is equal to route.
+// this only if the previousActiveRoute is equal to route.
 func (si *SignalItem) resetPreviousActiveRoute(r *Route) {
-	if r != nil && si.PreviousActiveRoute != nil && si.PreviousActiveRoute.ID != r.ID {
+	if r != nil && si.previousActiveRoute != nil && si.previousActiveRoute.routeID != r.routeID {
 		return
 	}
-	si.PreviousActiveRoute = nil
+	si.previousActiveRoute = nil
 	si.updateSignalState()
 }
 
@@ -420,16 +424,53 @@ type SignalLibrary struct {
 
 // initialize this SignalLibrary
 func (sl *SignalLibrary) initialize() error {
-	for _, t := range sl.Types {
+	for tName, t := range sl.Types {
+		t.Name = tName
 		for i, s := range t.States {
 			asp, ok := sl.Aspects[s.AspectName]
 			if !ok {
 				return fmt.Errorf("not aspect with code %s found", s.AspectName)
 			}
+			asp.Name = s.AspectName
 			t.States[i].Aspect = asp
 		}
 	}
 	return nil
+}
+
+// MarshalJSON method for SignalItem
+func (si *SignalItem) MarshalJSON() ([]byte, error) {
+	type jsonSignalItem struct {
+		jsonTrackStruct
+		Xb                  float64 `json:"xn"`
+		Yb                  float64 `json:"yn"`
+		SignalTypeCode      string  `json:"signalType"`
+		Reverse             bool    `json:"reverse"`
+		TrainID             string  `json:"trainID"`
+		PreviousActiveRoute string  `json:"previousActiveRoute"`
+		NextActiveRoute     string  `json:"nextActiveRoute"`
+		ActiveAspect        string  `json:"activeAspect"`
+	}
+	var parID, narID string
+	if si.previousActiveRoute != nil {
+		parID = si.previousActiveRoute.ID()
+	}
+	if si.nextActiveRoute != nil {
+		narID = si.nextActiveRoute.ID()
+	}
+	aSI := jsonSignalItem{
+		jsonTrackStruct:     si.asJSONStruct(),
+		Xb:                  si.Xb,
+		Yb:                  si.Yb,
+		SignalTypeCode:      si.SignalTypeCode,
+		Reverse:             si.Reverse,
+		TrainID:             si.TrainID,
+		PreviousActiveRoute: parID,
+		NextActiveRoute:     narID,
+		ActiveAspect:        si.activeAspect.Name,
+	}
+	d, err := json.Marshal(aSI)
+	return d, err
 }
 
 var _ TrackItem = new(SignalItem)

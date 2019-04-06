@@ -37,7 +37,10 @@ func TestMain(m *testing.M) {
 	simulation.InitializeLogger(mainLogger)
 	data, _ := ioutil.ReadFile("../simulation/testdata/demo.json")
 	var s simulation.Simulation
-	json.Unmarshal(data, &s)
+	if err := json.Unmarshal(data, &s); err != nil {
+		fmt.Println("Unable to load demo.json:", err)
+		os.Exit(1)
+	}
 	s.Initialize()
 	go Run(&s, "0.0.0.0", "22222")
 	os.Exit(m.Run())

@@ -18,17 +18,21 @@
 
 package routes
 
-import "github.com/ts2/ts2-sim-server/simulation"
+import (
+	"errors"
+
+	"github.com/ts2/ts2-sim-server/simulation"
+)
 
 // StandardManager is a routes manager that allow activation
 // by checking if routes are conflicting or not.
 // It always allows deactivation.
 type StandardManager struct{}
 
-// CanActivate returns true if the given route can be activated.
+// CanActivate returns an error if the given route cannot be activated.
 // In this implementation, it checks route conflicts and returns
 // false if a conflict is found.
-func (sm StandardManager) CanActivate(r *simulation.Route) bool {
+func (sm StandardManager) CanActivate(r *simulation.Route) error {
 	var flag bool
 	for _, pos := range r.Positions {
 		if pos.TrackItem().ID() == r.BeginSignalId || pos.TrackItem().ID() == r.EndSignalId {
@@ -36,12 +40,12 @@ func (sm StandardManager) CanActivate(r *simulation.Route) bool {
 		}
 		if pos.TrackItem().ConflictItem() != nil && pos.TrackItem().ConflictItem().ActiveRoute() != nil {
 			// Our trackItem has a conflicting item with an active route
-			return false
+			return errors.New("conflicting route is active")
 		}
 		if pos.TrackItem().ActiveRoute() == nil {
 			if flag {
 				// We had a route with same direction but does not end with the same signal
-				return false
+				return errors.New("conflicting route is active")
 			}
 			continue
 		}
@@ -49,28 +53,28 @@ func (sm StandardManager) CanActivate(r *simulation.Route) bool {
 		if pos.TrackItem().Type() == simulation.TypePoints && !flag {
 			// The trackItem is a pointsItem and it is the first
 			// trackItem with active route that we meet
-			return false
+			return errors.New("conflicting route is active")
 		}
 		if pos.PreviousItem().ID() != pos.TrackItem().ActiveRoutePreviousItem().ID() {
 			// The direction of route r is different from that of the active route of the TI
-			return false
+			return errors.New("conflicting route is active")
 		}
-		if pos.TrackItem().ActiveRoute().ID == r.ID {
+		if pos.TrackItem().ActiveRoute().ID() == r.ID() {
 			// Always allow to setup the same route again
-			return true
+			return nil
 		}
 		// We set flag to true to remember we have come across an item with activeRoute with
 		// the same direction. This enables the user to set a route ending with the same end
 		// signal when it is cleared by a train still on the route
 		flag = true
 	}
-	return true
+	return nil
 }
 
-// CanDeactivate returns true if the given route can be deactivated.
+// CanDeactivate returns an error if the given route cannot be deactivated.
 // In this implementation, it always returns true.
-func (sm StandardManager) CanDeactivate(r *simulation.Route) bool {
-	return true
+func (sm StandardManager) CanDeactivate(r *simulation.Route) error {
+	return nil
 }
 
 // Name of this manager

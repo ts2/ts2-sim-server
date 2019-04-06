@@ -29,14 +29,14 @@ func TestFollowingItem(t *testing.T) {
 	if err := json.Unmarshal(loadSim(), &sim); err != nil {
 		t.Errorf("Options: error while loading JSON: %s", err)
 	}
-	ei1, _ := sim.TrackItems[1]
-	li2, _ := sim.TrackItems[2]
-	si3, _ := sim.TrackItems[3]
-	li4, _ := sim.TrackItems[4]
-	ti6, _ := sim.TrackItems[6]
-	pi7, _ := sim.TrackItems[7]
-	ti8, _ := sim.TrackItems[8]
-	ti14, _ := sim.TrackItems[14]
+	ei1, _ := sim.TrackItems["1"]
+	li2, _ := sim.TrackItems["2"]
+	si3, _ := sim.TrackItems["3"]
+	li4, _ := sim.TrackItems["4"]
+	ti6, _ := sim.TrackItems["6"]
+	pi7, _ := sim.TrackItems["7"]
+	ti8, _ := sim.TrackItems["8"]
+	ti14, _ := sim.TrackItems["14"]
 	fi1, _ := li2.FollowingItem(si3, 0)
 	fi1b, _ := li2.FollowingItem(ei1, 0)
 	fi3, _ := si3.FollowingItem(li4, 1)

@@ -23,8 +23,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
-	"strconv"
-	"strings"
 	"time"
 
 	log "gopkg.in/inconshreveable/log15.v2"
@@ -51,10 +49,10 @@ func InitializeLogger(parentLogger log.Logger) {
 // Simulation holds all the game logic.
 type Simulation struct {
 	SignalLib     SignalLibrary
-	TrackItems    map[int]TrackItem
+	TrackItems    map[string]TrackItem
 	Places        map[string]*Place
 	Options       options
-	Routes        map[int]*Route
+	Routes        map[string]*Route
 	TrainTypes    map[string]*TrainType
 	Services      map[string]*Service
 	Trains        []*Train
@@ -89,7 +87,7 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 		logger.Crit("error initializing signal Library", "error", err)
 		panic(err)
 	}
-	sim.TrackItems = make(map[int]TrackItem)
+	sim.TrackItems = make(map[string]TrackItem)
 	sim.Places = make(map[string]*Place)
 	for tiId, tiString := range rawSim.TrackItems {
 		var rawItem auxItem
@@ -101,10 +99,6 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 		unmarshalItem := func(ti TrackItem) error {
 			if err := json.Unmarshal(tiString, ti); err != nil {
 				return fmt.Errorf("unable to decode %s: %s. %s", tiType, tiString, err)
-			}
-			tiId, errconv := strconv.Atoi(strings.Trim(tiId, `"`))
-			if errconv != nil {
-				return fmt.Errorf("unable to convert %s", errconv)
 			}
 			ti.underlying().simulation = sim
 			ti.underlying().tsId = tiId
@@ -152,16 +146,12 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 	}
 
 	sim.Options = rawSim.Options
-	sim.Routes = make(map[int]*Route)
+	sim.Routes = make(map[string]*Route)
 	for num, route := range rawSim.Routes {
 		route.setSimulation(sim)
-		routeNum, errRoute := strconv.Atoi(num)
-		if errRoute != nil {
-			return fmt.Errorf("routeNum : `%s` is invalid", num)
-		}
-		sim.Routes[routeNum] = route
-		if err := route.initialize(routeNum); err != nil {
-			logger.Crit("error initializing route", "route", route.ID, "error", err)
+		sim.Routes[num] = route
+		if err := route.initialize(num); err != nil {
+			logger.Crit("error initializing route", "route", route.routeID, "error", err)
 			panic(err)
 		}
 	}
@@ -188,7 +178,7 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 		}
 	})
 	for i, t := range sim.Trains {
-		t.setSimulation(sim, i)
+		t.setSimulation(sim, fmt.Sprintf("%d", i))
 	}
 	sim.MessageLogger = rawSim.MessageLogger
 	sim.MessageLogger.setSimulation(sim)
@@ -223,10 +213,10 @@ func (sim *Simulation) MarshalJSON() ([]byte, error) {
 
 	tkis := make(map[string]TrackItem)
 	for k, v := range sim.TrackItems {
-		tkis[fmt.Sprintf("%d", k)] = v
+		tkis[k] = v
 	}
 	for _, v := range sim.Places {
-		tkis[fmt.Sprintf("%d", v.ID())] = v
+		tkis[v.ID()] = v
 	}
 	res.WriteString(`,
 	"trackItems": `)

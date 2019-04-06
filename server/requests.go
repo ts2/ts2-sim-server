@@ -52,7 +52,7 @@ type RequestRegister struct {
 // ParamsListener is the struct of the Request Params for a RequestListener
 type ParamsListener struct {
 	Event simulation.EventName `json:"event"`
-	Ids   []string             `json:"ids"`
+	IDs   []string             `json:"ids"`
 }
 
 // RequestListener is a request made by a websocket client to add or remove a listener.

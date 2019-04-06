@@ -34,11 +34,17 @@ func (s *serverObject) dispatch(h *Hub, req Request, conn *connection) {
 		logger.Debug("Request for second register received", "submodule", "hub", "object", req.Object, "action", req.Action)
 	case "addListener":
 		logger.Debug("Request for addListener received", "submodule", "hub", "object", req.Object, "action", req.Action)
-		h.addRegistryEntry(req, conn)
+		if err := h.addRegistryEntry(req, conn); err != nil {
+			ch <- NewErrorResponse(req.ID, err)
+			return
+		}
 		ch <- NewOkResponse(req.ID, "Listener added successfully")
 	case "removeListener":
 		logger.Debug("Request for removeListener received", "submodule", "hub", "object", req.Object, "action", req.Action)
-		h.removeRegistryEntry(req, conn)
+		if err := h.removeRegistryEntry(req, conn); err != nil {
+			ch <- NewErrorResponse(req.ID, err)
+			return
+		}
 		ch <- NewOkResponse(req.ID, "Listener removed successfully")
 	default:
 		ch <- NewErrorResponse(req.ID, fmt.Errorf("unknwon action %s/%s", req.Object, req.Action))
@@ -47,29 +53,51 @@ func (s *serverObject) dispatch(h *Hub, req Request, conn *connection) {
 }
 
 // addRegistryEntry adds the given event registry entry to the registry.
-func (h *Hub) addRegistryEntry(req Request, conn *connection) {
+func (h *Hub) addRegistryEntry(req Request, conn *connection) error {
 	var pl ParamsListener
 	if err := json.Unmarshal(req.Params, &pl); err != nil {
-		logger.Error("Unparsable request (addRegistryEntry)", "submodule", "hub", "request", req)
+		logger.Error("Unparsable request (addRegistryEntry)", "submodule", "hub", "error", err, "request", req)
+		return fmt.Errorf("unparsable request: %s (%s)", err, string(req.Params))
 	}
-	re := registryEntry{conn: conn, eventName: pl.Event, ids: pl.Ids}
-	h.registry[&re] = true
-	logger.Debug("Registry entry added", "submodule", "hub", "entry", re)
+	if len(pl.IDs) == 0 {
+		re := registryEntry{eventName: pl.Event, id: ""}
+		if _, ok := h.registry[re]; !ok {
+			h.registry[re] = make(map[*connection]bool)
+		}
+		h.registry[re][conn] = true
+		logger.Debug("Registry entry added", "submodule", "hub", "entry", re)
+		return nil
+	}
+	for _, id := range pl.IDs {
+		re := registryEntry{eventName: pl.Event, id: id}
+		if _, ok := h.registry[re]; !ok {
+			h.registry[re] = make(map[*connection]bool)
+		}
+		h.registry[re][conn] = true
+	}
+	logger.Debug("Registry entries added", "submodule", "hub", "eventName", pl.Event, "ids", pl.IDs)
+	return nil
 }
 
 // removeRegistryEntry removes the given event registry entry from the registry.
-func (h *Hub) removeRegistryEntry(req Request, conn *connection) {
+func (h *Hub) removeRegistryEntry(req Request, conn *connection) error {
 	var pl ParamsListener
 	if err := json.Unmarshal(req.Params, &pl); err != nil {
-		logger.Error("Unparsable request (addRegistryEntry)", "submodule", "hub", "request", req)
+		logger.Error("Unparsable request (addRegistryEntry)", "submodule", "hub", "error", err, "request", req)
+		return fmt.Errorf("unparsable request: %s (%s)", err, string(req.Params))
 	}
-	re := registryEntry{conn: conn, eventName: pl.Event}
-	for r := range h.registry {
-		if r.conn == re.conn && r.eventName == re.eventName {
-			delete(h.registry, r)
-			break
-		}
+	if len(pl.IDs) == 0 {
+		re := registryEntry{eventName: pl.Event, id: ""}
+		delete(h.registry[re], conn)
+		logger.Debug("Registry entry deleted", "submodule", "hub", "entry", re)
+		return nil
 	}
+	for _, id := range pl.IDs {
+		re := registryEntry{eventName: pl.Event, id: id}
+		delete(h.registry[re], conn)
+	}
+	logger.Debug("Registry entries added", "submodule", "hub", "eventName", pl.Event, "ids", pl.IDs)
+	return nil
 }
 
 var _ hubObject = new(serverObject)

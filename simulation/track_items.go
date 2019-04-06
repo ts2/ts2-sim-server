@@ -19,6 +19,7 @@
 package simulation
 
 import (
+	"encoding/json"
 	"fmt"
 )
 
@@ -47,7 +48,7 @@ const (
 )
 
 // A CustomProperty is a map to hold track item properties that are defined by the user.
-type CustomProperty map[string][]int
+type CustomProperty map[string][]string
 
 // A LineItemManager manages breakdowns of line track circuits
 type LineItemManager interface {
@@ -66,7 +67,7 @@ type ItemsNotLinkedError struct {
 
 // Error method for the ItemsNotLinkedError
 func (e ItemsNotLinkedError) Error() string {
-	return fmt.Sprintf("TrackItems %d and %d are not linked", e.item1.ID(), e.item2.ID())
+	return fmt.Sprintf("TrackItems %s and %s are not linked", e.item1.ID(), e.item2.ID())
 }
 
 // An ItemNotLinkedAtError is returned when a TrackItem instance has no connected item at the given end.
@@ -77,7 +78,7 @@ type ItemNotLinkedAtError struct {
 
 // Error method for the ItemsNotLinkedError
 func (i ItemNotLinkedAtError) Error() string {
-	return fmt.Sprintf("TrackItem %d is not linked at (%f, %f)", i.item.ID(), i.pt.X, i.pt.Y)
+	return fmt.Sprintf("TrackItem %s is not linked at (%f, %f)", i.item.ID(), i.pt.X, i.pt.Y)
 }
 
 // ItemInconsistentLinkError is returned when a TrackItem is linked to another one, but
@@ -90,7 +91,7 @@ type ItemInconsistentLinkError struct {
 
 // Error method for the ItemInconsistentLinkError
 func (i ItemInconsistentLinkError) Error() string {
-	return fmt.Sprintf("inconsistent link at (%f, %f) between %d and %d", i.pt.X, i.pt.Y, i.item1.ID(), i.item2.ID())
+	return fmt.Sprintf("inconsistent link at (%f, %f) between %s and %s", i.pt.X, i.pt.Y, i.item1.ID(), i.item2.ID())
 }
 
 // A TrackItem is a piece of scenery and is "the base interface" for others
@@ -104,9 +105,9 @@ func (i ItemInconsistentLinkError) Error() string {
 //
 // Every TrackItem has an Origin() Point defined by its X and Y values.
 type TrackItem interface {
-	// ID returns the unique ID of this TrackItem, which is the index of this
+	// routeID returns the unique routeID of this TrackItem, which is the index of this
 	// item in the Simulation's TrackItems map.
-	ID() int
+	ID() string
 
 	// Type returns the name of the type of this item
 	Type() TrackItemType
@@ -193,7 +194,7 @@ type TrackItem interface {
 	DistanceToTrainEnd(Position) (float64, bool)
 
 	// Equals returns true if this track item and the given one are the same
-	// (i.e. they have the same ID)
+	// (i.e. they have the same routeID)
 	Equals(TrackItem) bool
 
 	// addTrigger adds the given function to the list of functions that will be
@@ -214,17 +215,17 @@ type TrackItem interface {
 type trackStruct struct {
 	TiType           string                    `json:"__type__"`
 	TsName           string                    `json:"name"`
-	NextTiID         int                       `json:"nextTiId"`
-	PreviousTiID     int                       `json:"previousTiId"`
+	NextTiID         string                    `json:"nextTiId"`
+	PreviousTiID     string                    `json:"previousTiId"`
 	TsMaxSpeed       float64                   `json:"maxSpeed"`
 	TsRealLength     float64                   `json:"realLength"`
 	X                float64                   `json:"x"`
 	Y                float64                   `json:"y"`
-	ConflictTiId     int                       `json:"conflictTiId"`
+	ConflictTiId     string                    `json:"conflictTiId"`
 	CustomProperties map[string]CustomProperty `json:"customProperties"`
 	PlaceCode        string                    `json:"placeCode"`
 
-	tsId           int
+	tsId           string
 	simulation     *Simulation
 	activeRoute    *Route
 	arPreviousItem TrackItem
@@ -235,9 +236,9 @@ type trackStruct struct {
 	triggers       []func(TrackItem)
 }
 
-// ID returns the unique ID of this TrackItem, which is the index of this
+// routeID returns the unique routeID of this TrackItem, which is the index of this
 // item in the Simulation's TrackItems map.
-func (t *trackStruct) ID() int {
+func (t *trackStruct) ID() string {
 	return t.tsId
 }
 
@@ -352,6 +353,10 @@ func (t *trackStruct) underlying() *trackStruct {
 func (t *trackStruct) setActiveRoute(r *Route, previous TrackItem) {
 	t.activeRoute = r
 	t.arPreviousItem = previous
+	t.simulation.sendEvent(&Event{
+		Name:   TrackItemChanged,
+		Object: t.full(),
+	})
 }
 
 // ActiveRoute returns a pointer to the route currently active on this item
@@ -381,12 +386,12 @@ func (t *trackStruct) trainTailActions(train *Train) {
 	if t.activeRoute.State != Persistent {
 		return
 	}
-	beginSignalNextRoute := t.activeRoute.BeginSignal().NextActiveRoute
-	if beginSignalNextRoute != nil && beginSignalNextRoute.ID == t.activeRoute.ID {
+	beginSignalNextRoute := t.activeRoute.BeginSignal().nextActiveRoute
+	if beginSignalNextRoute != nil && beginSignalNextRoute.routeID == t.activeRoute.routeID {
 		// same route has been set again
 		return
 	}
-	if t.ActiveRoutePreviousItem().ActiveRoute() == nil || t.ActiveRoutePreviousItem().ActiveRoute().ID != t.activeRoute.ID {
+	if t.ActiveRoutePreviousItem().ActiveRoute() == nil || t.ActiveRoutePreviousItem().ActiveRoute().routeID != t.activeRoute.routeID {
 		// previous item has been already set to a new route which is not ours
 		return
 	}
@@ -402,6 +407,10 @@ func (t *trackStruct) TrainPresent() bool {
 func (t *trackStruct) resetActiveRoute() {
 	t.activeRoute = nil
 	t.arPreviousItem = nil
+	t.simulation.sendEvent(&Event{
+		Name:   TrackItemChanged,
+		Object: t.full(),
+	})
 }
 
 // IsOnPosition returns true if this track item is the track item of the given position.
@@ -438,7 +447,7 @@ func (t *trackStruct) DistanceToTrainEnd(pos Position) (float64, bool) {
 }
 
 // Equals returns true if this track item and the given one are the same
-// (i.e. they have the same ID)
+// (i.e. they have the same routeID)
 func (t *trackStruct) Equals(ti TrackItem) bool {
 	return t.ID() == ti.ID()
 }
@@ -448,7 +457,67 @@ func (t *trackStruct) initialize() error {
 	return nil
 }
 
+// full returns this item as a TrackItem by reloading it
+func (t *trackStruct) full() TrackItem {
+	return t.simulation.TrackItems[t.ID()]
+}
+
+// MarshalJSON method for trackStruct
+func (t *trackStruct) MarshalJSON() ([]byte, error) {
+	ai := t.asJSONStruct()
+	return json.Marshal(ai)
+}
+
+// asJSONStruct returns this trackStruct as a jsonTrackStruct
+func (t *trackStruct) asJSONStruct() jsonTrackStruct {
+	var arID, arpiID string
+	if t.activeRoute != nil {
+		arID = t.activeRoute.ID()
+	}
+	if t.arPreviousItem != nil {
+		arpiID = t.arPreviousItem.ID()
+	}
+	ai := jsonTrackStruct{
+		ID:               t.ID(),
+		TiType:           t.TiType,
+		TsName:           t.TsName,
+		NextTiID:         t.NextTiID,
+		PreviousTiID:     t.PreviousTiID,
+		TsMaxSpeed:       t.TsMaxSpeed,
+		TsRealLength:     t.TsRealLength,
+		X:                t.X,
+		Y:                t.Y,
+		ConflictTiId:     t.ConflictTiId,
+		CustomProperties: t.CustomProperties,
+		PlaceCode:        t.PlaceCode,
+		ActiveRoute:      arID,
+		ARPreviousItem:   arpiID,
+		TrainEndsFW:      t.trainEndsFW,
+		TrainEndsBK:      t.trainEndsBK,
+	}
+	return ai
+}
+
 var _ TrackItem = new(trackStruct)
+
+type jsonTrackStruct struct {
+	ID               string                    `json:"id"`
+	TiType           string                    `json:"__type__"`
+	TsName           string                    `json:"name"`
+	NextTiID         string                    `json:"nextTiId"`
+	PreviousTiID     string                    `json:"previousTiId"`
+	TsMaxSpeed       float64                   `json:"maxSpeed"`
+	TsRealLength     float64                   `json:"realLength"`
+	X                float64                   `json:"x"`
+	Y                float64                   `json:"y"`
+	ConflictTiId     string                    `json:"conflictTiId"`
+	CustomProperties map[string]CustomProperty `json:"customProperties"`
+	PlaceCode        string                    `json:"placeCode"`
+	ActiveRoute      string                    `json:"activeRoute"`
+	ARPreviousItem   string                    `json:"activeRoutePreviousItem"`
+	TrainEndsFW      []float64                 `json:"trainEndsFW"`
+	TrainEndsBK      []float64                 `json:"trainEndsBK"`
+}
 
 // A Place is a special TrackItem representing a physical location such as a
 // station or a passing point. Note that Place items are not linked to other items.
@@ -488,6 +557,23 @@ func (li *LineItem) End() Point {
 	return Point{li.Xf, li.Yf}
 }
 
+// MarshalJSON method for LineItem
+func (li *LineItem) MarshalJSON() ([]byte, error) {
+	type auxLI struct {
+		jsonTrackStruct
+		Xf          float64 `json:"xf"`
+		Yf          float64 `json:"yf"`
+		TsTrackCode string  `json:"trackCode"`
+	}
+	aLI := auxLI{
+		jsonTrackStruct: li.asJSONStruct(),
+		Xf:              li.Xf,
+		Yf:              li.Yf,
+		TsTrackCode:     li.TsTrackCode,
+	}
+	return json.Marshal(aLI)
+}
+
 var _ TrackItem = new(LineItem)
 
 // InvisibleLinkItem behave like line items, but clients are encouraged not to
@@ -520,6 +606,11 @@ func (ei *EndItem) Type() TrackItemType {
 // RealLength() is the length in meters that this TrackItem has in real life track length
 func (ei *EndItem) RealLength() float64 {
 	return bigFloat
+}
+
+// MarshalJSON method for the end item
+func (ei *EndItem) MarshalJSON() ([]byte, error) {
+	return json.Marshal(ei.asJSONStruct())
 }
 
 var _ TrackItem = new(EndItem)

@@ -118,6 +118,12 @@ type Time struct {
 	time.Time
 }
 
+// ID method exists only to comply to the SimObject interface so
+// that Time objects can be serialized in event notifications.
+func (h Time) ID() string {
+	return ""
+}
+
 // UnmarshalJSON for the Time type
 func (h *Time) UnmarshalJSON(data []byte) error {
 	var hourStr string

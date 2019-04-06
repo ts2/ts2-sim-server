@@ -48,19 +48,19 @@ func TestLoadRoutes(t *testing.T) {
 		t.Errorf("Options: error while loading JSON: %s", err)
 	}
 	assertEqual(t, len(sim.Routes), 4, "Routes: Not all loaded")
-	r1, ok := sim.Routes[1]
+	r1, ok := sim.Routes["1"]
 	assertTrue(t, ok, "Routes: 1 not loaded")
 
-	si5, _ := sim.TrackItems[5].(*SignalItem)
-	si11, _ := sim.TrackItems[11].(*SignalItem)
+	si5, _ := sim.TrackItems["5"].(*SignalItem)
+	si11, _ := sim.TrackItems["11"].(*SignalItem)
 	assertEqual(t, r1.BeginSignal(), si5, "Route 1/BeginSignal")
 	assertEqual(t, r1.EndSignal(), si11, "Route 1/EndSignal")
-	items := []int{5, 6, 7, 8, 9, 10, 11}
+	items := []string{"5", "6", "7", "8", "9", "10", "11"}
 	for i, pos := range r1.Positions {
 		assertEqual(t, pos.TrackItem().ID(), items[i], "Route 1/Positions")
 	}
 	assertEqual(t, len(r1.Directions), 1, "Route 1/Directions")
-	d1, ok := r1.Directions[7]
+	d1, ok := r1.Directions["7"]
 	if !ok {
 		t.Errorf("Route 1/No direction 7")
 	}
@@ -68,14 +68,14 @@ func TestLoadRoutes(t *testing.T) {
 	assertEqual(t, r1.InitialState, Activated, "Route 1/InitialState")
 	assertEqual(t, r1.State, Activated, "Route 1/state")
 
-	r4, ok := sim.Routes[4]
+	r4, ok := sim.Routes["4"]
 	assertTrue(t, ok, "Routes: 4 not loaded")
 
-	si15, _ := sim.TrackItems[15].(*SignalItem)
-	si3, _ := sim.TrackItems[3].(*SignalItem)
+	si15, _ := sim.TrackItems["15"].(*SignalItem)
+	si3, _ := sim.TrackItems["3"].(*SignalItem)
 	assertEqual(t, r4.BeginSignal(), si15, "Route 4/BeginSignal")
 	assertEqual(t, r4.EndSignal(), si3, "Route 4/EndSignal")
-	items = []int{15, 14, 7, 6, 5, 4, 3}
+	items = []string{"15", "14", "7", "6", "5", "4", "3"}
 	for i, pos := range r4.Positions {
 		assertEqual(t, pos.TrackItem().ID(), items[i], "Route 4/Positions")
 	}
@@ -93,41 +93,41 @@ func TestLoadTrackItems(t *testing.T) {
 	}
 	assertEqual(t, len(sim.TrackItems), 22, "TrackItems: Not all loaded")
 
-	ei1, ok := sim.TrackItems[1].(*EndItem)
+	ei1, ok := sim.TrackItems["1"].(*EndItem)
 	assertTrue(t, ok, "TrackItems: 1 not loaded")
-	li2, ok := sim.TrackItems[2].(*LineItem)
+	li2, ok := sim.TrackItems["2"].(*LineItem)
 	assertTrue(t, ok, "TrackItems: 2 not loaded")
-	si3, ok := sim.TrackItems[3].(*SignalItem)
+	si3, ok := sim.TrackItems["3"].(*SignalItem)
 	assertTrue(t, ok, "TrackItems: 3 not loaded")
-	li4, ok := sim.TrackItems[4].(*LineItem)
+	li4, ok := sim.TrackItems["4"].(*LineItem)
 	assertTrue(t, ok, "TrackItems: 4 not loaded")
-	si5, ok := sim.TrackItems[5].(*SignalItem)
+	si5, ok := sim.TrackItems["5"].(*SignalItem)
 	assertTrue(t, ok, "TrackItems: 5 not loaded")
-	ili6, ok := sim.TrackItems[6].(*InvisibleLinkItem)
+	ili6, ok := sim.TrackItems["6"].(*InvisibleLinkItem)
 	assertTrue(t, ok, "TrackItems: 6 not loaded")
-	pi7, ok := sim.TrackItems[7].(*PointsItem)
+	pi7, ok := sim.TrackItems["7"].(*PointsItem)
 	assertTrue(t, ok, "TrackItems: 7 not loaded")
-	li8, ok := sim.TrackItems[8].(*LineItem)
+	li8, ok := sim.TrackItems["8"].(*LineItem)
 	assertTrue(t, ok, "TrackItems: 8 not loaded")
-	si9, ok := sim.TrackItems[9].(*SignalItem)
+	si9, ok := sim.TrackItems["9"].(*SignalItem)
 	assertTrue(t, ok, "TrackItems: 9 not loaded")
-	li10, ok := sim.TrackItems[10].(*LineItem)
+	li10, ok := sim.TrackItems["10"].(*LineItem)
 	assertTrue(t, ok, "TrackItems: 10 not loaded")
-	si11, ok := sim.TrackItems[11].(*SignalItem)
+	si11, ok := sim.TrackItems["11"].(*SignalItem)
 	assertTrue(t, ok, "TrackItems: 11 not loaded")
-	li12, ok := sim.TrackItems[12].(*LineItem)
+	li12, ok := sim.TrackItems["12"].(*LineItem)
 	assertTrue(t, ok, "TrackItems: 12 not loaded")
-	ei13, ok := sim.TrackItems[13].(*EndItem)
+	ei13, ok := sim.TrackItems["13"].(*EndItem)
 	assertTrue(t, ok, "TrackItems: 13 not loaded")
-	li14, ok := sim.TrackItems[14].(*LineItem)
+	li14, ok := sim.TrackItems["14"].(*LineItem)
 	assertTrue(t, ok, "TrackItems: 14 not loaded")
-	si15, ok := sim.TrackItems[15].(*SignalItem)
+	si15, ok := sim.TrackItems["15"].(*SignalItem)
 	assertTrue(t, ok, "TrackItems: 15 not loaded")
-	li16, ok := sim.TrackItems[16].(*LineItem)
+	li16, ok := sim.TrackItems["16"].(*LineItem)
 	assertTrue(t, ok, "TrackItems: 16 not loaded")
-	si17, ok := sim.TrackItems[17].(*SignalItem)
+	si17, ok := sim.TrackItems["17"].(*SignalItem)
 	assertTrue(t, ok, "TrackItems: 15 not loaded")
-	ei18, ok := sim.TrackItems[18].(*EndItem)
+	ei18, ok := sim.TrackItems["18"].(*EndItem)
 	assertTrue(t, ok, "TrackItems: 18 not loaded")
 	lft, ok := sim.Places["LFT"]
 	assertTrue(t, ok, "Places: LFT not loaded")
@@ -135,20 +135,20 @@ func TestLoadTrackItems(t *testing.T) {
 	assertTrue(t, ok, "Places: STN not loaded")
 	rgt, ok := sim.Places["RGT"]
 	assertTrue(t, ok, "Places: RGT not loaded")
-	pfi22, ok := sim.TrackItems[22].(*PlatformItem)
+	pfi22, ok := sim.TrackItems["22"].(*PlatformItem)
 	assertTrue(t, ok, "TrackItems: 22 not loaded")
-	pfi23, ok := sim.TrackItems[23].(*PlatformItem)
+	pfi23, ok := sim.TrackItems["23"].(*PlatformItem)
 	assertTrue(t, ok, "TrackItems: 23 not loaded")
-	txti24, ok := sim.TrackItems[24].(*TextItem)
+	txti24, ok := sim.TrackItems["24"].(*TextItem)
 	assertTrue(t, ok, "TrackItems: 24 not loaded")
-	txti25, ok := sim.TrackItems[25].(*TextItem)
+	txti25, ok := sim.TrackItems["25"].(*TextItem)
 	assertTrue(t, ok, "TrackItems: 25 not loaded")
 
 	assertEqual(t, ei1.Name(), "", "EndItem1/Name")
 	assertEqual(t, ei1.NextItem(), nil, "EndItem1/NextItem")
 	assertEqual(t, ei1.PreviousItem(), li2, "EndItem1/PreviousItem")
 	assertEqual(t, ei1.Origin(), Point{0.0, 0.0}, "EndItem1/Origin")
-	assertEqual(t, ei1.ID(), 1, "EndItem/ID")
+	assertEqual(t, ei1.ID(), "1", "EndItem/routeID")
 	assertEqual(t, li2.PreviousItem(), ei1, "LineItem2/PreviousItem")
 	assertEqual(t, li2.TrackCode(), "", "LineItem2/TrackCode")
 	assertEqual(t, li2.Place(), lft, "LineItem2/Place")
@@ -207,10 +207,10 @@ func TestLoadTrackItems(t *testing.T) {
 	assertEqual(t, txti25.Name(), "1", "TextItem25/Name")
 
 	assertEqual(t, len(si5.CustomProperty("ROUTES_SET")["UK_DANGER"]), 1, "SignalItem5/CustomProperty/len(RoutesSet)")
-	assertEqual(t, si5.CustomProperty("ROUTES_SET")["UK_DANGER"][0], 2, "SignalItem5/CustomProperty/RoutesSet")
+	assertEqual(t, si5.CustomProperty("ROUTES_SET")["UK_DANGER"][0], "2", "SignalItem5/CustomProperty/RoutesSet")
 	assertEqual(t, len(si5.CustomProperty("TRAIN_NOT_PRESENT_ON_ITEMS")["UK_DANGER"]), 2, "SignalItem5/CustomProperty/len(TNPOI)")
-	assertEqual(t, si5.CustomProperty("TRAIN_NOT_PRESENT_ON_ITEMS")["UK_DANGER"][0], 4, "SignalItem5/CustomProperty/TNPOI0")
-	assertEqual(t, si5.CustomProperty("TRAIN_NOT_PRESENT_ON_ITEMS")["UK_DANGER"][1], 3, "SignalItem5/CustomProperty/TNPOI1")
+	assertEqual(t, si5.CustomProperty("TRAIN_NOT_PRESENT_ON_ITEMS")["UK_DANGER"][0], "4", "SignalItem5/CustomProperty/TNPOI0")
+	assertEqual(t, si5.CustomProperty("TRAIN_NOT_PRESENT_ON_ITEMS")["UK_DANGER"][1], "3", "SignalItem5/CustomProperty/TNPOI1")
 }
 
 func TestLoadTrainTypes(t *testing.T) {
@@ -275,7 +275,7 @@ func TestLoadTrains(t *testing.T) {
 	tr := sim.Trains[0]
 	assertEqual(t, tr.Service(), sim.Services["S001"], "Train1/Service")
 	assertEqual(t, tr.TrainType(), sim.TrainTypes["UT"], "Train1/TrainType")
-	assertTrue(t, tr.TrainHead.Equals(Position{&sim, sim.TrackItems[2].ID(), sim.TrackItems[1].ID(), 3.0}), "Train1/TrainHead")
+	assertTrue(t, tr.TrainHead.Equals(Position{&sim, sim.TrackItems["2"].ID(), sim.TrackItems["1"].ID(), 3.0}), "Train1/TrainHead")
 	assertEqual(t, tr.AppearTime, ParseTime("06:00:00"), "Train1/AppearTime")
 	assertTrue(t, tr.InitialDelay.Equals(DelayGenerator{[]delayTuplet{{-60, 60, 60}, {60, 180, 40}}}), "Train1/AppearTime")
 	assertEqual(t, tr.InitialSpeed, 5.0, "Train1/InitialSpeed")

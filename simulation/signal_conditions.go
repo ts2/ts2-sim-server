@@ -22,7 +22,7 @@ import (
 	"fmt"
 )
 
-// NextActiveRoute is true if a route starting from this Signal is active
+// nextActiveRoute is true if a route starting from this Signal is active
 type NextActiveRoute struct{}
 
 // Code of the ConditionType, uniquely defines this ConditionType
@@ -31,17 +31,17 @@ func (nar NextActiveRoute) Code() string {
 }
 
 // Solve returns if the condition is met for the given SignalItem and parameters
-func (nar NextActiveRoute) Solve(item *SignalItem, values []string, params []int) bool {
-	return item.NextActiveRoute != nil
+func (nar NextActiveRoute) Solve(item *SignalItem, values []string, params []string) bool {
+	return item.nextActiveRoute != nil
 }
 
 // SetupTriggers installs needed triggers for the given SignalItem, with the
 // given Condition.
-func (nar NextActiveRoute) SetupTriggers(item *SignalItem, params []int) {}
+func (nar NextActiveRoute) SetupTriggers(item *SignalItem, params []string) {}
 
 // ---------------------------------------------------------------------------------------------------------------
 
-// PreviousActiveRoute is true if a route ending at this Signal is active
+// previousActiveRoute is true if a route ending at this Signal is active
 type PreviousActiveRoute struct{}
 
 // Code of the ConditionType, uniquely defines this ConditionType
@@ -50,13 +50,13 @@ func (par PreviousActiveRoute) Code() string {
 }
 
 // Solve returns if the condition is met for the given SignalItem and parameters
-func (par PreviousActiveRoute) Solve(item *SignalItem, values []string, params []int) bool {
-	return item.PreviousActiveRoute != nil
+func (par PreviousActiveRoute) Solve(item *SignalItem, values []string, params []string) bool {
+	return item.previousActiveRoute != nil
 }
 
 // SetupTriggers installs needed triggers for the given SignalItem, with the
 // given Condition.
-func (par PreviousActiveRoute) SetupTriggers(item *SignalItem, params []int) {}
+func (par PreviousActiveRoute) SetupTriggers(item *SignalItem, params []string) {}
 
 // ---------------------------------------------------------------------------------------------------------------
 
@@ -70,7 +70,7 @@ func (rsa RouteSetAcross) Code() string {
 }
 
 // Solve returns if the condition is met for the given SignalItem and parameters
-func (rsa RouteSetAcross) Solve(item *SignalItem, values []string, params []int) bool {
+func (rsa RouteSetAcross) Solve(item *SignalItem, values []string, params []string) bool {
 	if item.ActiveRoute() != nil {
 		positions := item.ActiveRoute().Positions
 		for _, pos := range positions[1 : len(positions)-1] {
@@ -84,7 +84,7 @@ func (rsa RouteSetAcross) Solve(item *SignalItem, values []string, params []int)
 
 // SetupTriggers installs needed triggers for the given SignalItem, with the
 // given Condition.
-func (rsa RouteSetAcross) SetupTriggers(item *SignalItem, params []int) {}
+func (rsa RouteSetAcross) SetupTriggers(item *SignalItem, params []string) {}
 
 // ---------------------------------------------------------------------------------------------------------------
 
@@ -98,29 +98,29 @@ func (tnpnr TrainNotPresentOnNextRoute) Code() string {
 }
 
 // Solve returns if the condition is met for the given SignalItem and parameters
-func (tnpnr TrainNotPresentOnNextRoute) Solve(item *SignalItem, values []string, params []int) bool {
-	if item.NextActiveRoute != nil {
-		for _, pos := range item.NextActiveRoute.Positions {
+func (tnpnr TrainNotPresentOnNextRoute) Solve(item *SignalItem, values []string, params []string) bool {
+	if item.nextActiveRoute != nil {
+		for _, pos := range item.nextActiveRoute.Positions {
 			if pos.TrackItem().TrainPresent() {
-				return true
+				return false
 			}
 		}
-		return false
+		return true
 	}
 	for cur := item.Position(); !cur.IsOut(); cur = cur.Next(DirectionCurrent) {
 		if cur.TrackItem().TrainPresent() {
-			return true
+			return false
 		}
 		if cur.TrackItem().Type() == TypeSignal && cur.TrackItem().IsOnPosition(cur) {
 			break
 		}
 	}
-	return false
+	return true
 }
 
 // SetupTriggers installs needed triggers for the given SignalItem, with the
 // given Condition.
-func (tnpnr TrainNotPresentOnNextRoute) SetupTriggers(item *SignalItem, params []int) {}
+func (tnpnr TrainNotPresentOnNextRoute) SetupTriggers(item *SignalItem, params []string) {}
 
 // ---------------------------------------------------------------------------------------------------------------
 
@@ -133,7 +133,7 @@ func (tnpoi TrainNotPresentOnItems) Code() string {
 }
 
 // Solve returns if the condition is met for the given SignalItem and parameters
-func (tnpoi TrainNotPresentOnItems) Solve(item *SignalItem, values []string, params []int) bool {
+func (tnpoi TrainNotPresentOnItems) Solve(item *SignalItem, values []string, params []string) bool {
 	for _, id := range params {
 		if item.Simulation().TrackItems[id].TrainPresent() {
 			return false
@@ -144,12 +144,12 @@ func (tnpoi TrainNotPresentOnItems) Solve(item *SignalItem, values []string, par
 
 // SetupTriggers installs needed triggers for the given SignalItem, with the
 // given Condition.
-func (tnpoi TrainNotPresentOnItems) SetupTriggers(item *SignalItem, params []int) {
+func (tnpoi TrainNotPresentOnItems) SetupTriggers(item *SignalItem, params []string) {
 	for _, id := range params {
 		ti, ok := item.Simulation().TrackItems[id]
 		if !ok {
 			panic(fmt.Errorf("TrainNotPresentOnItems: error in simulation definition.\n"+
-				"SignalItem %d reference unknown TrackItem %d", item.ID(), id))
+				"SignalItem %s reference unknown TrackItem %s", item.ID(), id))
 		}
 		ti.addTrigger(func(t TrackItem) {
 			item.updateSignalState()
@@ -169,7 +169,7 @@ func (tpoi TrainPresentOnItems) Code() string {
 }
 
 // Solve returns if the condition is met for the given SignalItem and parameters
-func (tpoi TrainPresentOnItems) Solve(item *SignalItem, values []string, params []int) bool {
+func (tpoi TrainPresentOnItems) Solve(item *SignalItem, values []string, params []string) bool {
 	for _, id := range params {
 		if !item.Simulation().TrackItems[id].TrainPresent() {
 			return false
@@ -180,12 +180,12 @@ func (tpoi TrainPresentOnItems) Solve(item *SignalItem, values []string, params 
 
 // SetupTriggers installs needed triggers for the given SignalItem, with the
 // given Condition.
-func (tpoi TrainPresentOnItems) SetupTriggers(item *SignalItem, params []int) {
+func (tpoi TrainPresentOnItems) SetupTriggers(item *SignalItem, params []string) {
 	for _, id := range params {
 		ti, ok := item.Simulation().TrackItems[id]
 		if !ok {
 			panic(fmt.Errorf("TrainPresentOnItems: error in simulation definition.\n"+
-				"SignalItem %d reference unknown TrackItem %d", item.ID(), id))
+				"SignalItem %s reference unknown TrackItem %s", item.ID(), id))
 		}
 		ti.addTrigger(func(t TrackItem) {
 			item.updateSignalState()
@@ -206,7 +206,7 @@ func (rs RouteSet) Code() string {
 }
 
 // Solve returns if the condition is met for the given SignalItem and parameters
-func (rs RouteSet) Solve(item *SignalItem, values []string, params []int) bool {
+func (rs RouteSet) Solve(item *SignalItem, values []string, params []string) bool {
 	for _, id := range params {
 		if item.Simulation().Routes[id].IsActive() {
 			return true
@@ -217,12 +217,12 @@ func (rs RouteSet) Solve(item *SignalItem, values []string, params []int) bool {
 
 // SetupTriggers installs needed triggers for the given SignalItem, with the
 // given Condition.
-func (rs RouteSet) SetupTriggers(item *SignalItem, params []int) {
+func (rs RouteSet) SetupTriggers(item *SignalItem, params []string) {
 	for _, id := range params {
 		r, ok := item.Simulation().Routes[id]
 		if !ok {
 			panic(fmt.Errorf("RouteSet: error in simulation definition.\n"+
-				"SignalItem %d reference unknown Route %d", item.ID(), id))
+				"SignalItem %s reference unknown Route %s", item.ID(), id))
 		}
 		r.addTrigger(func(r *Route) {
 			item.updateSignalState()
@@ -243,7 +243,7 @@ func (nsa NextSignalAspects) Code() string {
 }
 
 // Solve returns if the condition is met for the given SignalItem and parameters
-func (nsa NextSignalAspects) Solve(item *SignalItem, values []string, params []int) bool {
+func (nsa NextSignalAspects) Solve(item *SignalItem, values []string, params []string) bool {
 	nextSignal := item.getNextSignal()
 	if nextSignal != nil {
 		for _, v := range values {
@@ -257,12 +257,12 @@ func (nsa NextSignalAspects) Solve(item *SignalItem, values []string, params []i
 
 // SetupTriggers installs needed triggers for the given SignalItem, with the
 // given Condition.
-func (nsa NextSignalAspects) SetupTriggers(item *SignalItem, params []int) {
+func (nsa NextSignalAspects) SetupTriggers(item *SignalItem, params []string) {
 	for _, id := range params {
 		r, ok := item.Simulation().Routes[id]
 		if !ok {
 			panic(fmt.Errorf("RouteSet: error in simulation definition.\n"+
-				"SignalItem %d reference unknown Route %d", item.ID(), id))
+				"SignalItem %s reference unknown Route %s", item.ID(), id))
 		}
 		r.addTrigger(func(r *Route) {
 			item.updateSignalState()

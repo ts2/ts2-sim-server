@@ -41,7 +41,7 @@ func (r *routeObject) dispatch(h *Hub, req Request, conn *connection) {
 		ch <- NewResponse(req.ID, rtes)
 	case "show":
 		var idsParams = struct {
-			IDs []int `json:"ids"`
+			IDs []string `json:"ids"`
 		}{}
 		err := json.Unmarshal(req.Params, &idsParams)
 		logger.Debug("Request for route show received", "submodule", "hub", "object", req.Object, "action", req.Action, "params", idsParams)
@@ -49,7 +49,7 @@ func (r *routeObject) dispatch(h *Hub, req Request, conn *connection) {
 			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
 			return
 		}
-		rtes := make(map[int]*simulation.Route)
+		rtes := make(map[string]*simulation.Route)
 		for _, id := range idsParams.IDs {
 			rtes[id] = sim.Routes[id]
 		}
@@ -61,8 +61,8 @@ func (r *routeObject) dispatch(h *Hub, req Request, conn *connection) {
 		ch <- NewResponse(req.ID, rte)
 	case "activate":
 		var actParams = struct {
-			ID         int  `json:"id"`
-			Persistent bool `json:"persistent"`
+			ID         string `json:"id"`
+			Persistent bool   `json:"persistent"`
 		}{}
 		err := json.Unmarshal(req.Params, &actParams)
 		logger.Debug("Request for route activate received", "submodule", "hub", "object", req.Object, "action", req.Action, "params", actParams)
@@ -72,18 +72,18 @@ func (r *routeObject) dispatch(h *Hub, req Request, conn *connection) {
 		}
 		rte, ok := sim.Routes[actParams.ID]
 		if !ok {
-			ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown route: %d", actParams.ID))
+			ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown route: %s", actParams.ID))
 			return
 		}
 		err = rte.Activate(actParams.Persistent)
 		if err != nil {
-			ch <- NewErrorResponse(req.ID, fmt.Errorf("cannot activate route %d: %s", actParams.ID, err))
+			ch <- NewErrorResponse(req.ID, fmt.Errorf("cannot activate route %s: %s", actParams.ID, err))
 			return
 		}
-		ch <- NewOkResponse(req.ID, fmt.Sprintf("Route %d activated successfully", actParams.ID))
+		ch <- NewOkResponse(req.ID, fmt.Sprintf("Route %s activated successfully", actParams.ID))
 	case "deactivate":
 		var idParams = struct {
-			ID int `json:"id"`
+			ID string `json:"id"`
 		}{}
 		err := json.Unmarshal(req.Params, &idParams)
 		logger.Debug("Request for route deactivate received", "submodule", "hub", "object", req.Object, "action", req.Action, "params", idParams)
@@ -93,15 +93,15 @@ func (r *routeObject) dispatch(h *Hub, req Request, conn *connection) {
 		}
 		rte, ok := sim.Routes[idParams.ID]
 		if !ok {
-			ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown route: %d", idParams.ID))
+			ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown route: %s", idParams.ID))
 			return
 		}
 		err = rte.Deactivate()
 		if err != nil {
-			ch <- NewErrorResponse(req.ID, fmt.Errorf("cannot deactivate route %d: %s", idParams.ID, err))
+			ch <- NewErrorResponse(req.ID, fmt.Errorf("cannot deactivate route %s: %s", idParams.ID, err))
 			return
 		}
-		ch <- NewOkResponse(req.ID, fmt.Sprintf("Route %d deactivated successfully", idParams.ID))
+		ch <- NewOkResponse(req.ID, fmt.Sprintf("Route %s deactivated successfully", idParams.ID))
 	default:
 		ch <- NewErrorResponse(req.ID, fmt.Errorf("unknwon action %s/%s", req.Object, req.Action))
 		logger.Debug("Request for unknown action received", "submodule", "hub", "object", req.Object, "action", req.Action)

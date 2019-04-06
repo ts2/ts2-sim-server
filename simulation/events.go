@@ -34,10 +34,17 @@ const (
 	TrainDepartedFromStationEvent EventName = "trainDepartedFromStation"
 	// SignalaspectChanged is emitted each time a Signal changes its aspect
 	SignalaspectChanged EventName = "signalAspectChanged"
+	// TrackITemChanged is emitted each time a trackItem has one of its property changed and needs redrawing
+	TrackItemChanged EventName = "trackItemChanged"
 )
+
+// A SimObject can be serialized in an event
+type SimObject interface {
+	ID() string
+}
 
 // Event is a wrapper around an object that is sent to the server hub to notify clients of a change.
 type Event struct {
 	Name   EventName
-	Object interface{}
+	Object SimObject
 }

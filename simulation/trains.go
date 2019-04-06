@@ -65,7 +65,7 @@ const minRunningSpeed float64 = 0.25
 // Train is a stock of `TrainType` running on a track at a certain speed and to which
 // is assigned a `Service`.
 type Train struct {
-	ID             int            `json:"-"`
+	trainID        string         `json:"-"`
 	AppearTime     Time           `json:"appearTime"`
 	InitialDelay   DelayGenerator `json:"initialDelay"`
 	InitialSpeed   float64        `json:"initialSpeed"`
@@ -87,9 +87,14 @@ type Train struct {
 	lastSignal      *SignalItem
 }
 
+// ID returns the unique internal identifier of this Train
+func (t *Train) ID() string {
+	return t.trainID
+}
+
 // setSimulation attaches the Simulation to this Train and initializes it.
-func (t *Train) setSimulation(sim *Simulation, id int) {
-	t.ID = id
+func (t *Train) setSimulation(sim *Simulation, id string) {
+	t.trainID = id
 	t.simulation = sim
 	t.TrainHead.simulation = sim
 	t.effInitialDelay = t.InitialDelay.Yield()
@@ -131,7 +136,7 @@ func (t *Train) activate(h Time) {
 	t.Speed = t.InitialSpeed
 	// Update signals
 	if signalAhead := t.findNextSignal(); signalAhead != nil {
-		signalAhead.TrainID = t.ID
+		signalAhead.TrainID = t.trainID
 	}
 	// Status update
 	t.Status = Running
@@ -310,7 +315,7 @@ func (t *Train) jumpToNextServiceLine() {
 			case actionSetService:
 				t.ServiceCode = action.ActionParam
 				t.NextPlaceIndex = 0
-				t.findNextSignal().TrainID = t.ID
+				t.findNextSignal().TrainID = t.trainID
 				if t.StoppedTime != 0 {
 					t.Status = Stopped
 				} else {
@@ -329,7 +334,7 @@ func (t *Train) reverse() {
 		return
 	}
 	if signalAhead := t.findNextSignal(); signalAhead != nil {
-		signalAhead.TrainID = 0
+		signalAhead.TrainID = ""
 	}
 	if activeRoute := t.TrainHead.TrackItem().ActiveRoute(); activeRoute != nil {
 		if err := activeRoute.Deactivate(); err != nil {
@@ -339,7 +344,7 @@ func (t *Train) reverse() {
 	trainTail := t.TrainHead.Add(-t.TrainType().Length)
 	t.TrainHead = trainTail.Reversed()
 	if newSignalAhead := t.findNextSignal(); newSignalAhead != nil {
-		newSignalAhead.TrainID = t.ID
+		newSignalAhead.TrainID = t.trainID
 	}
 }
 
