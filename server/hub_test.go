@@ -19,7 +19,6 @@
 package server
 
 import (
-	"encoding/json"
 	"testing"
 	"time"
 
@@ -95,7 +94,7 @@ func TestAddRemoveListeners(t *testing.T) {
 
 	time.Sleep(1 * time.Second)
 	// remove listener
-	c.WriteJSON(Request{Object: "Server", Action: "removeListener", Params: json.RawMessage("{\"event\": \"clock\"}")})
+	c.WriteJSON(Request{Object: "Server", Action: "removeListener", Params: RawJSON("{\"event\": \"clock\"}")})
 	c.ReadJSON(&expectedResponse)
 	if expectedResponse.Data.Status != Ok {
 		t.Errorf("The response from server is NOOk (Server/removeListener)")
