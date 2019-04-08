@@ -123,6 +123,16 @@
                 input.focus();
                 return false;
             };
+            document.getElementById("plListTmpl").onclick = function (evt) {
+                input.value = '{"object": "place", "action": "list"}';
+                input.focus();
+                return false;
+            };
+            document.getElementById("plShowTmpl").onclick = function (evt) {
+                input.value = '{"object": "place", "action": "show", "params": {"ids": ["LFT", "STN"]}}';
+                input.focus();
+                return false;
+            };
             document.getElementById("ttListTmpl").onclick = function (evt) {
                 input.value = '{"object": "trainType", "action": "list"}';
                 input.focus();
@@ -169,7 +179,7 @@
                 return false;
             };
             document.getElementById("trainShowTmpl").onclick = function (evt) {
-                input.value = '{"object": "train", "action": "show", "params": {"ids": ["1"]}}';
+                input.value = '{"object": "train", "action": "show", "params": {"ids": [0]}}';
                 input.focus();
                 return false;
             };
@@ -290,6 +300,15 @@
                             <div class="dropdown-menu">
                                 <a id="tiListTmpl" class="dropdown-item" href="#">List</a>
                                 <a id="tiShowTmpl" class="dropdown-item" href="#">Show</a>
+                            </div>
+                        </div>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-default dropdown-toggle"
+                                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Places
+                            </button>
+                            <div class="dropdown-menu">
+                                <a id="plListTmpl" class="dropdown-item" href="#">List</a>
+                                <a id="plShowTmpl" class="dropdown-item" href="#">Show</a>
                             </div>
                         </div>
                         <div class="btn-group">

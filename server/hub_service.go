@@ -51,7 +51,12 @@ func (s *serviceObject) dispatch(h *Hub, req Request, conn *connection) {
 		}
 		sl := make(map[string]*simulation.Service)
 		for _, id := range idsParams.IDs {
-			sl[id] = sim.Services[id]
+			sld, ok := sim.Services[id]
+			if !ok {
+				ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown service: %s", id))
+				return
+			}
+			sl[id] = sld
 		}
 		tid, err := json.Marshal(sl)
 		if err != nil {
@@ -60,7 +65,7 @@ func (s *serviceObject) dispatch(h *Hub, req Request, conn *connection) {
 		}
 		ch <- NewResponse(req.ID, tid)
 	default:
-		ch <- NewErrorResponse(req.ID, fmt.Errorf("unknwon action %s/%s", req.Object, req.Action))
+		ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown action %s/%s", req.Object, req.Action))
 		logger.Debug("Request for unknown action received", "submodule", "hub", "object", req.Object, "action", req.Action)
 	}
 }

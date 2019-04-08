@@ -76,8 +76,8 @@ type Train struct {
 	StoppedTime    int            `json:"stoppedTime"`
 	TrainTypeCode  string         `json:"trainTypeCode"`
 	TrainHead      Position       `json:"trainHead"`
-	TrainManager   TrainsManager  `json:"trainManager"`
 
+	trainManager    TrainsManager
 	simulation      *Simulation
 	effInitialDelay time.Duration
 	minStopTime     time.Duration
@@ -99,8 +99,8 @@ func (t *Train) setSimulation(sim *Simulation, id string) {
 	t.TrainHead.simulation = sim
 	t.effInitialDelay = t.InitialDelay.Yield()
 	t.minStopTime = t.simulation.Options.DefaultMinimumStopTime.Yield()
-	if t.TrainManager == nil {
-		t.TrainManager = defaultTrainManager
+	if t.trainManager == nil {
+		t.trainManager = defaultTrainManager
 	}
 }
 
@@ -166,7 +166,7 @@ func (t *Train) advance(timeElapsed time.Duration) {
 		return
 	}
 	t.updateSignalActions()
-	t.Speed = t.TrainManager.Speed(t, timeElapsed)
+	t.Speed = t.trainManager.Speed(t, timeElapsed)
 	advanceLength := t.Speed * float64(timeElapsed) / float64(time.Second)
 	t.TrainHead = t.TrainHead.Add(advanceLength)
 	t.updateStatus(timeElapsed)

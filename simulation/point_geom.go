@@ -18,7 +18,7 @@
 
 package simulation
 
-//Point type represents a point on the scenery
+// Point type represents a point on the scenery
 type Point struct {
 	X float64
 	Y float64

@@ -18,8 +18,11 @@
 
 package simulation
 
+import "encoding/json"
+
 // TrainType defines a rolling stock type.
 type TrainType struct {
+	code         string
 	Description  string   `json:"description"`
 	EmergBraking float64  `json:"emergBraking"`
 	Length       float64  `json:"length"`
@@ -31,9 +34,19 @@ type TrainType struct {
 	simulation *Simulation
 }
 
+// ID returns the unique identifier of this train type
+func (tt *TrainType) ID() string {
+	return tt.code
+}
+
 // setSimulation() attaches the simulation this TrainType is part of
 func (tt *TrainType) setSimulation(sim *Simulation) {
 	tt.simulation = sim
+}
+
+// initialize this train type
+func (tt *TrainType) initialize(code string) {
+	tt.code = code
 }
 
 // Elements() returns the train types this TrainType is composed of.
@@ -43,4 +56,29 @@ func (tt *TrainType) Elements() []*TrainType {
 		res = append(res, tt.simulation.TrainTypes[code])
 	}
 	return res
+}
+
+// MarshalJSON for the TrainType type
+func (tt *TrainType) MarshalJSON() ([]byte, error) {
+	type auxTT struct {
+		ID           string   `json:"id"`
+		Description  string   `json:"description"`
+		EmergBraking float64  `json:"emergBraking"`
+		Length       float64  `json:"length"`
+		MaxSpeed     float64  `json:"maxSpeed"`
+		StdAccel     float64  `json:"stdAccel"`
+		StdBraking   float64  `json:"stdBraking"`
+		ElementsStr  []string `json:"elements"`
+	}
+	att := auxTT{
+		ID:           tt.ID(),
+		Description:  tt.Description,
+		EmergBraking: tt.EmergBraking,
+		Length:       tt.Length,
+		MaxSpeed:     tt.MaxSpeed,
+		StdAccel:     tt.StdAccel,
+		StdBraking:   tt.StdBraking,
+		ElementsStr:  tt.ElementsStr,
+	}
+	return json.Marshal(att)
 }

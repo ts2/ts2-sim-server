@@ -23,67 +23,54 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestLogin(t *testing.T) {
+func TestConnection(t *testing.T) {
 	// Wait for server to come up
 	time.Sleep(100 * time.Millisecond)
-	c := clientDial(t)
-	defer func() {
-		c.Close()
-	}()
-
-	// Try to send something that is not a login request
-	badRequest := Request{1234, "Dummy", "dummy", nil}
-	if err := c.WriteJSON(badRequest); err != nil {
-		t.Error(err)
-	}
-	var serverResponse ResponseStatus
-	c.ReadJSON(&serverResponse)
-	assertEqual(t, serverResponse, ResponseStatus{1234, TypeResponse, DataStatus{Fail, "Error: register required"}}, "Register/Wrong request")
-	_, _, err := c.ReadMessage()
-	if _, ok := err.(*websocket.CloseError); err == nil || !ok {
-		t.Errorf("Register/Wrong request/Connection should be closed")
-	}
-	c.Close()
-
-	// Incorrect login
-	c, err = register(t, Client, "", "wrong-token")
-	expectedErrorMsg := "Error: invalid register parameters"
-	if err == nil {
-		t.Errorf("Register/Incorrect: Unexpected behaviour")
-	}
-	assertEqual(t, err.Error(), expectedErrorMsg, "Register/Incorrect")
-	_, _, err = c.ReadMessage()
-	if _, ok := err.(*websocket.CloseError); err == nil || !ok {
-		t.Errorf("Register/Wrong request/Connection should be closed")
-	}
-	c.Close()
-
-	// Correct login
-	if _, err = register(t, Client, "", "client-secret"); err != nil {
-		t.Errorf(err.Error())
-	}
-}
-
-func TestDoubleLogin(t *testing.T) {
-	// Wait for server to come up
-	time.Sleep(100 * time.Millisecond)
-	c, err := register(t, Client, "", "client-secret")
-	defer func() {
-		c.Close()
-	}()
-
-	if err != nil {
-		t.Errorf(err.Error())
-	} else {
-		c.WriteJSON(RequestRegister{1234, "server", "register", ParamsRegister{Client, "", "client-secret"}})
-		var expectedResponse ResponseStatus
-		c.ReadJSON(&expectedResponse)
-		if expectedResponse.Data.Status != Fail {
-			t.Errorf("Double login: should have failed")
-		} else if expectedResponse.Data.Message != "Error: can't call register when already registered" {
-			t.Errorf("Double login: Wrong error message : %s", expectedResponse.Data.Message)
-		}
-	}
+	Convey("Testing server connection", t, func() {
+		c := clientDial(t)
+		Convey("Login test", func() {
+			Convey("First request that is not a register request should fail", func() {
+				badRequest := Request{1234, "Dummy", "dummy", nil}
+				err := c.WriteJSON(badRequest)
+				So(err, ShouldBeNil)
+				var resp ResponseStatus
+				err = c.ReadJSON(&resp)
+				So(err, ShouldBeNil)
+				So(resp, ShouldResemble, ResponseStatus{1234, TypeResponse, DataStatus{Fail, "Error: register required"}})
+				_, _, err = c.ReadMessage()
+				So(err, ShouldNotBeNil)
+				So(err, ShouldHaveSameTypeAs, new(websocket.CloseError))
+			})
+			Convey("Incorrect login should fail", func() {
+				err := register(t, c, Client, "", "wrong-token")
+				So(err, ShouldNotBeNil)
+				So(err.Error(), ShouldEqual, "Error: invalid register parameters")
+				_, _, err = c.ReadMessage()
+				So(err, ShouldNotBeNil)
+				So(err, ShouldHaveSameTypeAs, new(websocket.CloseError))
+			})
+			Convey("Correct login should be allowed", func() {
+				err := register(t, c, Client, "", "client-secret")
+				So(err, ShouldBeNil)
+			})
+		})
+		Convey("Login double test", func() {
+			err := register(t, c, Client, "", "client-secret")
+			So(err, ShouldBeNil)
+			err = c.WriteJSON(RequestRegister{1234, "server", "register", ParamsRegister{Client, "", "client-secret"}})
+			So(err, ShouldBeNil)
+			var resp ResponseStatus
+			err = c.ReadJSON(&resp)
+			So(err, ShouldBeNil)
+			So(resp.Data.Status, ShouldEqual, Fail)
+			So(resp.Data.Message, ShouldEqual, "Error: can't call register when already registered")
+		})
+		Reset(func() {
+			err := c.Close()
+			So(err, ShouldBeNil)
+		})
+	})
 }

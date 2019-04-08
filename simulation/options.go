@@ -23,7 +23,8 @@ import (
 	"reflect"
 )
 
-type options struct {
+// Options struct for the simulation
+type Options struct {
 	TrackCircuitBased       bool           `json:"trackCircuitBased"`
 	ClientToken             string         `json:"clientToken"`
 	CurrentScore            int            `json:"currentScore"`
@@ -42,7 +43,10 @@ type options struct {
 // Set the given option with the given value.
 //
 // option can be either the struct field name or the json key of the struct field.
-func (o *options) Set(option string, value interface{}) error {
+func (o *Options) Set(option string, value interface{}) error {
+	if value == nil {
+		return fmt.Errorf("option %s cannot have nil value", option)
+	}
 	stVal := reflect.ValueOf(o).Elem()
 	typ := stVal.Type()
 	_, ok := typ.FieldByName(option)

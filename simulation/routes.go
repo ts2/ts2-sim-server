@@ -55,7 +55,7 @@ const (
 // are inhibited. Routes are static and defined in the game file. The player can
 // only activate or deactivate them.
 type Route struct {
-	routeID       string                    `json:"id"`
+	routeID       string
 	BeginSignalId string                    `json:"beginSignal"`
 	EndSignalId   string                    `json:"endSignal"`
 	InitialState  RouteState                `json:"initialState"`

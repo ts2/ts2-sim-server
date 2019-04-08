@@ -51,7 +51,12 @@ func (r *routeObject) dispatch(h *Hub, req Request, conn *connection) {
 		}
 		rtes := make(map[string]*simulation.Route)
 		for _, id := range idsParams.IDs {
-			rtes[id] = sim.Routes[id]
+			rte, ok := sim.Routes[id]
+			if !ok {
+				ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown route: %s", id))
+				return
+			}
+			rtes[id] = rte
 		}
 		rte, err := json.Marshal(rtes)
 		if err != nil {
@@ -103,7 +108,7 @@ func (r *routeObject) dispatch(h *Hub, req Request, conn *connection) {
 		}
 		ch <- NewOkResponse(req.ID, fmt.Sprintf("Route %s deactivated successfully", idParams.ID))
 	default:
-		ch <- NewErrorResponse(req.ID, fmt.Errorf("unknwon action %s/%s", req.Object, req.Action))
+		ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown action %s/%s", req.Object, req.Action))
 		logger.Debug("Request for unknown action received", "submodule", "hub", "object", req.Object, "action", req.Action)
 	}
 }

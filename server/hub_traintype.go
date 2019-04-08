@@ -51,7 +51,12 @@ func (s *trainTypeObject) dispatch(h *Hub, req Request, conn *connection) {
 		}
 		tts := make(map[string]*simulation.TrainType)
 		for _, id := range idsParams.IDs {
-			tts[id] = sim.TrainTypes[id]
+			ttID, ok := sim.TrainTypes[id]
+			if !ok {
+				ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown trainType: %s", id))
+				return
+			}
+			tts[id] = ttID
 		}
 		tid, err := json.Marshal(tts)
 		if err != nil {
@@ -60,7 +65,7 @@ func (s *trainTypeObject) dispatch(h *Hub, req Request, conn *connection) {
 		}
 		ch <- NewResponse(req.ID, tid)
 	default:
-		ch <- NewErrorResponse(req.ID, fmt.Errorf("unknwon action %s/%s", req.Object, req.Action))
+		ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown action %s/%s", req.Object, req.Action))
 		logger.Debug("Request for unknown action received", "submodule", "hub", "object", req.Object, "action", req.Action)
 	}
 }

@@ -47,7 +47,7 @@ func (s *serverObject) dispatch(h *Hub, req Request, conn *connection) {
 		}
 		ch <- NewOkResponse(req.ID, "Listener removed successfully")
 	default:
-		ch <- NewErrorResponse(req.ID, fmt.Errorf("unknwon action %s/%s", req.Object, req.Action))
+		ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown action %s/%s", req.Object, req.Action))
 		logger.Debug("Request for unknown action received", "submodule", "hub", "object", req.Object, "action", req.Action, "params", req.Params)
 	}
 }

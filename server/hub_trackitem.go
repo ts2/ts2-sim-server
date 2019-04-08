@@ -51,7 +51,12 @@ func (s *trackItemObject) dispatch(h *Hub, req Request, conn *connection) {
 		}
 		tkis := make(map[string]simulation.TrackItem)
 		for _, id := range idsParams.IDs {
-			tkis[id] = sim.TrackItems[id]
+			tsID, ok := sim.TrackItems[id]
+			if !ok {
+				ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown trackItem: %s", id))
+				return
+			}
+			tkis[id] = tsID
 		}
 		tid, err := json.Marshal(tkis)
 		if err != nil {
@@ -60,7 +65,7 @@ func (s *trackItemObject) dispatch(h *Hub, req Request, conn *connection) {
 		}
 		ch <- NewResponse(req.ID, tid)
 	default:
-		ch <- NewErrorResponse(req.ID, fmt.Errorf("unknwon action %s/%s", req.Object, req.Action))
+		ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown action %s/%s", req.Object, req.Action))
 		logger.Debug("Request for unknown action received", "submodule", "hub", "object", req.Object, "action", req.Action)
 	}
 }

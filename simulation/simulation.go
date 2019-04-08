@@ -51,7 +51,7 @@ type Simulation struct {
 	SignalLib     SignalLibrary
 	TrackItems    map[string]TrackItem
 	Places        map[string]*Place
-	Options       options
+	Options       Options
 	Routes        map[string]*Route
 	TrainTypes    map[string]*TrainType
 	Services      map[string]*Service
@@ -70,7 +70,7 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 
 	type auxSim struct {
 		TrackItems    map[string]json.RawMessage
-		Options       options
+		Options       Options
 		SignalLib     SignalLibrary         `json:"signalLibrary"`
 		Routes        map[string]*Route     `json:"routes"`
 		TrainTypes    map[string]*TrainType `json:"trainTypes"`
@@ -157,12 +157,14 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 		}
 	}
 	sim.TrainTypes = rawSim.TrainTypes
-	for _, tt := range sim.TrainTypes {
+	for ttCode, tt := range sim.TrainTypes {
 		tt.setSimulation(sim)
+		tt.initialize(ttCode)
 	}
 	sim.Services = rawSim.Services
-	for _, s := range sim.Services {
+	for sCode, s := range sim.Services {
 		s.setSimulation(sim)
+		s.initialize(sCode)
 	}
 	sim.Trains = rawSim.Trains
 	sort.Slice(sim.Trains, func(i, j int) bool {
@@ -196,7 +198,7 @@ func (sim *Simulation) MarshalJSON() ([]byte, error) {
 	logr, _ := json.Marshal(sim.MessageLogger)
 	res.Write(logr)
 	res.WriteString(`,
-	"options": `)
+	"Options": `)
 	opts, _ := json.Marshal(sim.Options)
 	res.Write(opts)
 	res.WriteString(`,

@@ -47,20 +47,20 @@ type signalShape uint8
 const (
 	noneShape   signalShape = 0
 	circleShape signalShape = 1
-	//squareShape signalShape = 2
-	//QUARTER_SW  signalShape = 10
-	//QUARTER_NW  signalShape = 11
-	//QUARTER_NE  signalShape = 12
-	//QUARTER_SE  signalShape = 13
-	//BAR_N_S     signalShape = 20
-	//BAR_E_W     signalShape = 21
-	//BAR_SW_NE   signalShape = 22
-	//BAR_NW_SE   signalShape = 23
-	//POLE_NS     signalShape = 31
-	//POLE_NSW    signalShape = 32
-	//POLE_SW     signalShape = 33
-	//POLE_NE     signalShape = 34
-	//POLE_NSE    signalShape = 35
+	// squareShape signalShape = 2
+	// QUARTER_SW  signalShape = 10
+	// QUARTER_NW  signalShape = 11
+	// QUARTER_NE  signalShape = 12
+	// QUARTER_SE  signalShape = 13
+	// BAR_N_S     signalShape = 20
+	// BAR_E_W     signalShape = 21
+	// BAR_SW_NE   signalShape = 22
+	// BAR_NW_SE   signalShape = 23
+	// POLE_NS     signalShape = 31
+	// POLE_NSW    signalShape = 32
+	// POLE_SW     signalShape = 33
+	// POLE_NE     signalShape = 34
+	// POLE_NSE    signalShape = 35
 )
 
 // ActionTarget defines when a speed limit associated with a signal aspect must be
@@ -88,8 +88,16 @@ func (sa *SignalAction) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &rawAction); err != nil {
 		return fmt.Errorf("unable to read signal action: %s (%s)", data, err)
 	}
-	*sa = SignalAction{ActionTarget(rawAction[0]), rawAction[1], time.Duration(rawAction[2]) * time.Second}
+	*sa = SignalAction{
+		Target:   ActionTarget(rawAction[0]),
+		Speed:    rawAction[1],
+		Duration: time.Duration(rawAction[2]) * time.Second}
 	return nil
+}
+
+// MarshalJSON for the SignalAction Type
+func (sa *SignalAction) MarshalJSON() ([]byte, error) {
+	return json.Marshal([3]float64{float64(sa.Target), sa.Speed, float64(sa.Duration)})
 }
 
 // SignalAspect class represents an aspect of a signal, that is a combination of
@@ -196,6 +204,20 @@ func (s *SignalState) UnmarshalJSON(data []byte) error {
 		}
 	}
 	return nil
+}
+
+// MarshalJSON for the SignalState type
+func (s *SignalState) MarshalJSON() ([]byte, error) {
+	var rawSignalState struct {
+		AspectName string
+		Conditions map[string][]string
+	}
+	rawSignalState.AspectName = s.Aspect.Name
+	rawSignalState.Conditions = make(map[string][]string)
+	for k, v := range s.Conditions {
+		rawSignalState.Conditions[k] = v.Values
+	}
+	return json.Marshal(rawSignalState)
 }
 
 // A SignalType describes a type of signals which can have different aspects and
@@ -415,29 +437,6 @@ func (si *SignalItem) resetPreviousActiveRoute(r *Route) {
 	si.updateSignalState()
 }
 
-// SignalLibrary holds the information about the signal types and signal aspects
-// available in the simulation.
-type SignalLibrary struct {
-	Aspects map[string]*SignalAspect `json:"signalAspects"`
-	Types   map[string]*SignalType   `json:"signalTypes"`
-}
-
-// initialize this SignalLibrary
-func (sl *SignalLibrary) initialize() error {
-	for tName, t := range sl.Types {
-		t.Name = tName
-		for i, s := range t.States {
-			asp, ok := sl.Aspects[s.AspectName]
-			if !ok {
-				return fmt.Errorf("not aspect with code %s found", s.AspectName)
-			}
-			asp.Name = s.AspectName
-			t.States[i].Aspect = asp
-		}
-	}
-	return nil
-}
-
 // MarshalJSON method for SignalItem
 func (si *SignalItem) MarshalJSON() ([]byte, error) {
 	type jsonSignalItem struct {
@@ -474,3 +473,26 @@ func (si *SignalItem) MarshalJSON() ([]byte, error) {
 }
 
 var _ TrackItem = new(SignalItem)
+
+// SignalLibrary holds the information about the signal types and signal aspects
+// available in the simulation.
+type SignalLibrary struct {
+	Aspects map[string]*SignalAspect `json:"signalAspects"`
+	Types   map[string]*SignalType   `json:"signalTypes"`
+}
+
+// initialize this SignalLibrary
+func (sl *SignalLibrary) initialize() error {
+	for tName, t := range sl.Types {
+		t.Name = tName
+		for i, s := range t.States {
+			asp, ok := sl.Aspects[s.AspectName]
+			if !ok {
+				return fmt.Errorf("not aspect with code %s found", s.AspectName)
+			}
+			asp.Name = s.AspectName
+			t.States[i].Aspect = asp
+		}
+	}
+	return nil
+}

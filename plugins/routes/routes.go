@@ -19,7 +19,7 @@
 package routes
 
 import (
-	"errors"
+	"fmt"
 
 	"github.com/ts2/ts2-sim-server/simulation"
 )
@@ -33,31 +33,31 @@ type StandardManager struct{}
 // In this implementation, it checks route conflicts and returns
 // false if a conflict is found.
 func (sm StandardManager) CanActivate(r *simulation.Route) error {
-	var flag bool
+	var flag *simulation.Route
 	for _, pos := range r.Positions {
 		if pos.TrackItem().ID() == r.BeginSignalId || pos.TrackItem().ID() == r.EndSignalId {
 			continue
 		}
 		if pos.TrackItem().ConflictItem() != nil && pos.TrackItem().ConflictItem().ActiveRoute() != nil {
 			// Our trackItem has a conflicting item with an active route
-			return errors.New("conflicting route is active")
+			return fmt.Errorf("conflicting route %s is active", pos.TrackItem().ConflictItem().ActiveRoute().ID())
 		}
 		if pos.TrackItem().ActiveRoute() == nil {
-			if flag {
+			if flag != nil {
 				// We had a route with same direction but does not end with the same signal
-				return errors.New("conflicting route is active")
+				return fmt.Errorf("conflicting route %s is active", flag.ID())
 			}
 			continue
 		}
 		// The track item has an active route already
-		if pos.TrackItem().Type() == simulation.TypePoints && !flag {
+		if pos.TrackItem().Type() == simulation.TypePoints && flag == nil {
 			// The trackItem is a pointsItem and it is the first
 			// trackItem with active route that we meet
-			return errors.New("conflicting route is active")
+			return fmt.Errorf("conflicting route %s is active", pos.TrackItem().ActiveRoute().ID())
 		}
 		if pos.PreviousItem().ID() != pos.TrackItem().ActiveRoutePreviousItem().ID() {
 			// The direction of route r is different from that of the active route of the TI
-			return errors.New("conflicting route is active")
+			return fmt.Errorf("conflicting route %s is active", pos.TrackItem().ActiveRoute().ID())
 		}
 		if pos.TrackItem().ActiveRoute().ID() == r.ID() {
 			// Always allow to setup the same route again
@@ -66,7 +66,7 @@ func (sm StandardManager) CanActivate(r *simulation.Route) error {
 		// We set flag to true to remember we have come across an item with activeRoute with
 		// the same direction. This enables the user to set a route ending with the same end
 		// signal when it is cleared by a train still on the route
-		flag = true
+		flag = pos.TrackItem().ActiveRoute()
 	}
 	return nil
 }

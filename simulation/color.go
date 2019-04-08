@@ -71,3 +71,8 @@ func (c *Color) UnmarshalJSON(data []byte) error {
 	*c = col
 	return nil
 }
+
+// MarshalJSON for the Color Type
+func (c *Color) MarshalJSON() ([]byte, error) {
+	return json.Marshal(c.Hex())
+}

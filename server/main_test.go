@@ -33,7 +33,9 @@ import (
 
 func TestMain(m *testing.M) {
 	mainLogger := log.New()
-	mainLogger.SetHandler(log.DiscardHandler())
+	if os.Getenv("TS2_DEBUG") == "" {
+		mainLogger.SetHandler(log.DiscardHandler())
+	}
 	InitializeLogger(mainLogger)
 	simulation.InitializeLogger(mainLogger)
 	data, _ := ioutil.ReadFile("../simulation/testdata/demo.json")
@@ -47,18 +49,6 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func assertTrue(t *testing.T, expr bool, msg string) {
-	if !expr {
-		t.Errorf("%v: expression is false", msg)
-	}
-}
-
-func assertEqual(t *testing.T, a interface{}, b interface{}, msg string) {
-	if a != b {
-		t.Errorf("%v: %v(%T) is not equal to %v(%T)", msg, a, a, b, b)
-	}
-}
-
 func clientDial(t *testing.T) *websocket.Conn {
 	u := url.URL{Scheme: "ws", Host: "127.0.0.1:22222", Path: "/ws"}
 	conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
@@ -68,20 +58,17 @@ func clientDial(t *testing.T) *websocket.Conn {
 	return conn
 }
 
-/*
-login dials to the server and logs the client in
-*/
-func register(t *testing.T, ct ClientType, mt ManagerType, token string) (*websocket.Conn, error) {
-	c := clientDial(t)
+// register dials to the server and logs the client in
+func register(t *testing.T, c *websocket.Conn, ct ClientType, mt ManagerType, token string) error {
 	loginRequest := RequestRegister{1234, "server", "register", ParamsRegister{ct, mt, token}}
 	if err := c.WriteJSON(loginRequest); err != nil {
-		return nil, err
+		return err
 	}
 	var expectedResponse ResponseStatus
 	c.ReadJSON(&expectedResponse)
 	if expectedResponse.Data.Status == Ok {
-		return c, nil
+		return nil
 	} else {
-		return c, fmt.Errorf(expectedResponse.Data.Message)
+		return fmt.Errorf(expectedResponse.Data.Message)
 	}
 }

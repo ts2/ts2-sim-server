@@ -20,7 +20,6 @@ package simulation
 
 import (
 	"io/ioutil"
-	"testing"
 )
 
 // Equals is a comparison function for DelayGenerator objects.
@@ -31,18 +30,6 @@ func (dg DelayGenerator) Equals(b DelayGenerator) bool {
 		}
 	}
 	return true
-}
-
-func assertTrue(t *testing.T, expr bool, msg string) {
-	if !expr {
-		t.Errorf("%v: expression is false", msg)
-	}
-}
-
-func assertEqual(t *testing.T, a interface{}, b interface{}, msg string) {
-	if a != b {
-		t.Errorf("%v: %v(%T) is not equal to %v(%T)", msg, a, a, b, b)
-	}
 }
 
 func loadSim() []byte {

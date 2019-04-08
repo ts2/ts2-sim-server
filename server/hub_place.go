@@ -25,39 +25,40 @@ import (
 	"github.com/ts2/ts2-sim-server/simulation"
 )
 
-type trainObject struct{}
+type placeObject struct{}
 
-// dispatch processes requests made on the Service object
-func (t *trainObject) dispatch(h *Hub, req Request, conn *connection) {
+// dispatch processes requests made on the Place object
+func (s *placeObject) dispatch(h *Hub, req Request, conn *connection) {
 	ch := conn.pushChan
 	switch req.Action {
 	case "list":
-		logger.Debug("Request for train list received", "submodule", "hub", "object", req.Object, "action", req.Action)
-		sl, err := json.Marshal(sim.Trains)
+		logger.Debug("Request for place list received", "submodule", "hub", "object", req.Object, "action", req.Action)
+		til, err := json.Marshal(sim.Places)
 		if err != nil {
 			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
 			return
 		}
-		ch <- NewResponse(req.ID, sl)
+		ch <- NewResponse(req.ID, til)
 	case "show":
 		var idsParams = struct {
-			IDs []int `json:"ids"`
+			IDs []string `json:"ids"`
 		}{}
 		err := json.Unmarshal(req.Params, &idsParams)
-		logger.Debug("Request for train show received", "submodule", "hub", "object", req.Object, "action", req.Action, "params", idsParams)
+		logger.Debug("Request for place show received", "submodule", "hub", "object", req.Object, "action", req.Action, "params", idsParams)
 		if err != nil {
 			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
 			return
 		}
-		ts := make([]*simulation.Train, len(idsParams.IDs))
+		tkis := make(map[string]*simulation.Place)
 		for _, id := range idsParams.IDs {
-			if id >= len(sim.Trains) {
-				ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown train: %d", id))
+			tsID, ok := sim.Places[id]
+			if !ok {
+				ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown place: %s", id))
 				return
 			}
-			ts[id] = sim.Trains[id]
+			tkis[id] = tsID
 		}
-		tid, err := json.Marshal(ts)
+		tid, err := json.Marshal(tkis)
 		if err != nil {
 			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
 			return
@@ -69,8 +70,8 @@ func (t *trainObject) dispatch(h *Hub, req Request, conn *connection) {
 	}
 }
 
-var _ hubObject = new(trainObject)
+var _ hubObject = new(placeObject)
 
 func init() {
-	hub.objects["train"] = new(trainObject)
+	hub.objects["place"] = new(placeObject)
 }
