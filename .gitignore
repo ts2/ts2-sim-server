@@ -27,3 +27,7 @@ _testmain.go
 
 .idea
 *.iml
+ts2-sim-server
+docker/demo.json
+docker/ts2-sim-server
+coverage.txt

@@ -19,7 +19,6 @@
 		"defaultMinimumStopTime": [[20,40,90],[40,120,10]],
 		"defaultSignalVisibility": 100,
 		"description": "This is a developers test/demo simulation!",
-        "managerToken": "manager-secret",
 		"timeFactor": 5,
 		"title": "TS2 - Demo & Test Sim",
 		"trackCircuitBased": false,
@@ -29,34 +28,34 @@
 	"routes": {
 		"1": {
 			"__type__": "Route",
-			"beginSignal": 5,
+			"beginSignal": "5",
 			"directions": {
 				"7": 0
 			},
-			"endSignal": 11,
+			"endSignal": "11",
 			"initialState": 1
 		},
 		"2": {
 			"__type__": "Route",
-			"beginSignal": 5,
+			"beginSignal": "5",
 			"directions": {
 				"7": 1
 			},
-			"endSignal": 17,
+			"endSignal": "17",
 			"initialState": 0
 		},
 		"3": {
 			"__type__": "Route",
-			"beginSignal": 9,
+			"beginSignal": "9",
 			"directions": {},
-			"endSignal": 3,
+			"endSignal": "3",
 			"initialState": 0
 		},
 		"4": {
 			"__type__": "Route",
-			"beginSignal": 15,
+			"beginSignal": "15",
 			"directions": {},
-			"endSignal": 3,
+			"endSignal": "3",
 			"initialState": 0
 		}
 	},
@@ -107,11 +106,11 @@
             "plannedTrainType": "UT",
             "postActions": [
             	{
-            		"actionCode": 1,
+            		"actionCode": "REVERSE",
             		"actionParam": null
             	},
             	{
-            		"actionCode": 2,
+            		"actionCode": "SET_SERVICE",
             		"actionParam": "S002"
             	}
             ]
@@ -148,7 +147,7 @@
             "maxSpeed": 27.77,
             "name": null,
             "nextTiId": null,
-            "previousTiId": 2,
+            "previousTiId": "2",
             "x": 0.0,
             "y": 0.0
 		},
@@ -157,9 +156,9 @@
             "conflictTiId": null,
             "maxSpeed": 27.77,
             "name": null,
-            "nextTiId": 3,
+            "nextTiId": "3",
             "placeCode": "LFT",
-            "previousTiId": 1,
+            "previousTiId": "1",
             "realLength": 400.0,
             "trackCode": null,
             "x": 0.0,
@@ -172,8 +171,8 @@
             "conflictTiId": null,
             "maxSpeed": 0.0,
             "name": "31",
-            "nextTiId": 2,
-            "previousTiId": 4,
+            "nextTiId": "2",
+            "previousTiId": "4",
             "reverse": true,
             "signalType": "UK_3_ASPECTS",
             "x": 100.0,
@@ -186,9 +185,9 @@
             "conflictTiId": null,
             "maxSpeed": 0.0,
             "name": "Sample Name",
-            "nextTiId": 5,
+            "nextTiId": "5",
             "placeCode": null,
-            "previousTiId": 3,
+            "previousTiId": "3",
             "realLength": 400.0,
             "trackCode": null,
             "x": 100.0,
@@ -201,20 +200,20 @@
             "conflictTiId": null,
             "customProperties": {
             	"ROUTES_SET": {
-            		"UK_DANGER": [2]
+            		"UK_DANGER": ["2"]
             	},
 				"TRAIN_NOT_PRESENT_ON_ITEMS": {
-					"UK_DANGER": [4, 3]
+					"UK_DANGER": ["4", "3"]
 				}
             },
             "maxSpeed": 0.0,
             "name": "32",
-            "nextTiId": 6,
-            "previousTiId": 4,
+            "nextTiId": "6",
+            "previousTiId": "4",
             "reverse": false,
             "signalType": "UK_3_ASPECTS",
             "x": 190.0,
-            "xn": 195.0,
+            "xn": 205.0,
             "y": 0.0,
             "yn": 5.0
         },
@@ -223,9 +222,9 @@
             "conflictTiId": null,
             "maxSpeed": 10.0,
             "name": null,
-            "nextTiId": 7,
+            "nextTiId": "7",
             "placeCode": null,
-            "previousTiId": 5,
+            "previousTiId": "5",
             "realLength": 200.0,
             "trackCode": null,
             "x": 200.0,
@@ -238,9 +237,9 @@
             "conflictTiId": null,
             "maxSpeed": 10.0,
             "name": null,
-            "nextTiId": 8,
-            "previousTiId": 6,
-            "reverseTiId": 14,
+            "nextTiId": "8",
+            "previousTiId": "6",
+            "reverseTiId": "14",
             "x": 250.0,
             "xf": -5.0,
             "xn": 5.0,
@@ -255,9 +254,9 @@
             "conflictTiId": null,
             "maxSpeed": 10.0,
             "name": null,
-            "nextTiId": 9,
+            "nextTiId": "9",
             "placeCode": null,
-            "previousTiId": 7,
+            "previousTiId": "7",
             "realLength": 200.0,
             "trackCode": null,
             "x": 255.0,
@@ -270,8 +269,8 @@
             "conflictTiId": null,
             "maxSpeed": 0.0,
             "name": "33",
-            "nextTiId": 8,
-            "previousTiId": 10,
+            "nextTiId": "8",
+            "previousTiId": "10",
             "reverse": true,
             "signalType": "UK_3_ASPECTS",
             "x": 300.0,
@@ -284,9 +283,9 @@
             "conflictTiId": null,
             "maxSpeed": 0.0,
             "name": null,
-            "nextTiId": 11,
+            "nextTiId": "11",
             "placeCode": "STN",
-            "previousTiId": 9,
+            "previousTiId": "9",
             "realLength": 400.0,
             "trackCode": "1",
             "x": 300.0,
@@ -299,8 +298,8 @@
             "conflictTiId": null,
             "maxSpeed": 0.0,
             "name": "34",
-            "nextTiId": 12,
-            "previousTiId": 10,
+            "nextTiId": "12",
+            "previousTiId": "10",
             "reverse": false,
             "signalType": "UK_3_ASPECTS",
             "x": 390.0,
@@ -313,9 +312,9 @@
             "conflictTiId": null,
             "maxSpeed": 0.0,
             "name": null,
-            "nextTiId": 11,
+            "nextTiId": "13",
             "placeCode": "RGT",
-            "previousTiId": 10,
+            "previousTiId": "11",
             "realLength": 400.0,
             "trackCode": null,
             "x": 400.0,
@@ -329,7 +328,7 @@
             "maxSpeed": 0.0,
             "name": null,
             "nextTiId": null,
-            "previousTiId": 12,
+            "previousTiId": "12",
             "x": 500.0,
             "y": 0.0
 		},
@@ -338,9 +337,9 @@
             "conflictTiId": null,
             "maxSpeed": 10.0,
             "name": null,
-            "nextTiId": 15,
+            "nextTiId": "15",
             "placeCode": null,
-            "previousTiId": 7,
+            "previousTiId": "7",
             "realLength": 200.0,
             "trackCode": null,
             "x": 255.0,
@@ -353,8 +352,8 @@
             "conflictTiId": null,
             "maxSpeed": 0.0,
             "name": "35",
-            "nextTiId": 14,
-            "previousTiId": 16,
+            "nextTiId": "14",
+            "previousTiId": "16",
             "reverse": true,
             "signalType": "UK_3_ASPECTS",
             "x": 290.0,
@@ -367,9 +366,9 @@
             "conflictTiId": null,
             "maxSpeed": 0.0,
             "name": null,
-            "nextTiId": 17,
+            "nextTiId": "17",
             "placeCode": "STN",
-            "previousTiId": 15,
+            "previousTiId": "15",
             "realLength": 400.0,
             "trackCode": "2",
             "x": 290.0,
@@ -382,8 +381,8 @@
             "conflictTiId": null,
             "maxSpeed": 0.0,
             "name": null,
-            "nextTiId": 18,
-            "previousTiId": 16,
+            "nextTiId": "18",
+            "previousTiId": "16",
             "reverse": false,
             "signalType": "BUFFER",
             "x": 390.0,
@@ -397,7 +396,7 @@
             "maxSpeed": 0.0,
             "name": null,
             "nextTiId": null,
-            "previousTiId": 17,
+            "previousTiId": "17",
             "x": 400.0,
             "y": 0.0
 		},
@@ -421,7 +420,7 @@
             "placeCode": "STN",
             "previousTiId": null,
             "x": 320.0,
-            "y": 10.0
+            "y": 0.0
         },
         "21": {
  			"__type__": "Place",
@@ -497,8 +496,8 @@
             "trainHead": {
                 "__type__": "Position",
                 "positionOnTI": 3.0,
-                "previousTI": 1,
-                "trackItem": 2
+                "previousTI": "1",
+                "trackItem": "2"
             },
             "trainTypeCode": "UT"
         }
