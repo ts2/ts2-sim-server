@@ -85,8 +85,7 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 	}
 	sim.SignalLib = rawSim.SignalLib
 	if err := sim.SignalLib.initialize(); err != nil {
-		logger.Crit("error initializing signal Library", "error", err)
-		panic(err)
+		return fmt.Errorf("error initializing signal Library: %s", err)
 	}
 	sim.TrackItems = make(map[string]TrackItem)
 	sim.Places = make(map[string]*Place)
@@ -109,39 +108,42 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 			sim.TrackItems[tiId] = ti
 			return nil
 		}
-
+		var err error
 		switch tiType {
 		case `"LineItem"`:
 			var ti LineItem
-			unmarshalItem(&ti)
+			err = unmarshalItem(&ti)
 		case `"InvisibleLinkItem"`:
 			var ti InvisibleLinkItem
-			unmarshalItem(&ti)
+			err = unmarshalItem(&ti)
 		case `"EndItem"`:
 			var ti EndItem
-			unmarshalItem(&ti)
+			err = unmarshalItem(&ti)
 		case `"PlatformItem"`:
 			var ti PlatformItem
-			unmarshalItem(&ti)
+			err = unmarshalItem(&ti)
 		case `"TextItem"`:
 			var ti TextItem
-			unmarshalItem(&ti)
+			err = unmarshalItem(&ti)
 		case `"PointsItem"`:
 			var ti PointsItem
-			unmarshalItem(&ti)
+			err = unmarshalItem(&ti)
 		case `"SignalItem"`:
 			var ti SignalItem
-			unmarshalItem(&ti)
+			err = unmarshalItem(&ti)
 		case `"Place"`:
 			var pl Place
-			unmarshalItem(&pl)
+			err = unmarshalItem(&pl)
 			delete(sim.TrackItems, pl.ID())
 			sim.Places[pl.PlaceCode] = &pl
 		default:
 			return fmt.Errorf("unknown TrackItem type: %s", rawItem["__type__"])
 		}
-
+		if err != nil {
+			return err
+		}
 	}
+
 	if err := sim.checkTrackItemsLinks(); err != nil {
 		return err
 	}
@@ -152,8 +154,7 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 		route.setSimulation(sim)
 		sim.Routes[num] = route
 		if err := route.initialize(num); err != nil {
-			logger.Crit("error initializing route", "route", route.routeID, "error", err)
-			panic(err)
+			return fmt.Errorf("error initializing route %s: %s", route.routeID, err)
 		}
 	}
 	sim.TrainTypes = rawSim.TrainTypes
@@ -167,6 +168,9 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 		s.initialize(sCode)
 	}
 	sim.Trains = rawSim.Trains
+	for i, t := range sim.Trains {
+		t.setSimulation(sim, fmt.Sprintf("%d", i))
+	}
 	sort.Slice(sim.Trains, func(i, j int) bool {
 		switch {
 		case len(sim.Trains[i].Service().Lines) == 0 && len(sim.Trains[j].Service().Lines) == 0:
@@ -180,16 +184,13 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 				sim.Trains[j].Service().Lines[0].ScheduledDepartureTime) < 0
 		}
 	})
-	for i, t := range sim.Trains {
-		t.setSimulation(sim, fmt.Sprintf("%d", i))
-	}
 	sim.MessageLogger = rawSim.MessageLogger
 	sim.MessageLogger.setSimulation(sim)
 	return nil
 }
 
 // MarshalJSON for the Simulation type
-func (sim *Simulation) MarshalJSON() ([]byte, error) {
+func (sim Simulation) MarshalJSON() ([]byte, error) {
 	var res bytes.Buffer
 	res.WriteString(`{
 	"__type__": "Simulation",

@@ -28,11 +28,11 @@
 	"routes": {
 		"1": {
 			"__type__": "Route",
-			"beginSignal": "5",
+			"beginSignal": "11",
 			"directions": {
 				"7": 0
 			},
-			"endSignal": "11",
+			"endSignal": "5",
 			"initialState": 1
 		},
 		"2": {
@@ -137,63 +137,6 @@
                 }
             ],
             "plannedTrainType": "UT",
-            "postActions": []
-		},
-        "S003": {
-            "__type__": "Service",
-            "description": "LEFT->STATION",
-            "lines": [
-                {
-                    "__type__": "ServiceLine",
-                    "mustStop": false,
-                    "placeCode": "LFT",
-                    "scheduledArrivalTime": null,
-                    "scheduledDepartureTime": "08:07:30",
-                    "trackCode": null
-                },
-                {
-                    "__type__": "ServiceLine",
-                    "mustStop": true,
-                    "placeCode": "STN",
-                    "scheduledArrivalTime": "08:09:00",
-                    "scheduledDepartureTime": "08:10:00",
-                    "trackCode": "2"
-                }
-            ],
-            "plannedTrainType": "UT2",
-            "postActions": [
-            	{
-            		"actionCode": "REVERSE",
-            		"actionParam": null
-            	},
-            	{
-            		"actionCode": "SET_SERVICE",
-            		"actionParam": "S004"
-            	}
-            ]
-		},
-        "S004": {
-            "__type__": "Service",
-            "description": "STATION->LEFT",
-            "lines": [
-                {
-                    "__type__": "ServiceLine",
-                    "mustStop": true,
-                    "placeCode": "STN",
-                    "scheduledArrivalTime": null,
-                    "scheduledDepartureTime": "08:11:30",
-                    "trackCode": "2"
-                },
-                {
-                    "__type__": "ServiceLine",
-                    "mustStop": false,
-                    "placeCode": "LFT",
-                    "scheduledArrivalTime": null,
-                    "scheduledDepartureTime": "08:12:00",
-                    "trackCode": null
-                }
-            ],
-            "plannedTrainType": "UT2",
             "postActions": []
 		}
 	},
@@ -557,24 +500,6 @@
                 "trackItem": "2"
             },
             "trainTypeCode": "UT"
-        },
-        {
-            "__type__": "Train",
-            "appearTime": "08:07:00",
-            "initialDelay": [[-60, 60, 60], [60, 180, 40]],
-            "initialSpeed": 5.0,
-            "nextPlaceIndex": null,
-            "serviceCode": "S003",
-            "speed": 5.0,
-            "status": 0,
-            "stoppedTime": 0,
-            "trainHead": {
-                "__type__": "Position",
-                "positionOnTI": 3.0,
-                "previousTI": "1",
-                "trackItem": "2"
-            },
-            "trainTypeCode": "UT2"
         }
     ],
 	"signalLibrary": {

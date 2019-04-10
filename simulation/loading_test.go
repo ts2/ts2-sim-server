@@ -20,6 +20,7 @@ package simulation
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -188,9 +189,11 @@ func TestSimulationLoading(t *testing.T) {
 			So(tt2.Elements()[1], ShouldEqual, tt)
 		})
 		Convey("Services should all be loaded", func() {
-			So(sim.Services, ShouldHaveLength, 2)
+			So(sim.Services, ShouldHaveLength, 4)
 			So(sim.Services, ShouldContainKey, "S001")
 			So(sim.Services, ShouldContainKey, "S002")
+			So(sim.Services, ShouldContainKey, "S003")
+			So(sim.Services, ShouldContainKey, "S004")
 			s1 := sim.Services["S001"]
 			s2 := sim.Services["S002"]
 			So(s1.Description, ShouldEqual, "LEFT->STATION")
@@ -210,7 +213,7 @@ func TestSimulationLoading(t *testing.T) {
 			So(s2.PostActions, ShouldHaveLength, 0)
 		})
 		Convey("Trains loading should be Ok", func() {
-			So(sim.Trains, ShouldHaveLength, 1)
+			So(sim.Trains, ShouldHaveLength, 2)
 			tr := sim.Trains[0]
 			So(tr.Service(), ShouldEqual, sim.Services["S001"])
 			So(tr.TrainType(), ShouldEqual, sim.TrainTypes["UT"])
@@ -254,6 +257,78 @@ func TestSimulationLoading(t *testing.T) {
 			cautionAspect := sim.SignalLib.Aspects["UK_CAUTION"]
 			So(cautionAspect.Actions[0].Target, ShouldEqual, BeforeNextSignal)
 			So(cautionAspect.Actions[0].Speed, ShouldEqual, 0.0)
+		})
+	})
+	Convey("Testing simulation loading errors", t, func() {
+		var sim Simulation
+		Convey("Loading wrong JSON should fail", func() {
+			err := json.Unmarshal([]byte(`{"this": ["is": "erroneous JSON"]}`), &sim)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldEqual, "invalid character ':' after array element")
+
+			err = json.Unmarshal([]byte(`{"routes": []}`), &sim)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldEqual, "unable to decode simulation JSON: json: cannot unmarshal array into Go struct field auxSim.routes of type map[string]*simulation.Route")
+		})
+		Convey("Loading with wrong signalLibrary should fail", func() {
+			err := json.Unmarshal([]byte(`
+{"signalLibrary": {
+	"signalTypes": {
+		"BUFFER": {
+			"states": [
+				{
+					"aspectName": "BUFFER",
+					"conditions": {}
+				}
+			]
+		}
+	}
+}}`), &sim)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldEqual, "error initializing signal Library: no aspect with code BUFFER found")
+		})
+		Convey("Wrong trackItem type should fail", func() {
+			err := json.Unmarshal([]byte(`
+{
+	"trackItems": {
+		"3": {
+			"__type__": "undefined"
+		}
+	}
+}`), &sim)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldEqual, `unknown TrackItem type: "undefined"`)
+		})
+		Convey("Wrong trackItem definition should fail", func() {
+			err := json.Unmarshal([]byte(`
+{
+	"trackItems": {
+		"3": {
+			"__type__": "SignalItem",
+			"name": []
+		}
+	}
+}`), &sim)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldEqual, `unable to decode "SignalItem": {
+			"__type__": "SignalItem",
+			"name": []
+		}. json: cannot unmarshal array into Go struct field SignalItem.name of type string`)
+		})
+		Convey("Simulation with wrong links should fail loading", func() {
+			data, _ := ioutil.ReadFile("testdata/badlinks.json")
+			err := json.Unmarshal(data, &sim)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldBeIn, []string{
+				"inconsistent link at (0.000000, 0.000000) between 1 and 3",
+				"inconsistent link at (90.000000, 0.000000) between 2 and 1",
+			})
+		})
+		Convey("Simulation with wrong routes should fail loading", func() {
+			data, _ := ioutil.ReadFile("testdata/badroutes.json")
+			err := json.Unmarshal(data, &sim)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldEqual, "error initializing route 1: route Error: unable to link signal 11 to signal 5")
 		})
 	})
 }

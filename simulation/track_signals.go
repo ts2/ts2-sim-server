@@ -488,7 +488,7 @@ func (sl *SignalLibrary) initialize() error {
 		for i, s := range t.States {
 			asp, ok := sl.Aspects[s.AspectName]
 			if !ok {
-				return fmt.Errorf("not aspect with code %s found", s.AspectName)
+				return fmt.Errorf("no aspect with code %s found", s.AspectName)
 			}
 			asp.Name = s.AspectName
 			t.States[i].Aspect = asp

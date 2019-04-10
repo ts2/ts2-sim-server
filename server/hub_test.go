@@ -379,7 +379,7 @@ func TestHub(t *testing.T) {
 				var trains []simulation.Train
 				err = json.Unmarshal(resp.Data, &trains)
 				So(err, ShouldBeNil)
-				So(trains, ShouldHaveLength, 1)
+				So(trains, ShouldHaveLength, 2)
 			})
 			Convey("Showing a train", func() {
 				err = c.WriteJSON(Request{Object: "train", Action: "show", Params: RawJSON(`{"ids": [0]}`)})
@@ -563,7 +563,7 @@ func TestHub(t *testing.T) {
 				var services map[string]*simulation.Service
 				err = json.Unmarshal(resp.Data, &services)
 				So(err, ShouldBeNil)
-				So(services, ShouldHaveLength, 2)
+				So(services, ShouldHaveLength, 4)
 			})
 			Convey("Showing a service", func() {
 				err = c.WriteJSON(Request{Object: "service", Action: "show", Params: RawJSON(`{"ids": ["S002"]}`)})

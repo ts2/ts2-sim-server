@@ -20,7 +20,21 @@ package simulation
 
 import (
 	"io/ioutil"
+	"os"
+	"testing"
+
+	log "gopkg.in/inconshreveable/log15.v2"
 )
+
+func TestMain(m *testing.M) {
+	mainLogger := log.New()
+	if os.Getenv("TS2_DEBUG") == "" {
+		mainLogger.SetHandler(log.DiscardHandler())
+	}
+	InitializeLogger(mainLogger)
+	InitializeLogger(mainLogger)
+	os.Exit(m.Run())
+}
 
 // Equals is a comparison function for DelayGenerator objects.
 func (dg DelayGenerator) Equals(b DelayGenerator) bool {
