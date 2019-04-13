@@ -254,8 +254,8 @@ type SignalItem struct {
 	Yb             float64 `json:"yn"`
 	SignalTypeCode string  `json:"signalType"`
 	Reverse        bool    `json:"reverse"`
-	TrainID        string  `json:"trainID"`
 
+	train               *Train
 	previousActiveRoute *Route
 	nextActiveRoute     *Route
 	activeAspect        *SignalAspect
@@ -263,7 +263,19 @@ type SignalItem struct {
 
 // initialize this signalItem
 func (si *SignalItem) initialize() error {
+	if err := si.trackStruct.initialize(); err != nil {
+		return err
+	}
 	si.activeAspect = si.SignalType().getDefaultAspect()
+	for _, st := range si.SignalType().States {
+		for ct := range st.Conditions {
+			var params []string
+			for _, vals := range si.CustomProperties[ct] {
+				params = append(params, vals...)
+			}
+			signalConditionTypes[ct].SetupTriggers(si, params)
+		}
+	}
 	return nil
 }
 
@@ -298,6 +310,15 @@ func (si *SignalItem) ActiveAspect() *SignalAspect {
 func (si *SignalItem) setActiveRoute(r *Route, previous TrackItem) {
 	si.trackStruct.setActiveRoute(r, previous)
 	si.updateSignalState()
+}
+
+// setTrainID sets the train associated with this signal train to display in berth.
+func (si *SignalItem) setTrain(t *Train) {
+	si.train = t
+	si.simulation.sendEvent(&Event{
+		Name:   TrackItemChanged,
+		Object: si,
+	})
 }
 
 // IsOnPosition returns true if this signal item is the track item of
@@ -340,6 +361,7 @@ func (si *SignalItem) trainHeadActions(train *Train) {
 	// descriptor only in this case. For this, we move backwards from the train
 	// head to this signal.
 	// We do not use isOut, because we are backwards
+	si.trackStruct.trainHeadActions(train)
 	for pos := train.TrainHead; pos.TrackItem().Type() != TypeEnd; pos = pos.Previous() {
 		if !pos.TrackItem().Equals(si) {
 			continue
@@ -349,16 +371,15 @@ func (si *SignalItem) trainHeadActions(train *Train) {
 			return
 		}
 		if nextSignal := si.getNextSignal(); nextSignal != nil {
-			nextSignal.TrainID = train.trainID
+			nextSignal.setTrain(train)
 		}
-		if si.TrainID == train.trainID {
+		if si.train == train {
 			// Only reset train descriptor if it is ours, as it may
 			// be the one of a train behind in the same block
-			si.TrainID = ""
+			si.setTrain(nil)
 		}
 	}
 	si.updateSignalState()
-	si.trackStruct.trainHeadActions(train)
 }
 
 // trainTailActions performs the actions to be done when a train tail reaches this signal item.
@@ -457,13 +478,17 @@ func (si *SignalItem) MarshalJSON() ([]byte, error) {
 	if si.nextActiveRoute != nil {
 		narID = si.nextActiveRoute.ID()
 	}
+	var trainID string
+	if si.train != nil {
+		trainID = si.train.ID()
+	}
 	aSI := jsonSignalItem{
 		jsonTrackStruct:     si.asJSONStruct(),
 		Xb:                  si.Xb,
 		Yb:                  si.Yb,
 		SignalTypeCode:      si.SignalTypeCode,
 		Reverse:             si.Reverse,
-		TrainID:             si.TrainID,
+		TrainID:             trainID,
 		PreviousActiveRoute: parID,
 		NextActiveRoute:     narID,
 		ActiveAspect:        si.activeAspect.Name,

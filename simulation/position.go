@@ -70,9 +70,9 @@ func (pos Position) IsValid() bool {
 		return false
 	}
 	if !pos.TrackItem().IsConnected(pos.PreviousItem()) {
-		return true
+		return false
 	}
-	return false
+	return true
 }
 
 // IsNull returns true if this Position is null.
@@ -104,10 +104,14 @@ func (pos Position) Next(dir PointDirection) Position {
 // Previous is the last Position on the previous TrackItem with regard to this Position
 func (pos Position) Previous() Position {
 	previousTI, _ := pos.PreviousItem().FollowingItem(pos.TrackItem(), DirectionCurrent)
+	var previousTIID string
+	if previousTI != nil {
+		previousTIID = previousTI.ID()
+	}
 	return Position{
 		simulation:     pos.simulation,
 		TrackItemID:    pos.PreviousItemID,
-		PreviousItemID: previousTI.ID(),
+		PreviousItemID: previousTIID,
 		PositionOnTI:   pos.PreviousItem().RealLength(),
 	}
 }
@@ -137,13 +141,17 @@ func (pos Position) Equals(pos2 Position) bool {
 // Add returns the Position that is length ahead of this position.
 // If length is negative, find the position backwards.
 func (pos Position) Add(length float64) Position {
-	if pos.PositionOnTI+length < pos.TrackItem().RealLength() {
+	if length > 0 && pos.PositionOnTI+length < pos.TrackItem().RealLength() ||
+		length < 0 && pos.PositionOnTI+length > 0 {
 		return Position{
 			simulation:     pos.simulation,
 			TrackItemID:    pos.TrackItemID,
 			PreviousItemID: pos.PreviousItemID,
 			PositionOnTI:   pos.PositionOnTI + length,
 		}
+	}
+	if length < 0 {
+		return pos.Previous().Add(pos.PositionOnTI + length)
 	}
 	return pos.Next(DirectionCurrent).Add(length + pos.PositionOnTI - pos.TrackItem().RealLength())
 }
@@ -154,7 +162,7 @@ func (pos Position) Add(length float64) Position {
 // and in the same direction
 func (pos Position) Sub(orig Position) (float64, error) {
 	if orig.TrackItemID == pos.TrackItemID {
-		if orig.PreviousItemID != pos.TrackItemID {
+		if orig.PreviousItemID != pos.PreviousItemID {
 			return 0, errors.New("position is not in the same direction as orig")
 		}
 		if orig.PositionOnTI > pos.PositionOnTI {
@@ -164,7 +172,7 @@ func (pos Position) Sub(orig Position) (float64, error) {
 	}
 	d, err := pos.Sub(orig.Next(DirectionCurrent))
 	if err != nil {
-		return 0, nil
+		return 0, err
 	}
 	return d + orig.TrackItem().RealLength() - orig.PositionOnTI, nil
 }

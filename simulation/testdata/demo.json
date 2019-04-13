@@ -547,7 +547,6 @@
             "initialSpeed": 5.0,
             "nextPlaceIndex": null,
             "serviceCode": "S001",
-            "speed": 5.0,
             "status": 0,
             "stoppedTime": 0,
             "trainHead": {
@@ -565,7 +564,6 @@
             "initialSpeed": 5.0,
             "nextPlaceIndex": null,
             "serviceCode": "S003",
-            "speed": 5.0,
             "status": 0,
             "stoppedTime": 0,
             "trainHead": {

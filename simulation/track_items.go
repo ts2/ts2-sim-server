@@ -230,9 +230,8 @@ type trackStruct struct {
 	activeRoute    *Route
 	arPreviousItem TrackItem
 	selected       bool
-	trains         []*Train
-	trainEndsFW    []float64
-	trainEndsBK    []float64
+	trainEndsFW    map[*Train]float64
+	trainEndsBK    map[*Train]float64
 	triggers       []func(TrackItem)
 }
 
@@ -377,13 +376,16 @@ func (t *trackStruct) trainHeadActions(train *Train) {
 }
 
 // trainTailActions performs the actions to be done when a train tail reaches this TrackItem
-//
-// Implementation here handles automatic release of the route if applicable.
 func (t *trackStruct) trainTailActions(train *Train) {
+	t.releaseRouteBehind(train)
+}
+
+// releaseRouteBehind automatically releases the route after train passed if applicable
+func (t *trackStruct) releaseRouteBehind(train *Train) {
 	if t.activeRoute == nil {
 		return
 	}
-	if t.activeRoute.State != Persistent {
+	if t.activeRoute.State != Activated {
 		return
 	}
 	beginSignalNextRoute := t.activeRoute.BeginSignal().nextActiveRoute
@@ -400,7 +402,7 @@ func (t *trackStruct) trainTailActions(train *Train) {
 
 // TrainPresent returns true if at least one train is present on this TrackItem
 func (t *trackStruct) TrainPresent() bool {
-	return len(t.trains) > 0
+	return len(t.trainEndsFW) + len(t.trainEndsBK) > 0
 }
 
 // resetActiveRoute resets route information on this item.
@@ -449,11 +451,16 @@ func (t *trackStruct) DistanceToTrainEnd(pos Position) (float64, bool) {
 // Equals returns true if this track item and the given one are the same
 // (i.e. they have the same routeID)
 func (t *trackStruct) Equals(ti TrackItem) bool {
+	if ti == nil {
+		return false
+	}
 	return t.ID() == ti.ID()
 }
 
 // initialize this track item
 func (t *trackStruct) initialize() error {
+	t.trainEndsFW = make(map[*Train]float64)
+	t.trainEndsBK = make(map[*Train]float64)
 	return nil
 }
 
@@ -477,6 +484,14 @@ func (t *trackStruct) asJSONStruct() jsonTrackStruct {
 	if t.arPreviousItem != nil {
 		arpiID = t.arPreviousItem.ID()
 	}
+	tEndsFW := make(map[string]float64)
+	for t, p := range t.trainEndsFW {
+		tEndsFW[t.ID()] = p
+	}
+	tEndsBK := make(map[string]float64)
+	for t, p := range t.trainEndsBK {
+		tEndsBK[t.ID()] = p
+	}
 	ai := jsonTrackStruct{
 		ID:               t.ID(),
 		TiType:           t.TiType,
@@ -492,8 +507,8 @@ func (t *trackStruct) asJSONStruct() jsonTrackStruct {
 		PlaceCode:        t.PlaceCode,
 		ActiveRoute:      arID,
 		ARPreviousItem:   arpiID,
-		TrainEndsFW:      t.trainEndsFW,
-		TrainEndsBK:      t.trainEndsBK,
+		TrainEndsFW:      tEndsFW,
+		TrainEndsBK:      tEndsBK,
 	}
 	return ai
 }
@@ -515,8 +530,8 @@ type jsonTrackStruct struct {
 	PlaceCode        string                    `json:"placeCode"`
 	ActiveRoute      string                    `json:"activeRoute"`
 	ARPreviousItem   string                    `json:"activeRoutePreviousItem"`
-	TrainEndsFW      []float64                 `json:"trainEndsFW"`
-	TrainEndsBK      []float64                 `json:"trainEndsBK"`
+	TrainEndsFW      map[string]float64        `json:"trainEndsFW"`
+	TrainEndsBK      map[string]float64        `json:"trainEndsBK"`
 }
 
 // A Place is a special TrackItem representing a physical location such as a

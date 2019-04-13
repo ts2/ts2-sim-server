@@ -18,7 +18,7 @@
 
 package simulation
 
-// MessageType defines the type of message of the logger
+// MessageType defines the type of message of the Logger
 type MessageType uint8
 
 const (
@@ -44,14 +44,14 @@ func (ml *MessageLogger) setSimulation(sim *Simulation) {
 	ml.simulation = sim
 }
 
-// addMessage adds the given message to the simulation message logger.
-// This method also logs to the logger the same message.
+// addMessage adds the given message to the simulation message Logger.
+// This method also logs to the Logger the same message.
 func (ml *MessageLogger) addMessage(msg string, typ MessageType) {
 	ml.Messages = append(ml.Messages, Message{
 		MsgText: msg,
 		MsgType: typ,
 	})
-	if logger != nil {
-		logger.Info(msg, "msgType", typ)
+	if Logger != nil {
+		Logger.Info(msg, "msgType", typ)
 	}
 }

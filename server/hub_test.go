@@ -25,8 +25,11 @@ import (
 
 	"github.com/gorilla/websocket"
 	. "github.com/smartystreets/goconvey/convey"
+	_ "github.com/ts2/ts2-sim-server/plugins/lines"
 	_ "github.com/ts2/ts2-sim-server/plugins/points"
 	_ "github.com/ts2/ts2-sim-server/plugins/routes"
+	_ "github.com/ts2/ts2-sim-server/plugins/signals"
+	_ "github.com/ts2/ts2-sim-server/plugins/trains"
 	"github.com/ts2/ts2-sim-server/simulation"
 )
 
@@ -73,154 +76,6 @@ func TestHub(t *testing.T) {
 			So(resp.MsgType, ShouldEqual, TypeResponse)
 			So(resp.Data.Status, ShouldEqual, Fail)
 			So(resp.Data.Message, ShouldEqual, "Error: unknown object undefined")
-		})
-		Convey("Server functions", func() {
-			Convey("Calling unknown action should fail", func() {
-				err = c.WriteJSON(Request{Object: "server", Action: "undefined"})
-				So(err, ShouldBeNil)
-				var resp ResponseStatus
-				err = c.ReadJSON(&resp)
-				So(err, ShouldBeNil)
-				So(resp.MsgType, ShouldEqual, TypeResponse)
-				So(resp.Data.Status, ShouldEqual, Fail)
-				So(resp.Data.Message, ShouldEqual, "Error: unknown action server/undefined")
-			})
-			Convey("Adding listener for clock, start simulation, check we receive notifications and remove listener", func() {
-				err = c.WriteJSON(RequestListener{
-					Object: "server",
-					Action: "addListener",
-					Params: ParamsListener{
-						Event: simulation.ClockEvent,
-					},
-				})
-				So(err, ShouldBeNil)
-				var resp ResponseStatus
-				err = c.ReadJSON(&resp)
-				So(err, ShouldBeNil)
-				So(resp.Data.Status, ShouldEqual, Ok)
-
-				resp = sendRequestStatus(c, "simulation", "start", "")
-				So(resp.Data.Status, ShouldEqual, Ok)
-
-				var event ResponseNotification
-				err = c.ReadJSON(&event)
-				So(err, ShouldBeNil)
-				So(event.MsgType, ShouldEqual, TypeNotification)
-				So(event.Data.Name, ShouldEqual, simulation.ClockEvent)
-
-				resp = sendRequestStatus(c, "simulation", "pause", "")
-				So(resp.Data.Status, ShouldEqual, Ok)
-
-				resp = sendRequestStatus(c, "server", "removeListener", "{\"event\": \"clock\"}")
-				So(resp.Data.Status, ShouldEqual, Ok)
-			})
-			Convey("Adding listener for selected IDs only and check we only receive events for these", func() {
-				err = c.WriteJSON(RequestListener{
-					Object: "server",
-					Action: "addListener",
-					Params: ParamsListener{
-						Event: simulation.RouteActivatedEvent,
-						IDs:   []string{"1"},
-					},
-				})
-				So(err, ShouldBeNil)
-				var resp ResponseStatus
-				err = c.ReadJSON(&resp)
-				So(err, ShouldBeNil)
-				So(resp.MsgType, ShouldEqual, TypeResponse)
-				So(resp.Data.Status, ShouldEqual, Ok)
-
-				err := c.WriteJSON(Request{Object: "route", Action: "activate", Params: RawJSON(`{"id": "1"}`)})
-				So(err, ShouldBeNil)
-				var haveResponse, haveNotification bool
-				for i := 0; i < 2; i++ {
-					var r Response
-					err = c.ReadJSON(&r)
-					So(err, ShouldBeNil)
-					switch r.MsgType {
-					case TypeResponse:
-						So(haveResponse, ShouldBeFalse)
-						haveResponse = true
-						var rd DataStatus
-						err := json.Unmarshal(r.Data, &rd)
-						So(err, ShouldBeNil)
-						So(rd.Status, ShouldEqual, Ok)
-					case TypeNotification:
-						So(haveNotification, ShouldBeFalse)
-						haveNotification = true
-						var de DataEvent
-						err := json.Unmarshal(r.Data, &de)
-						So(err, ShouldBeNil)
-						So(de.Name, ShouldEqual, simulation.RouteActivatedEvent)
-					}
-				}
-
-				resp = sendRequestStatus(c, "route", "deactivate", `{"id": "1"}`)
-				So(resp.Data.Status, ShouldEqual, Ok)
-
-				resp = sendRequestStatus(c, "route", "activate", `{"id": "2"}`)
-				So(resp.Data.Status, ShouldEqual, Ok)
-
-				err = c.WriteJSON(RequestListener{
-					Object: "server",
-					Action: "removeListener",
-					Params: ParamsListener{
-						Event: simulation.RouteActivatedEvent,
-						IDs:   []string{"1"},
-					},
-				})
-				So(err, ShouldBeNil)
-				err = c.ReadJSON(&resp)
-				So(err, ShouldBeNil)
-				So(resp.MsgType, ShouldEqual, TypeResponse)
-				So(resp.Data.Status, ShouldEqual, Ok)
-
-			})
-			Convey("Invalid listeners requests should fail", func() {
-				resp := sendRequestStatus(c, "server", "addListener", `{"event": []}`)
-				So(resp.MsgType, ShouldEqual, TypeResponse)
-				So(resp.Data.Status, ShouldEqual, Fail)
-
-				resp = sendRequestStatus(c, "server", "removeListener", `{"event": []}`)
-				So(resp.MsgType, ShouldEqual, TypeResponse)
-				So(resp.Data.Status, ShouldEqual, Fail)
-			})
-		})
-		Convey("Simulation functions", func() {
-			Convey("Calling unknown action should fail", func() {
-				err = c.WriteJSON(Request{Object: "simulation", Action: "undefined"})
-				So(err, ShouldBeNil)
-				var resp ResponseStatus
-				err = c.ReadJSON(&resp)
-				So(err, ShouldBeNil)
-				So(resp.MsgType, ShouldEqual, TypeResponse)
-				So(resp.Data.Status, ShouldEqual, Fail)
-				So(resp.Data.Message, ShouldEqual, "Error: unknown action simulation/undefined")
-			})
-			Convey("Dumping simulation", func() {
-				err = c.WriteJSON(Request{Object: "simulation", Action: "dump"})
-				So(err, ShouldBeNil)
-				var resp Response
-				err = c.ReadJSON(&resp)
-				So(err, ShouldBeNil)
-				So(resp.MsgType, ShouldEqual, TypeResponse)
-				var simu simulation.Simulation
-				err := json.Unmarshal(resp.Data, &simu)
-				So(err, ShouldBeNil)
-				So(simu.TrackItems, ShouldHaveLength, 22)
-				So(simu.Places, ShouldHaveLength, 3)
-				So(simu.Places, ShouldContainKey, "STN")
-			})
-			Convey("Starting simulation", func() {
-				resp := sendRequestStatus(c, "simulation", "start", "")
-				So(resp.MsgType, ShouldEqual, TypeResponse)
-				So(resp.Data.Status, ShouldEqual, Ok)
-			})
-			Convey("Stopping simulation", func() {
-				resp := sendRequestStatus(c, "simulation", "pause", "")
-				So(resp.MsgType, ShouldEqual, TypeResponse)
-				So(resp.Data.Status, ShouldEqual, Ok)
-			})
 		})
 		Convey("Option functions", func() {
 			Convey("Calling unknown action should fail", func() {
@@ -585,6 +440,178 @@ func TestHub(t *testing.T) {
 				So(resp.MsgType, ShouldEqual, TypeResponse)
 				So(resp.Data.Status, ShouldEqual, Fail)
 				So(resp.Data.Message, ShouldEqual, "Error: unknown service: 999")
+			})
+		})
+		Convey("Simulation functions", func() {
+			Convey("Calling unknown action should fail", func() {
+				err = c.WriteJSON(Request{Object: "simulation", Action: "undefined"})
+				So(err, ShouldBeNil)
+				var resp ResponseStatus
+				err = c.ReadJSON(&resp)
+				So(err, ShouldBeNil)
+				So(resp.MsgType, ShouldEqual, TypeResponse)
+				So(resp.Data.Status, ShouldEqual, Fail)
+				So(resp.Data.Message, ShouldEqual, "Error: unknown action simulation/undefined")
+			})
+			Convey("Dumping simulation", func() {
+				err = c.WriteJSON(Request{Object: "simulation", Action: "dump"})
+				So(err, ShouldBeNil)
+				var resp Response
+				err = c.ReadJSON(&resp)
+				So(err, ShouldBeNil)
+				So(resp.MsgType, ShouldEqual, TypeResponse)
+				var simu simulation.Simulation
+				err := json.Unmarshal(resp.Data, &simu)
+				So(err, ShouldBeNil)
+				So(simu.TrackItems, ShouldHaveLength, 22)
+				So(simu.Places, ShouldHaveLength, 3)
+				So(simu.Places, ShouldContainKey, "STN")
+			})
+			Convey("Starting simulation", func() {
+				resp := sendRequestStatus(c, "simulation", "start", "")
+				So(resp.MsgType, ShouldEqual, TypeResponse)
+				So(resp.Data.Status, ShouldEqual, Ok)
+			})
+			Convey("checking simulation state", func() {
+				err = c.WriteJSON(Request{Object: "simulation", Action: "isStarted"})
+				So(err, ShouldBeNil)
+				var resp Response
+				err = c.ReadJSON(&resp)
+				So(err, ShouldBeNil)
+				So(resp.MsgType, ShouldEqual, TypeResponse)
+				var isStarted bool
+				err := json.Unmarshal(resp.Data, &isStarted)
+				So(err, ShouldBeNil)
+				So(isStarted, ShouldBeTrue)
+			})
+			Convey("Stopping simulation", func() {
+				resp := sendRequestStatus(c, "simulation", "pause", "")
+				So(resp.MsgType, ShouldEqual, TypeResponse)
+				So(resp.Data.Status, ShouldEqual, Ok)
+			})
+			Convey("checking simulation state again", func() {
+				err = c.WriteJSON(Request{Object: "simulation", Action: "isStarted"})
+				So(err, ShouldBeNil)
+				var resp Response
+				err = c.ReadJSON(&resp)
+				So(err, ShouldBeNil)
+				So(resp.MsgType, ShouldEqual, TypeResponse)
+				var isStarted bool
+				err := json.Unmarshal(resp.Data, &isStarted)
+				So(err, ShouldBeNil)
+				So(isStarted, ShouldBeFalse)
+			})
+		})
+		Convey("Server functions", func() {
+			Convey("Calling unknown action should fail", func() {
+				err = c.WriteJSON(Request{Object: "server", Action: "undefined"})
+				So(err, ShouldBeNil)
+				var resp ResponseStatus
+				err = c.ReadJSON(&resp)
+				So(err, ShouldBeNil)
+				So(resp.MsgType, ShouldEqual, TypeResponse)
+				So(resp.Data.Status, ShouldEqual, Fail)
+				So(resp.Data.Message, ShouldEqual, "Error: unknown action server/undefined")
+			})
+			Convey("Adding listener for clock, start simulation, check we receive notifications and remove listener", func() {
+				err = c.WriteJSON(RequestListener{
+					Object: "server",
+					Action: "addListener",
+					Params: ParamsListener{
+						Event: simulation.ClockEvent,
+					},
+				})
+				So(err, ShouldBeNil)
+				var resp ResponseStatus
+				err = c.ReadJSON(&resp)
+				So(err, ShouldBeNil)
+				So(resp.Data.Status, ShouldEqual, Ok)
+
+				resp = sendRequestStatus(c, "simulation", "start", "")
+				So(resp.Data.Status, ShouldEqual, Ok)
+
+				var event ResponseNotification
+				err = c.ReadJSON(&event)
+				So(err, ShouldBeNil)
+				So(event.MsgType, ShouldEqual, TypeNotification)
+				So(event.Data.Name, ShouldEqual, simulation.ClockEvent)
+
+				resp = sendRequestStatus(c, "simulation", "pause", "")
+				So(resp.Data.Status, ShouldEqual, Ok)
+
+				resp = sendRequestStatus(c, "server", "removeListener", "{\"event\": \"clock\"}")
+				So(resp.Data.Status, ShouldEqual, Ok)
+			})
+			Convey("Adding listener for selected IDs only and check we only receive events for these", func() {
+				err = c.WriteJSON(RequestListener{
+					Object: "server",
+					Action: "addListener",
+					Params: ParamsListener{
+						Event: simulation.RouteActivatedEvent,
+						IDs:   []string{"1"},
+					},
+				})
+				So(err, ShouldBeNil)
+				var resp ResponseStatus
+				err = c.ReadJSON(&resp)
+				So(err, ShouldBeNil)
+				So(resp.MsgType, ShouldEqual, TypeResponse)
+				So(resp.Data.Status, ShouldEqual, Ok)
+
+				err := c.WriteJSON(Request{Object: "route", Action: "activate", Params: RawJSON(`{"id": "1"}`)})
+				So(err, ShouldBeNil)
+				var haveResponse, haveNotification bool
+				for i := 0; i < 2; i++ {
+					var r Response
+					err = c.ReadJSON(&r)
+					So(err, ShouldBeNil)
+					switch r.MsgType {
+					case TypeResponse:
+						So(haveResponse, ShouldBeFalse)
+						haveResponse = true
+						var rd DataStatus
+						err := json.Unmarshal(r.Data, &rd)
+						So(err, ShouldBeNil)
+						So(rd.Status, ShouldEqual, Ok)
+					case TypeNotification:
+						So(haveNotification, ShouldBeFalse)
+						haveNotification = true
+						var de DataEvent
+						err := json.Unmarshal(r.Data, &de)
+						So(err, ShouldBeNil)
+						So(de.Name, ShouldEqual, simulation.RouteActivatedEvent)
+					}
+				}
+
+				resp = sendRequestStatus(c, "route", "deactivate", `{"id": "1"}`)
+				So(resp.Data.Status, ShouldEqual, Ok)
+
+				resp = sendRequestStatus(c, "route", "activate", `{"id": "2"}`)
+				So(resp.Data.Status, ShouldEqual, Ok)
+
+				err = c.WriteJSON(RequestListener{
+					Object: "server",
+					Action: "removeListener",
+					Params: ParamsListener{
+						Event: simulation.RouteActivatedEvent,
+						IDs:   []string{"1"},
+					},
+				})
+				So(err, ShouldBeNil)
+				err = c.ReadJSON(&resp)
+				So(err, ShouldBeNil)
+				So(resp.MsgType, ShouldEqual, TypeResponse)
+				So(resp.Data.Status, ShouldEqual, Ok)
+
+			})
+			Convey("Invalid listeners requests should fail", func() {
+				resp := sendRequestStatus(c, "server", "addListener", `{"event": []}`)
+				So(resp.MsgType, ShouldEqual, TypeResponse)
+				So(resp.Data.Status, ShouldEqual, Fail)
+
+				resp = sendRequestStatus(c, "server", "removeListener", `{"event": []}`)
+				So(resp.MsgType, ShouldEqual, TypeResponse)
+				So(resp.Data.Status, ShouldEqual, Fail)
 			})
 		})
 		Reset(func() {

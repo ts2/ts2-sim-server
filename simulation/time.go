@@ -92,6 +92,7 @@ func (dg DelayGenerator) Yield() time.Duration {
 	}
 
 	// First determine our segment
+	rand.Seed(time.Now().Unix())
 	r0 := rand.Intn(100)
 	seg := 0
 	for i := range probas {

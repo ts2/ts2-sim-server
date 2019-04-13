@@ -26,6 +26,7 @@ import (
 	"os"
 	"os/signal"
 
+	_ "github.com/ts2/ts2-sim-server/plugins/lines"
 	_ "github.com/ts2/ts2-sim-server/plugins/points"
 	_ "github.com/ts2/ts2-sim-server/plugins/routes"
 	_ "github.com/ts2/ts2-sim-server/plugins/signals"

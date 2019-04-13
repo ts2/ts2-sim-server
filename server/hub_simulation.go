@@ -28,17 +28,22 @@ type simulationObject struct{}
 // dispatch processes requests made on the Simulation object
 func (s *simulationObject) dispatch(h *Hub, req Request, conn *connection) {
 	ch := conn.pushChan
+	logger.Debug("Request for simulation received", "submodule", "hub", "object", req.Object, "action", req.Action)
 	switch req.Action {
 	case "start":
-		logger.Debug("Request for simulation start received", "submodule", "hub", "object", req.Object, "action", req.Action)
 		sim.Start()
 		ch <- NewOkResponse(req.ID, "Simulation started successfully")
 	case "pause":
-		logger.Debug("Request for simulation pause received", "submodule", "hub", "object", req.Object, "action", req.Action)
 		sim.Pause()
 		ch <- NewOkResponse(req.ID, "Simulation paused successfully")
+	case "isStarted":
+		j, err := json.Marshal(sim.IsStarted())
+		if err != nil {
+			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
+			return
+		}
+		ch <- NewResponse(req.ID, RawJSON(j))
 	case "dump":
-		logger.Debug("Request for simulation dump received", "submodule", "hub", "object", req.Object, "action", req.Action)
 		data, err := json.Marshal(sim)
 		if err != nil {
 			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))

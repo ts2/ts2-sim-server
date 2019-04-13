@@ -158,9 +158,15 @@ func (pi *PointsItem) FollowingItem(precedingItem TrackItem, dir PointDirection)
 		return pi.PreviousItem(), nil
 	}
 	if precedingItem == pi.PreviousItem() {
-		if dir == DirectionReversed {
+		switch dir {
+		case DirectionReversed:
 			return pi.ReverseItem(), nil
-		} else {
+		case DirectionNormal, DirectionFailed, DirectionUnknown:
+			return pi.NextItem(), nil
+		case DirectionCurrent:
+			if pi.Reversed() {
+				return pi.ReverseItem(), nil
+			}
 			return pi.NextItem(), nil
 		}
 	}

@@ -19,6 +19,7 @@
 package simulation
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
 	"time"
@@ -92,11 +93,15 @@ func (t *Train) ID() string {
 	return t.trainID
 }
 
-// setSimulation attaches the Simulation to this Train and initializes it.
-func (t *Train) setSimulation(sim *Simulation, id string) {
-	t.trainID = id
+// setSimulation sets the simulation to this Train
+func (t *Train) setSimulation(sim *Simulation) {
 	t.simulation = sim
 	t.TrainHead.simulation = sim
+}
+
+// initialize attaches the Simulation to this Train and initializes it.
+func (t *Train) initialize(id string) {
+	t.trainID = id
 	t.effInitialDelay = t.InitialDelay.Yield()
 	t.minStopTime = t.simulation.Options.DefaultMinimumStopTime.Yield()
 	if t.trainManager == nil {
@@ -115,6 +120,25 @@ func (t *Train) TrainType() *TrainType {
 	return t.simulation.TrainTypes[t.TrainTypeCode]
 }
 
+// TrainTail returns the position of the train's tail
+func (t *Train) TrainTail() Position {
+	return t.TrainHead.Add(-t.TrainType().Length)
+}
+
+// MarshalJSON method for the train type
+func (t Train) MarshalJSON() ([]byte, error) {
+	type auxTrain Train
+	type trainJSON struct {
+		auxTrain
+		ID string `json:"id"`
+	}
+	at := trainJSON{
+		auxTrain: auxTrain(t),
+		ID:       t.ID(),
+	}
+	return json.Marshal(at)
+}
+
 // IsActive returns true if this train is in the area and its service is not finished.
 func (t *Train) IsActive() bool {
 	return t.Status != Inactive &&
@@ -129,14 +153,17 @@ func (t *Train) activate(h Time) {
 	if t.Status != Inactive {
 		return
 	}
+	if h.IsZero() {
+		return
+	}
 	realAppearTime := t.AppearTime.Add(t.effInitialDelay)
-	if h.Sub(realAppearTime) > 0 {
+	if h.Sub(realAppearTime) < 0 {
 		return
 	}
 	t.Speed = t.InitialSpeed
 	// Update signals
 	if signalAhead := t.findNextSignal(); signalAhead != nil {
-		signalAhead.TrainID = t.trainID
+		signalAhead.setTrain(t)
 	}
 	// Status update
 	t.Status = Running
@@ -147,6 +174,13 @@ func (t *Train) activate(h Time) {
 		t.NextPlaceIndex = 0
 	}
 	t.executeActions(0)
+	// Signal actions update
+	t.signalActions = []SignalAction{{
+		Target: ASAP,
+		Speed:  VeryHighSpeed,
+	}}
+	t.actionIndex = 0
+	// Log status change
 	var msg string
 	switch {
 	case math.Abs(float64(t.effInitialDelay)) < 60:
@@ -171,6 +205,10 @@ func (t *Train) advance(timeElapsed time.Duration) {
 	t.TrainHead = t.TrainHead.Add(advanceLength)
 	t.updateStatus(timeElapsed)
 	t.executeActions(advanceLength)
+	t.simulation.sendEvent(&Event{
+		Name:   TrainChanged,
+		Object: t,
+	})
 }
 
 // Execute actions that have to be done when the train head enters
@@ -183,20 +221,68 @@ func (t *Train) advance(timeElapsed time.Duration) {
 func (t *Train) executeActions(advanceLength float64) {
 	// Train head
 	oth := t.TrainHead.Add(-advanceLength)
+	toNotify := make(map[TrackItem]bool)
 	for _, ti := range oth.trackItemsToPosition(t.TrainHead) {
 		t.checkPlace(ti)
 		ti.trainHeadActions(t)
+		t.updateItemWithTrainHead(ti)
+		toNotify[ti] = true
 	}
 	// Train tail
-	tt := t.TrainHead.Add(-t.TrainType().Length)
+	tt := t.TrainTail()
 	ott := tt.Add(-advanceLength)
 	for _, ti := range ott.trackItemsToPosition(tt) {
 		ti.trainTailActions(t)
+		t.updateItemWithTrainTail(ti)
+		toNotify[ti] = true
 	}
 	if tt.IsOut() {
 		t.Status = Out
 		t.Speed = 0
 		t.simulation.MessageLogger.addMessage(fmt.Sprintf("Train %s exited the area", t.ServiceCode), simulationMsg)
+	}
+	for ti := range toNotify {
+		t.simulation.sendEvent(&Event{
+			Name:   TrackItemChanged,
+			Object: ti,
+		})
+	}
+}
+
+// updateItemWithTrainHead updates the knowledge of this trackItem about this train's Head,
+// knowing that this item is between the former head and the current head of the train.
+func (t *Train) updateItemWithTrainHead(ti TrackItem) {
+	ti.underlying().trainEndsFW[t] = ti.RealLength()
+	ti.underlying().trainEndsBK[t] = 0
+	if ti.Equals(t.TrainHead.TrackItem()) {
+		if t.TrainHead.PreviousItemID == ti.PreviousItem().ID() {
+			ti.underlying().trainEndsFW[t] = t.TrainHead.PositionOnTI
+		} else {
+			ti.underlying().trainEndsBK[t] = ti.RealLength() - t.TrainHead.PositionOnTI
+		}
+	}
+}
+
+// updateItemWithTrainTail updates the knowledge of this trackItem about this train's Tail,
+// knowing that this item is between the former tail and the current tail of the train.
+func (t *Train) updateItemWithTrainTail(ti TrackItem) {
+	if !ti.Equals(t.TrainHead.TrackItem()) {
+		delete(ti.underlying().trainEndsBK, t)
+		delete(ti.underlying().trainEndsFW, t)
+	}
+	if ti.Equals(t.TrainTail().TrackItem()) {
+		if t.TrainTail().PreviousItemID == ti.PreviousItem().ID() {
+			ti.underlying().trainEndsBK[t] = t.TrainTail().PositionOnTI
+		} else {
+			ti.underlying().trainEndsFW[t] = ti.RealLength() - t.TrainTail().PositionOnTI
+		}
+		if !ti.Equals(t.TrainHead.TrackItem()) {
+			if t.TrainTail().PreviousItemID == ti.PreviousItem().ID() {
+				ti.underlying().trainEndsFW[t] = ti.RealLength()
+			} else {
+				ti.underlying().trainEndsBK[t] = 0
+			}
+		}
 	}
 }
 
@@ -207,7 +293,7 @@ func (t *Train) NextSignalPosition() Position {
 	return NextSignalPosition(t.TrainHead)
 }
 
-// NextSignalPosition returns he position of the next signal in front of the given position.
+// NextSignalPosition returns the position of the next signal in front of the given position.
 //
 // Returns a null position if there is no signal ahead.
 func NextSignalPosition(pos Position) Position {
@@ -215,8 +301,8 @@ func NextSignalPosition(pos Position) Position {
 		return Position{}
 	}
 	cur := pos.Next(DirectionCurrent)
-	for pos.TrackItem().Type() != TypeEnd {
-		if cur.TrackItem().Type() == TypeSignal && cur.TrackItem().PreviousItem().ID() == cur.PreviousItemID {
+	for cur.TrackItem().Type() != TypeEnd {
+		if cur.TrackItem().Type() == TypeSignal && cur.TrackItem().(*SignalItem).IsOnPosition(cur) {
 			return cur
 		}
 		cur = cur.Next(DirectionCurrent)
@@ -245,7 +331,7 @@ func (t *Train) updateSignalActions() {
 	}
 	nsd, err := nsp.Sub(t.TrainHead)
 	if err != nil {
-		logger.Crit("unexpected error", "error", err)
+		Logger.Crit("unexpected error", "error", err)
 		return
 	}
 	if nsd < t.simulation.Options.DefaultSignalVisibility {
@@ -255,7 +341,7 @@ func (t *Train) updateSignalActions() {
 			// We check actions each time because the aspect of the signal
 			// might have changed
 			t.signalActions = nsp.TrackItem().(*SignalItem).activeAspect.Actions
-			if t.lastSignal.ID() != nsp.TrackItemID {
+			if t.lastSignal == nil || !nsp.TrackItem().Equals(t.lastSignal) {
 				// We see this signal for the first time
 				t.lastSignal = nsp.TrackItem().(*SignalItem)
 				t.actionIndex = 0
@@ -297,7 +383,11 @@ func (t *Train) checkPlace(ti TrackItem) {
 		return
 	}
 	sLine := t.Service().Lines[t.NextPlaceIndex]
-	if sLine.PlaceCode != ti.underlying().PlaceCode || !sLine.MustStop {
+	if sLine.PlaceCode != ti.underlying().PlaceCode {
+		return
+	}
+	if sLine.MustStop {
+		// If we must stop, then we will change the current line at departure
 		return
 	}
 	t.jumpToNextServiceLine()
@@ -315,7 +405,7 @@ func (t *Train) jumpToNextServiceLine() {
 			case actionSetService:
 				t.ServiceCode = action.ActionParam
 				t.NextPlaceIndex = 0
-				t.findNextSignal().TrainID = t.trainID
+				t.findNextSignal().setTrain(t)
 				if t.StoppedTime != 0 {
 					t.Status = Stopped
 				} else {
@@ -334,22 +424,27 @@ func (t *Train) reverse() {
 		return
 	}
 	if signalAhead := t.findNextSignal(); signalAhead != nil {
-		signalAhead.TrainID = ""
+		signalAhead.setTrain(nil)
 	}
 	if activeRoute := t.TrainHead.TrackItem().ActiveRoute(); activeRoute != nil {
 		if err := activeRoute.Deactivate(); err != nil {
 			t.simulation.MessageLogger.addMessage(err.Error(), simulationMsg)
 		}
 	}
-	trainTail := t.TrainHead.Add(-t.TrainType().Length)
-	t.TrainHead = trainTail.Reversed()
+	t.TrainHead = t.TrainTail().Reversed()
 	if newSignalAhead := t.findNextSignal(); newSignalAhead != nil {
-		newSignalAhead.TrainID = t.trainID
+		newSignalAhead.setTrain(t)
 	}
+	t.signalActions = []SignalAction{{
+		Target: ASAP,
+		Speed:  VeryHighSpeed,
+	}}
+	t.actionIndex = 0
+	t.updateSignalActions()
 }
 
-// Shunting returns true if this train is currently shunting.
-func (t *Train) Shunting() bool {
+// IsShunting returns true if this train is currently shunting.
+func (t *Train) IsShunting() bool {
 	return false
 }
 

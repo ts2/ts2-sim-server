@@ -32,6 +32,8 @@ const (
 	TrainStoppedAtStationEvent EventName = "trainStoppedAtStation"
 	// TrainDepartedFromStationEvent is emitted each time a train departs from a station
 	TrainDepartedFromStationEvent EventName = "trainDepartedFromStation"
+	// TrainChanged is emitted each time a train data is modified
+	TrainChanged EventName = "trainChanged"
 	// SignalaspectChanged is emitted each time a Signal changes its aspect
 	SignalaspectChanged EventName = "signalAspectChanged"
 	// TrackITemChanged is emitted each time a trackItem has one of its property changed and needs redrawing
