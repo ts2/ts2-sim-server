@@ -221,7 +221,7 @@ func TestSimulationLoading(t *testing.T) {
 			So(tr.AppearTime, ShouldResemble, ParseTime("06:00:00"))
 			So(tr.InitialDelay.Equals(DelayGenerator{[]delayTuplet{{-60, 60, 60}, {60, 180, 40}}}), ShouldBeTrue)
 			So(tr.InitialSpeed, ShouldEqual, 5.0)
-			So(tr.Speed, ShouldEqual, 5.0)
+			So(tr.Speed, ShouldEqual, 0)
 			So(tr.NextPlaceIndex, ShouldEqual, 0)
 			So(tr.Status, ShouldEqual, Inactive)
 			So(tr.StoppedTime, ShouldEqual, 0)
