@@ -181,16 +181,7 @@ func (t *Train) activate(h Time) {
 	}}
 	t.actionIndex = 0
 	// Log status change
-	var msg string
-	switch {
-	case math.Abs(float64(t.effInitialDelay)) < 60:
-		msg = fmt.Sprintf("Train %s entered the area on time", t.ServiceCode)
-	case t.effInitialDelay <= -60:
-		msg = fmt.Sprintf("Train %s entered the area %d minutes early", t.ServiceCode, t.effInitialDelay/60)
-	case t.effInitialDelay >= 60:
-		msg = fmt.Sprintf("Train %s entered the area %d minutes late", t.ServiceCode, t.effInitialDelay/60)
-	}
-	t.simulation.MessageLogger.addMessage(msg, simulationMsg)
+	t.logTrainEntersArea()
 }
 
 // advance the train by a step corresponding to the elapsed time,
@@ -224,22 +215,22 @@ func (t *Train) executeActions(advanceLength float64) {
 	toNotify := make(map[TrackItem]bool)
 	for _, ti := range oth.trackItemsToPosition(t.TrainHead) {
 		t.checkPlace(ti)
-		ti.trainHeadActions(t)
 		t.updateItemWithTrainHead(ti)
+		ti.trainHeadActions(t)
 		toNotify[ti] = true
 	}
 	// Train tail
 	tt := t.TrainTail()
 	ott := tt.Add(-advanceLength)
 	for _, ti := range ott.trackItemsToPosition(tt) {
-		ti.trainTailActions(t)
 		t.updateItemWithTrainTail(ti)
+		ti.trainTailActions(t)
 		toNotify[ti] = true
 	}
 	if tt.IsOut() {
 		t.Status = Out
 		t.Speed = 0
-		t.simulation.MessageLogger.addMessage(fmt.Sprintf("Train %s exited the area", t.ServiceCode), simulationMsg)
+		t.logAndScoreTrainExited()
 	}
 	for ti := range toNotify {
 		t.simulation.sendEvent(&Event{
@@ -398,6 +389,7 @@ func (t *Train) jumpToNextServiceLine() {
 	t.minStopTime = t.simulation.Options.DefaultMinimumStopTime.Yield()
 	if t.NextPlaceIndex == len(t.Service().Lines)-1 {
 		// The service is ended
+		t.NextPlaceIndex = NoMorePlace
 		for _, action := range t.Service().PostActions {
 			switch action.ActionCode {
 			case actionReverse:
@@ -491,6 +483,7 @@ func (t *Train) updateStatus(timeElapsed time.Duration) {
 			Name:   TrainStoppedAtStationEvent,
 			Object: t,
 		})
+		t.logAndScoreTrainStoppedAtStation()
 		return
 	}
 	if t.Status != Stopped {
@@ -535,4 +528,59 @@ func (t *Train) updateStatus(timeElapsed time.Duration) {
 		Name:   TrainDepartedFromStationEvent,
 		Object: t,
 	})
+}
+
+// logTrainEntersArea sends a message on the logger saying that this train entered
+// the area and informing if it is late or early.
+func (t *Train) logTrainEntersArea() {
+	var msg string
+	switch {
+	case -time.Minute < t.effInitialDelay && t.effInitialDelay < time.Minute:
+		msg = fmt.Sprintf("Train %s entered the area on time", t.ServiceCode)
+	case t.effInitialDelay <= -60:
+		msg = fmt.Sprintf("Train %s entered the area %d minutes early", t.ServiceCode, t.effInitialDelay/time.Minute)
+	case t.effInitialDelay >= 60:
+		msg = fmt.Sprintf("Train %s entered the area %d minutes late", t.ServiceCode, t.effInitialDelay/time.Minute)
+	}
+	t.simulation.MessageLogger.addMessage(msg, simulationMsg)
+}
+
+// logAndScoreTrainStoppedAtStation modifies the score and logs information about this train
+// that has just stopped at a station.
+func (t *Train) logAndScoreTrainStoppedAtStation() {
+	serviceLine := t.Service().Lines[t.NextPlaceIndex]
+	place := t.TrainHead.TrackItem().Place()
+	plannedPlatform := serviceLine.TrackCode
+	actualPlatform := t.TrainHead.TrackItem().TrackCode()
+	sim := t.simulation
+	if actualPlatform != plannedPlatform {
+		sim.updateScore(sim.Options.WrongPlatformPenalty)
+		sim.MessageLogger.addMessage(fmt.Sprintf("Train %s arrived at station %s on platform %s instead of %s",
+			t.ServiceCode, place.Name(), actualPlatform, plannedPlatform), simulationMsg)
+	}
+	scheduledArrivalTime := serviceLine.ScheduledArrivalTime
+	currentTime := sim.Options.CurrentTime
+	delay := currentTime.Sub(scheduledArrivalTime)
+	if delay > time.Minute {
+		playerDelay := delay - t.effInitialDelay
+		if playerDelay > time.Minute {
+			sim.updateScore(sim.Options.LatePenalty * int(playerDelay/time.Minute))
+		}
+		sim.MessageLogger.addMessage(fmt.Sprintf("Train %s arrived %d minutes late at station %s (%+d minutes)",
+			t.ServiceCode, delay/time.Minute, place.Name(), playerDelay/time.Minute), simulationMsg)
+		return
+	}
+	sim.MessageLogger.addMessage(fmt.Sprintf("Train %s arrived on time at station %s",
+		t.ServiceCode, place.Name()), simulationMsg)
+}
+
+// logAndScoreTrainExited modifies the score and logs information about this train
+// that just exited the area.
+func (t *Train) logAndScoreTrainExited() {
+	sim := t.simulation
+	if t.NextPlaceIndex != NoMorePlace {
+		sim.updateScore(sim.Options.WrongDestinationPenalty)
+		sim.MessageLogger.addMessage(fmt.Sprintf("Train %s badly routed", t.ServiceCode), simulationMsg)
+	}
+	sim.MessageLogger.addMessage(fmt.Sprintf("Train %s exited the area", t.ServiceCode), simulationMsg)
 }

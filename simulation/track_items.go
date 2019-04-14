@@ -147,6 +147,9 @@ type TrackItem interface {
 	// (as defined by PlaceCode).
 	Place() *Place
 
+	// TrackCode returns the code (usually a number) of the track line
+	TrackCode() string
+
 	// FollowingItem returns the following TrackItem linked to this one,
 	// knowing we come from precedingItem(). Returned is either NextItem or
 	// PreviousItem, depending which way we come from.
@@ -224,6 +227,7 @@ type trackStruct struct {
 	ConflictTiId     string                    `json:"conflictTiId"`
 	CustomProperties map[string]CustomProperty `json:"customProperties"`
 	PlaceCode        string                    `json:"placeCode"`
+	TsTrackCode      string                    `json:"trackCode"`
 
 	tsId           string
 	simulation     *Simulation
@@ -302,6 +306,12 @@ func (t *trackStruct) Place() *Place {
 	return t.simulation.Places[t.PlaceCode]
 }
 
+// TrackCode returns the track number of this LineItem, if it is part of a
+// TypePlace and if it has one.
+func (t *trackStruct) TrackCode() string {
+	return t.TsTrackCode
+}
+
 // FollowingItem returns the following TrackItem linked to this one,
 // knowing we come from precedingItem(). Returned is either NextItem or
 // PreviousItem, depending which way we come from.
@@ -377,6 +387,9 @@ func (t *trackStruct) trainHeadActions(train *Train) {
 
 // trainTailActions performs the actions to be done when a train tail reaches this TrackItem
 func (t *trackStruct) trainTailActions(train *Train) {
+	for _, trigger := range t.triggers {
+		trigger(t)
+	}
 	t.releaseRouteBehind(train)
 }
 
@@ -385,7 +398,7 @@ func (t *trackStruct) releaseRouteBehind(train *Train) {
 	if t.activeRoute == nil {
 		return
 	}
-	if t.activeRoute.State != Activated {
+	if t.activeRoute.State() != Activated && t.activeRoute.State() != Destroying {
 		return
 	}
 	beginSignalNextRoute := t.activeRoute.BeginSignal().nextActiveRoute
@@ -402,7 +415,7 @@ func (t *trackStruct) releaseRouteBehind(train *Train) {
 
 // TrainPresent returns true if at least one train is present on this TrackItem
 func (t *trackStruct) TrainPresent() bool {
-	return len(t.trainEndsFW) + len(t.trainEndsBK) > 0
+	return len(t.trainEndsFW)+len(t.trainEndsBK) > 0
 }
 
 // resetActiveRoute resets route information on this item.
@@ -509,6 +522,7 @@ func (t *trackStruct) asJSONStruct() jsonTrackStruct {
 		ARPreviousItem:   arpiID,
 		TrainEndsFW:      tEndsFW,
 		TrainEndsBK:      tEndsBK,
+		TsTrackCode:      t.TsTrackCode,
 	}
 	return ai
 }
@@ -532,6 +546,7 @@ type jsonTrackStruct struct {
 	ARPreviousItem   string                    `json:"activeRoutePreviousItem"`
 	TrainEndsFW      map[string]float64        `json:"trainEndsFW"`
 	TrainEndsBK      map[string]float64        `json:"trainEndsBK"`
+	TsTrackCode      string                    `json:"trackCode"`
 }
 
 // A Place is a special TrackItem representing a physical location such as a
@@ -551,20 +566,13 @@ var _ TrackItem = new(Place)
 // is used to connect two TrackItem's together.
 type LineItem struct {
 	trackStruct
-	Xf          float64 `json:"xf"`
-	Yf          float64 `json:"yf"`
-	TsTrackCode string  `json:"trackCode"`
+	Xf float64 `json:"xf"`
+	Yf float64 `json:"yf"`
 }
 
 // Type returns the name of the type of this item
 func (li *LineItem) Type() TrackItemType {
 	return TypeLine
-}
-
-// TrackCode returns the track number of this LineItem, if it is part of a
-// TypePlace and if it has one.
-func (li *LineItem) TrackCode() string {
-	return li.TsTrackCode
 }
 
 // End returns the two coordinates (Xf, Yf) of the end point of this item
@@ -576,15 +584,13 @@ func (li *LineItem) End() Point {
 func (li *LineItem) MarshalJSON() ([]byte, error) {
 	type auxLI struct {
 		jsonTrackStruct
-		Xf          float64 `json:"xf"`
-		Yf          float64 `json:"yf"`
-		TsTrackCode string  `json:"trackCode"`
+		Xf float64 `json:"xf"`
+		Yf float64 `json:"yf"`
 	}
 	aLI := auxLI{
 		jsonTrackStruct: li.asJSONStruct(),
 		Xf:              li.Xf,
 		Yf:              li.Yf,
-		TsTrackCode:     li.TsTrackCode,
 	}
 	return json.Marshal(aLI)
 }

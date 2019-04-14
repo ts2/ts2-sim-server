@@ -38,14 +38,17 @@ type RoutesManager interface {
 type RouteState uint8
 
 const (
-	// Deactivated =  The route is not active
+	// Deactivated = The route is not active
 	Deactivated RouteState = 0
 
-	// Activated =  The route is active but will be destroyed by the first train using it
+	// Activated = The route is active but will be destroyed by the first train using it
 	Activated RouteState = 1
 
-	// Persistent =  The route is set and will remain after train passage
+	// Persistent = The route is set and will remain after train passage
 	Persistent RouteState = 2
+
+	// Destroying = The route is currently being destroyed by a train
+	Destroying RouteState = 3
 )
 
 // A Route is a path between two signals.
@@ -60,7 +63,7 @@ type Route struct {
 	EndSignalId   string                    `json:"endSignal"`
 	InitialState  RouteState                `json:"initialState"`
 	Directions    map[string]PointDirection `json:"directions"`
-	State         RouteState                `json:"state"`
+	Persistent    bool                      `json:"persistent"`
 	Positions     []Position                `json:"-"`
 
 	simulation *Simulation
@@ -88,9 +91,28 @@ func (r *Route) Equals(other *Route) bool {
 	return r.routeID == other.routeID
 }
 
+// State returns the current state of this route
+func (r *Route) State() RouteState {
+	if r.BeginSignal().nextActiveRoute == nil {
+		for _, p := range r.Positions {
+			if p.TrackItem().ActiveRoute() != nil && p.TrackItem().ActiveRoute().Equals(r) {
+				return Destroying
+			}
+		}
+		return Deactivated
+	}
+	if r.BeginSignal().nextActiveRoute.Equals(r) {
+		if r.Persistent {
+			return Persistent
+		}
+		return Activated
+	}
+	return Deactivated
+}
+
 // IsActive returns true if this Route is active
 func (r *Route) IsActive() bool {
-	return r.State == Activated || r.State == Persistent
+	return r.State() == Activated || r.State() == Persistent
 }
 
 // addTrigger adds the given function to the list of function that will be
@@ -107,14 +129,14 @@ func (r *Route) Activate(persistent bool) error {
 		}
 	}
 	for _, pos := range r.Positions {
+		if pos.TrackItem().Equals(r.BeginSignal()) || pos.TrackItem().Equals(r.EndSignal()) {
+			continue
+		}
 		pos.TrackItem().setActiveRoute(r, pos.PreviousItem())
 	}
 	r.EndSignal().previousActiveRoute = r
 	r.BeginSignal().nextActiveRoute = r
-	r.State = Activated
-	if persistent {
-		r.State = Persistent
-	}
+	r.Persistent = persistent
 	for _, t := range r.triggers {
 		t(r)
 	}
@@ -141,7 +163,6 @@ func (r *Route) Deactivate() error {
 		}
 		pos.TrackItem().setActiveRoute(nil, nil)
 	}
-	r.State = Deactivated
 	for _, t := range r.triggers {
 		t(r)
 	}
@@ -164,7 +185,12 @@ func (r *Route) initialize(routeNum string) error {
 	r.routeID = routeNum
 
 	// Initialize state to initial state
-	r.State = r.InitialState
+	switch r.InitialState {
+	case Persistent:
+		_ = r.Activate(true)
+	case Activated:
+		_ = r.Activate(false)
+	}
 
 	// Populate Positions slice
 	pos := Position{
@@ -237,7 +263,7 @@ func (r *Route) MarshalJSON() ([]byte, error) {
 		EndSignalId:   r.EndSignalId,
 		InitialState:  r.InitialState,
 		Directions:    r.Directions,
-		State:         r.State,
+		State:         r.State(),
 	}
 	d, err := json.Marshal(ar)
 	return d, err

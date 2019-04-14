@@ -150,9 +150,6 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 	for num, route := range rawSim.Routes {
 		route.setSimulation(sim)
 		sim.Routes[num] = route
-		if err := route.initialize(num); err != nil {
-			return fmt.Errorf("error initializing route %s: %s", route.routeID, err)
-		}
 	}
 
 	sim.TrainTypes = rawSim.TrainTypes
@@ -191,6 +188,12 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 	for _, ti := range sim.TrackItems {
 		if err := ti.initialize(); err != nil {
 			return err
+		}
+	}
+
+	for num, r := range sim.Routes {
+		if err := r.initialize(num); err != nil {
+			return fmt.Errorf("error initializing route %s: %s", r.routeID, err)
 		}
 	}
 
@@ -302,7 +305,7 @@ func (sim *Simulation) IsStarted() bool {
 // sendEvent sends the given event on the event channel to notify clients.
 // Sending is done asynchronously so as not to block.
 func (sim *Simulation) sendEvent(evt *Event) {
-	go func() { sim.EventChan <- evt }()
+	go func(evtChan chan *Event) { evtChan <- evt }(sim.EventChan)
 }
 
 // increaseTime adds the step to the simulation time.
@@ -357,6 +360,15 @@ func (sim *Simulation) updateTrains() {
 		}
 		train.advance(timeStep * time.Duration(sim.Options.TimeFactor))
 	}
+}
+
+// updateScore updates the score by adding penalty and notifiying clients
+func (sim *Simulation) updateScore(penalty int) {
+	sim.Options.CurrentScore += penalty
+	sim.sendEvent(&Event{
+		Name:   ScoreChanged,
+		Object: IntObject{Value: sim.Options.CurrentScore},
+	})
 }
 
 // RegisterRoutesManager registers the given route manager in the simulation.

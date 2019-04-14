@@ -18,26 +18,23 @@
 
 package simulation
 
+import "fmt"
+
 // An EventName is the name of a event
 type EventName string
 
+// Events that can be send to clients that add a listener to them.
 const (
-	// A ClockEvent is fired at each clock tick. Note that the actual time may not have changed.
-	ClockEvent EventName = "clock"
-	// A RouteActivatedEvent is emitted each time a route is successfully activated.
-	RouteActivatedEvent EventName = "routeActivated"
-	// A RouteDeactivatedEvent is emitted each time a route is successfully deactivated.
-	RouteDeactivatedEvent EventName = "routeDeactivated"
-	// TrainStoppedAtStationEvent is emitted each time a train arrives and stops at a scheduled station
-	TrainStoppedAtStationEvent EventName = "trainStoppedAtStation"
-	// TrainDepartedFromStationEvent is emitted each time a train departs from a station
+	ClockEvent                    EventName = "clock"
+	RouteActivatedEvent           EventName = "routeActivated"
+	RouteDeactivatedEvent         EventName = "routeDeactivated"
+	TrainStoppedAtStationEvent    EventName = "trainStoppedAtStation"
 	TrainDepartedFromStationEvent EventName = "trainDepartedFromStation"
-	// TrainChanged is emitted each time a train data is modified
-	TrainChanged EventName = "trainChanged"
-	// SignalaspectChanged is emitted each time a Signal changes its aspect
-	SignalaspectChanged EventName = "signalAspectChanged"
-	// TrackITemChanged is emitted each time a trackItem has one of its property changed and needs redrawing
-	TrackItemChanged EventName = "trackItemChanged"
+	TrainChanged                  EventName = "trainChanged"
+	SignalaspectChanged           EventName = "signalAspectChanged"
+	TrackItemChanged              EventName = "trackItemChanged"
+	MessageReceived               EventName = "messageReceived"
+	ScoreChanged                  EventName = "scoreChanged"
 )
 
 // A SimObject can be serialized in an event
@@ -49,4 +46,14 @@ type SimObject interface {
 type Event struct {
 	Name   EventName
 	Object SimObject
+}
+
+// An IntObject is a SimObject that wraps a single integer value
+type IntObject struct {
+	Value int `json:"value"`
+}
+
+// ID method to implement SimObject. Returns the Value as a string.
+func (io IntObject) ID() string {
+	return fmt.Sprint(io.Value)
 }

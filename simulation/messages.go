@@ -33,6 +33,12 @@ type Message struct {
 	MsgText string      `json:"msgText"`
 }
 
+// ID method exists so that a Message satisfies the Object interface and
+// can be sent as a notification. Simply returns the message's text.
+func (m Message) ID() string {
+	return m.MsgText
+}
+
 // MessageLogger holds all Message instances that have been emitted to it.
 type MessageLogger struct {
 	Messages   []Message `json:"messages"`
@@ -47,11 +53,16 @@ func (ml *MessageLogger) setSimulation(sim *Simulation) {
 // addMessage adds the given message to the simulation message Logger.
 // This method also logs to the Logger the same message.
 func (ml *MessageLogger) addMessage(msg string, typ MessageType) {
-	ml.Messages = append(ml.Messages, Message{
+	newMsg := Message{
 		MsgText: msg,
 		MsgType: typ,
-	})
+	}
+	ml.Messages = append(ml.Messages, newMsg)
 	if Logger != nil {
 		Logger.Info(msg, "msgType", typ)
 	}
+	ml.simulation.sendEvent(&Event{
+		Name:   MessageReceived,
+		Object: newMsg,
+	})
 }

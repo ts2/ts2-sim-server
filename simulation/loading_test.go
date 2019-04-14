@@ -32,7 +32,7 @@ func TestSimulationLoading(t *testing.T) {
 		err := json.Unmarshal(loadSim(), &sim)
 		So(err, ShouldBeNil)
 		Convey("Options should be all loaded", func() {
-			So(sim.Options.CurrentScore, ShouldEqual, 12)
+			So(sim.Options.CurrentScore, ShouldEqual, 0)
 			So(sim.Options.CurrentTime, ShouldResemble, ParseTime("06:00:00"))
 			So(sim.Options.DefaultDelayAtEntry.Equals(DelayGenerator{[]delayTuplet{{0, 0, 100}}}), ShouldBeTrue)
 			So(sim.Options.DefaultMinimumStopTime.Equals(DelayGenerator{[]delayTuplet{{20, 40, 90}, {40, 120, 10}}}), ShouldBeTrue)
@@ -46,16 +46,16 @@ func TestSimulationLoading(t *testing.T) {
 			So(sim.Options.TrackCircuitBased, ShouldEqual, false)
 		})
 		Convey("Routes should be correctly loaded", func() {
-			So(sim.Routes, ShouldHaveLength, 4)
+			So(sim.Routes, ShouldHaveLength, 5)
 
 			So(sim.Routes, ShouldContainKey, "1")
 			r1 := sim.Routes["1"]
 			So(r1.ID(), ShouldEqual, "1")
 			si5, _ := sim.TrackItems["5"].(*SignalItem)
-			si11, _ := sim.TrackItems["11"].(*SignalItem)
+			si101, _ := sim.TrackItems["101"].(*SignalItem)
 			So(r1.BeginSignal(), ShouldEqual, si5)
-			So(r1.EndSignal(), ShouldEqual, si11)
-			items := []string{"5", "6", "7", "8", "9", "10", "11"}
+			So(r1.EndSignal(), ShouldEqual, si101)
+			items := []string{"5", "6", "7", "8", "9", "10", "101"}
 			for i, pos := range r1.Positions {
 				So(pos.TrackItem().ID(), ShouldEqual, items[i])
 			}
@@ -63,7 +63,7 @@ func TestSimulationLoading(t *testing.T) {
 			So(ok, ShouldBeTrue)
 			So(d1, ShouldEqual, DirectionNormal)
 			So(r1.InitialState, ShouldEqual, Activated)
-			So(r1.State, ShouldEqual, Activated)
+			So(r1.State(), ShouldEqual, Activated)
 
 			So(sim.Routes, ShouldContainKey, "4")
 			r4, ok := sim.Routes["4"]
@@ -77,7 +77,7 @@ func TestSimulationLoading(t *testing.T) {
 				So(pos.TrackItem().ID(), ShouldEqual, items[i])
 			}
 			So(r4.InitialState, ShouldEqual, Deactivated)
-			So(r4.State, ShouldEqual, Deactivated)
+			So(r4.State(), ShouldEqual, Deactivated)
 		})
 		Convey("TrackItems loading", func() {
 			Convey("TrackItems links should be ok", func() {
@@ -86,28 +86,32 @@ func TestSimulationLoading(t *testing.T) {
 			})
 			Convey("All 25 items should be loaded", func() {
 				items := map[string]TrackItem{
-					"1":  new(EndItem),
-					"2":  new(LineItem),
-					"3":  new(SignalItem),
-					"4":  new(LineItem),
-					"5":  new(SignalItem),
-					"6":  new(InvisibleLinkItem),
-					"7":  new(PointsItem),
-					"8":  new(LineItem),
-					"9":  new(SignalItem),
-					"10": new(LineItem),
-					"11": new(SignalItem),
-					"12": new(LineItem),
-					"13": new(EndItem),
-					"14": new(LineItem),
-					"15": new(SignalItem),
-					"16": new(LineItem),
-					"17": new(SignalItem),
-					"18": new(EndItem),
-					"22": new(PlatformItem),
-					"23": new(PlatformItem),
-					"24": new(TextItem),
-					"25": new(TextItem),
+					"1":   new(EndItem),
+					"2":   new(LineItem),
+					"3":   new(SignalItem),
+					"4":   new(LineItem),
+					"5":   new(SignalItem),
+					"6":   new(LineItem),
+					"7":   new(PointsItem),
+					"8":   new(LineItem),
+					"9":   new(SignalItem),
+					"10":  new(LineItem),
+					"101": new(SignalItem),
+					"102": new(LineItem),
+					"103": new(InvisibleLinkItem),
+					"104": new(LineItem),
+					"11":  new(SignalItem),
+					"12":  new(LineItem),
+					"13":  new(EndItem),
+					"14":  new(LineItem),
+					"15":  new(SignalItem),
+					"16":  new(LineItem),
+					"17":  new(SignalItem),
+					"18":  new(EndItem),
+					"22":  new(PlatformItem),
+					"23":  new(PlatformItem),
+					"24":  new(TextItem),
+					"25":  new(TextItem),
 				}
 				for id, typ := range items {
 					it, ok := sim.TrackItems[id]
@@ -146,10 +150,10 @@ func TestSimulationLoading(t *testing.T) {
 				So(sim.TrackItems["9"].(*SignalItem).Reversed(), ShouldBeTrue)
 				So(sim.TrackItems["10"].Place(), ShouldEqual, sim.Places["STN"])
 				So(sim.TrackItems["10"].(*LineItem).TrackCode(), ShouldEqual, "1")
-				So(sim.TrackItems["11"].(*SignalItem).SignalType(), ShouldEqual, sim.SignalLib.Types["UK_3_ASPECTS"])
+				So(sim.TrackItems["11"].(*SignalItem).SignalType(), ShouldEqual, sim.SignalLib.Types["UK_2_AUTOMATIC"])
 				So(sim.TrackItems["12"].Place(), ShouldEqual, sim.Places["RGT"])
 				So(sim.TrackItems["12"].(*LineItem).TrackCode(), ShouldEqual, "")
-				So(sim.TrackItems["13"].Origin(), ShouldResemble, Point{500.0, 0.0})
+				So(sim.TrackItems["13"].Origin(), ShouldResemble, Point{600.0, 0.0})
 				So(sim.TrackItems["7"].(*PointsItem).ReverseItem(), ShouldEqual, sim.TrackItems["14"])
 				So(sim.TrackItems["7"].(*PointsItem).CommonEnd(), ShouldResemble, Point{-5.0, 0.0})
 				So(sim.TrackItems["7"].(*PointsItem).ReverseEnd(), ShouldResemble, Point{5.0, 5.0})
@@ -162,8 +166,8 @@ func TestSimulationLoading(t *testing.T) {
 				So(sim.TrackItems["17"].(*SignalItem).SignalType(), ShouldEqual, sim.SignalLib.Types["BUFFER"])
 				So(sim.TrackItems["18"].PreviousItem(), ShouldEqual, sim.TrackItems["17"])
 				So(sim.TrackItems["18"].NextItem(), ShouldBeNil)
-				So(sim.TrackItems["22"].Origin(), ShouldResemble, Point{300, 30})
-				So(sim.TrackItems["22"].End(), ShouldResemble, Point{400, 45})
+				So(sim.TrackItems["22"].Origin(), ShouldResemble, Point{300, 35})
+				So(sim.TrackItems["22"].End(), ShouldResemble, Point{390, 50})
 				So(sim.TrackItems["23"].Place(), ShouldEqual, sim.Places["STN"])
 				So(sim.TrackItems["23"].(*PlatformItem).TrackCode(), ShouldEqual, "1")
 				So(sim.TrackItems["24"].Name(), ShouldEqual, "2")
@@ -189,11 +193,10 @@ func TestSimulationLoading(t *testing.T) {
 			So(tt2.Elements()[1], ShouldEqual, tt)
 		})
 		Convey("Services should all be loaded", func() {
-			So(sim.Services, ShouldHaveLength, 4)
+			So(sim.Services, ShouldHaveLength, 3)
 			So(sim.Services, ShouldContainKey, "S001")
 			So(sim.Services, ShouldContainKey, "S002")
 			So(sim.Services, ShouldContainKey, "S003")
-			So(sim.Services, ShouldContainKey, "S004")
 			s1 := sim.Services["S001"]
 			s2 := sim.Services["S002"]
 			So(s1.Description, ShouldEqual, "LEFT->STATION")
@@ -231,7 +234,7 @@ func TestSimulationLoading(t *testing.T) {
 			So(sim.MessageLogger.Messages[0], ShouldResemble, Message{playerWarningMsg, "Test message"})
 		})
 		Convey("SignalLibrary should be correctly loaded", func() {
-			So(sim.SignalLib.Types, ShouldHaveLength, 2)
+			So(sim.SignalLib.Types, ShouldHaveLength, 3)
 			So(sim.SignalLib.Aspects, ShouldHaveLength, 4)
 			So(sim.SignalLib.Aspects, ShouldContainKey, "BUFFER")
 			bufferAspect := sim.SignalLib.Aspects["BUFFER"]

@@ -31,10 +31,10 @@ func TestMarshalling(t *testing.T) {
 			var sim2 simulation.Simulation
 			err = json.Unmarshal(sData, &sim2)
 			So(err, ShouldBeNil)
-			So(sim2.TrackItems, ShouldHaveLength, 22)
-			So(sim2.Routes, ShouldHaveLength, 4)
+			So(sim2.TrackItems, ShouldHaveLength, 26)
+			So(sim2.Routes, ShouldHaveLength, 5)
 			So(sim2.Trains, ShouldHaveLength, 2)
-			So(sim2.Services, ShouldHaveLength, 4)
+			So(sim2.Services, ShouldHaveLength, 3)
 			So(sim2.Options.TimeFactor, ShouldEqual, 5)
 		})
 	})

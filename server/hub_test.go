@@ -160,7 +160,7 @@ func TestHub(t *testing.T) {
 				var rtes map[string]simulation.Route
 				err = json.Unmarshal(resp.Data, &rtes)
 				So(err, ShouldBeNil)
-				So(rtes, ShouldHaveLength, 4)
+				So(rtes, ShouldHaveLength, 5)
 			})
 			Convey("Showing a route", func() {
 				err = c.WriteJSON(Request{Object: "route", Action: "show", Params: RawJSON(`{"ids": ["1"]}`)})
@@ -175,7 +175,7 @@ func TestHub(t *testing.T) {
 				So(rtes, ShouldHaveLength, 1)
 				So(rtes, ShouldContainKey, "1")
 				So(rtes["1"].BeginSignalId, ShouldEqual, "5")
-				So(rtes["1"].EndSignalId, ShouldEqual, "11")
+				So(rtes["1"].EndSignalId, ShouldEqual, "101")
 			})
 			Convey("Show with a wrong route ID should fail", func() {
 				resp := sendRequestStatus(c, "route", "show", `{"ids": ["1", "999"]}`)
@@ -279,7 +279,7 @@ func TestHub(t *testing.T) {
 				var trackItems map[string]trackStruct
 				err = json.Unmarshal(resp.Data, &trackItems)
 				So(err, ShouldBeNil)
-				So(trackItems, ShouldHaveLength, 22)
+				So(trackItems, ShouldHaveLength, 26)
 			})
 			Convey("Showing a trackItem", func() {
 				err = c.WriteJSON(Request{Object: "trackItem", Action: "show", Params: RawJSON(`{"ids": ["2"]}`)})
@@ -418,7 +418,7 @@ func TestHub(t *testing.T) {
 				var services map[string]*simulation.Service
 				err = json.Unmarshal(resp.Data, &services)
 				So(err, ShouldBeNil)
-				So(services, ShouldHaveLength, 4)
+				So(services, ShouldHaveLength, 3)
 			})
 			Convey("Showing a service", func() {
 				err = c.WriteJSON(Request{Object: "service", Action: "show", Params: RawJSON(`{"ids": ["S002"]}`)})
@@ -463,7 +463,7 @@ func TestHub(t *testing.T) {
 				var simu simulation.Simulation
 				err := json.Unmarshal(resp.Data, &simu)
 				So(err, ShouldBeNil)
-				So(simu.TrackItems, ShouldHaveLength, 22)
+				So(simu.TrackItems, ShouldHaveLength, 26)
 				So(simu.Places, ShouldHaveLength, 3)
 				So(simu.Places, ShouldContainKey, "STN")
 			})

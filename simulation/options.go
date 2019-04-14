@@ -38,6 +38,9 @@ type Options struct {
 	Title                   string         `json:"title"`
 	Version                 string         `json:"version"`
 	WarningSpeed            float64        `json:"warningSpeed"`
+	WrongPlatformPenalty    int            `json:"wrongPlatformPenalty"`
+	WrongDestinationPenalty int            `json:"wrongDestinationPenalty"`
+	LatePenalty             int            `json:"latePenalty"`
 }
 
 // Set the given option with the given value.
