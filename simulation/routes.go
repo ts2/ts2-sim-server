@@ -93,7 +93,7 @@ func (r *Route) Equals(other *Route) bool {
 
 // State returns the current state of this route
 func (r *Route) State() RouteState {
-	if r.BeginSignal().nextActiveRoute == nil {
+	if r.BeginSignal().nextActiveRoute == nil || !r.BeginSignal().nextActiveRoute.Equals(r) {
 		for _, p := range r.Positions {
 			if p.TrackItem().ActiveRoute() != nil && p.TrackItem().ActiveRoute().Equals(r) {
 				return Destroying
@@ -101,13 +101,10 @@ func (r *Route) State() RouteState {
 		}
 		return Deactivated
 	}
-	if r.BeginSignal().nextActiveRoute.Equals(r) {
-		if r.Persistent {
-			return Persistent
-		}
-		return Activated
+	if r.Persistent {
+		return Persistent
 	}
-	return Deactivated
+	return Activated
 }
 
 // IsActive returns true if this Route is active

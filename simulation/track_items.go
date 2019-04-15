@@ -390,11 +390,11 @@ func (t *trackStruct) trainTailActions(train *Train) {
 	for _, trigger := range t.triggers {
 		trigger(t)
 	}
-	t.releaseRouteBehind(train)
+	t.releaseRouteBehind()
 }
 
 // releaseRouteBehind automatically releases the route after train passed if applicable
-func (t *trackStruct) releaseRouteBehind(train *Train) {
+func (t *trackStruct) releaseRouteBehind() {
 	if t.activeRoute == nil {
 		return
 	}
@@ -406,7 +406,7 @@ func (t *trackStruct) releaseRouteBehind(train *Train) {
 		// same route has been set again
 		return
 	}
-	if t.ActiveRoutePreviousItem().ActiveRoute() == nil || t.ActiveRoutePreviousItem().ActiveRoute().routeID != t.activeRoute.routeID {
+	if t.ActiveRoutePreviousItem().ActiveRoute() == nil || !t.ActiveRoutePreviousItem().ActiveRoute().Equals(t.activeRoute) {
 		// previous item has been already set to a new route which is not ours
 		return
 	}
@@ -437,10 +437,8 @@ func (t *trackStruct) IsOnPosition(pos Position) bool {
 // train tail) of the closest train when on pos. If no train is on this item, the
 // distance will be 0, and the second argument will be false.
 func (t *trackStruct) DistanceToTrainEnd(pos Position) (float64, bool) {
-	var (
-		minDist float64
-		mdSet   bool
-	)
+	var mdSet bool
+	minDist := bigFloat
 	if pos.PreviousItemID == t.PreviousTiID {
 		for _, teb := range t.trainEndsBK {
 			x := teb - pos.PositionOnTI
@@ -449,7 +447,10 @@ func (t *trackStruct) DistanceToTrainEnd(pos Position) (float64, bool) {
 				mdSet = true
 			}
 		}
-		return minDist, mdSet
+		if !mdSet {
+			return 0, false
+		}
+		return minDist, true
 	}
 	for _, tef := range t.trainEndsFW {
 		x := t.RealLength() - tef - pos.PositionOnTI
@@ -457,6 +458,10 @@ func (t *trackStruct) DistanceToTrainEnd(pos Position) (float64, bool) {
 			minDist = x
 			mdSet = true
 		}
+		if !mdSet {
+			return 0, false
+		}
+		return minDist, true
 	}
 	return minDist, mdSet
 }

@@ -400,12 +400,16 @@ func (si *SignalItem) trainTailActions(train *Train) {
 		si.trackStruct.trainTailActions(train)
 		return
 	}
+	si.releaseRouteBehind()
+}
+
+// releaseRouteBehind automatically releases the route after train passed if applicable
+func (si *SignalItem) releaseRouteBehind() {
 	// For cleaning purposes: activeRoute not used in this direction
 	si.resetActiveRoute()
-
 	if si.previousActiveRoute != nil && si.previousActiveRoute.State() != Persistent {
 		beginSignalNextRoute := si.previousActiveRoute.BeginSignal().nextActiveRoute
-		if beginSignalNextRoute == nil || beginSignalNextRoute.Equals(si.previousActiveRoute) {
+		if beginSignalNextRoute == nil || !beginSignalNextRoute.Equals(si.previousActiveRoute) {
 			// Only reset previous route if the user did not reactivate it in the meantime
 			si.PreviousItem().resetActiveRoute()
 			si.resetPreviousActiveRoute(nil)
