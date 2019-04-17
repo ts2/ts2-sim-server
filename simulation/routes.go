@@ -181,14 +181,6 @@ func (r *Route) initialize(routeNum string) error {
 	// Set route routeID
 	r.routeID = routeNum
 
-	// Initialize state to initial state
-	switch r.InitialState {
-	case Persistent:
-		_ = r.Activate(true)
-	case Activated:
-		_ = r.Activate(false)
-	}
-
 	// Populate Positions slice
 	pos := Position{
 		TrackItemID:    r.BeginSignal().ID(),
@@ -198,6 +190,13 @@ func (r *Route) initialize(routeNum string) error {
 	for !pos.IsOut() {
 		r.Positions = append(r.Positions, pos)
 		if pos.TrackItem().ID() == r.EndSignal().ID() {
+			// Initialize state to initial state
+			switch r.InitialState {
+			case Persistent:
+				_ = r.Activate(true)
+			case Activated:
+				_ = r.Activate(false)
+			}
 			return nil
 		}
 		dir := DirectionCurrent

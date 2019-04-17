@@ -31,7 +31,7 @@ func (s *serverObject) dispatch(h *Hub, req Request, conn *connection) {
 	switch req.Action {
 	case "register":
 		ch <- NewErrorResponse(req.ID, fmt.Errorf("can't call register when already registered"))
-		logger.Debug("Request for second register received", "submodule", "hub", "object", req.Object, "action", req.Action)
+		logger.Warn("Request for second register received", "submodule", "hub", "object", req.Object, "action", req.Action)
 	case "addListener":
 		logger.Debug("Request for addListener received", "submodule", "hub", "object", req.Object, "action", req.Action, "params", req.Params)
 		if err := h.addRegistryEntry(req, conn); err != nil {
@@ -46,6 +46,13 @@ func (s *serverObject) dispatch(h *Hub, req Request, conn *connection) {
 			return
 		}
 		ch <- NewOkResponse(req.ID, "Listener removed successfully")
+	case "renotify":
+		logger.Debug("Request for renotify received", "submodule", "hub", "object", req.Object, "action", req.Action, "params", req.Params)
+		if err := h.renotifyClient(req, conn); err != nil {
+			ch <- NewErrorResponse(req.ID, err)
+			return
+		}
+		ch <- NewOkResponse(req.ID, "Renotify request taken into account")
 	default:
 		ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown action %s/%s", req.Object, req.Action))
 		logger.Debug("Request for unknown action received", "submodule", "hub", "object", req.Object, "action", req.Action, "params", req.Params)
@@ -97,6 +104,27 @@ func (h *Hub) removeRegistryEntry(req Request, conn *connection) error {
 		delete(h.registry[re], conn)
 	}
 	logger.Debug("Registry entries added", "submodule", "hub", "eventName", pl.Event, "ids", pl.IDs)
+	return nil
+}
+
+// renotifyClient will resend the last notification for each event and object ID
+func (h *Hub) renotifyClient(req Request, conn *connection) error {
+	for re, event := range h.lastEvents {
+		if _, ok := h.registry[registryEntry{eventName: re.eventName, id: ""}]; ok {
+			if h.registry[registryEntry{eventName: event.Name, id: ""}][conn] {
+				conn.pushChan <- NewNotificationResponse(event)
+			}
+		}
+		if event.Object.ID() == "" {
+			// Object has no ID. Don't send twice
+			continue
+		}
+		if _, ok := h.registry[re]; ok {
+			if h.registry[registryEntry{eventName: event.Name, id: event.Object.ID()}][conn] {
+				conn.pushChan <- NewNotificationResponse(event)
+			}
+		}
+	}
 	return nil
 }
 

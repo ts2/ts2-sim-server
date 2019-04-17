@@ -32,6 +32,9 @@ type Hub struct {
 	// Registry of client listeners
 	registry map[registryEntry]map[*connection]bool
 
+	// lastEvents holds the last event sent for each registryEntry
+	lastEvents map[registryEntry]*simulation.Event
+
 	// Register requests from the connection
 	registerChan chan *connection
 
@@ -101,6 +104,7 @@ func (h *Hub) unregister(c *connection) {
 // notifyClients sends the given event to all registered clients.
 func (h *Hub) notifyClients(e *simulation.Event) {
 	logger.Debug("Notifying clients", "submodule", "hub", "event", e)
+	h.lastEvents[registryEntry{eventName: e.Name, id: e.Object.ID()}] = e
 	// Notify clients that subscribed to all objects
 	for conn := range h.registry[registryEntry{eventName: e.Name, id: ""}] {
 		conn.pushChan <- NewNotificationResponse(e)
@@ -138,6 +142,7 @@ func newHub() *Hub {
 	h.clientConnections = make(map[*connection]bool)
 	// make registry map
 	h.registry = make(map[registryEntry]map[*connection]bool)
+	h.lastEvents = make(map[registryEntry]*simulation.Event)
 	// make channels
 	h.registerChan = make(chan *connection)
 	h.unregisterChan = make(chan *connection)

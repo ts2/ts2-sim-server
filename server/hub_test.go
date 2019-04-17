@@ -613,6 +613,47 @@ func TestHub(t *testing.T) {
 				So(resp.MsgType, ShouldEqual, TypeResponse)
 				So(resp.Data.Status, ShouldEqual, Fail)
 			})
+			Convey("Renotify should send back the last notifications", func() {
+				err = c.WriteJSON(RequestListener{
+					Object: "server",
+					Action: "addListener",
+					Params: ParamsListener{
+						Event: simulation.RouteActivatedEvent,
+						IDs:   []string{"1"},
+					},
+				})
+				So(err, ShouldBeNil)
+				var resp ResponseStatus
+				err = c.ReadJSON(&resp)
+				So(err, ShouldBeNil)
+				So(resp.MsgType, ShouldEqual, TypeResponse)
+				So(resp.Data.Status, ShouldEqual, Ok)
+
+				err := c.WriteJSON(Request{Object: "server", Action: "renotify"})
+				So(err, ShouldBeNil)
+				var haveResponse, haveNotification bool
+				for i := 0; i < 2; i++ {
+					var r Response
+					err = c.ReadJSON(&r)
+					So(err, ShouldBeNil)
+					switch r.MsgType {
+					case TypeResponse:
+						So(haveResponse, ShouldBeFalse)
+						haveResponse = true
+						var rd DataStatus
+						err := json.Unmarshal(r.Data, &rd)
+						So(err, ShouldBeNil)
+						So(rd.Status, ShouldEqual, Ok)
+					case TypeNotification:
+						So(haveNotification, ShouldBeFalse)
+						haveNotification = true
+						var de DataEvent
+						err := json.Unmarshal(r.Data, &de)
+						So(err, ShouldBeNil)
+						So(de.Name, ShouldEqual, simulation.RouteActivatedEvent)
+					}
+				}
+			})
 		})
 		Reset(func() {
 			err := c.Close()

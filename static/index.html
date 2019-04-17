@@ -1,15 +1,15 @@
 <!doctype html>
 <html>
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="icon" href="static/ts2.ico" type="image/x-icon"/>
-    <link rel="shortcut icon" href="static/ts2.ico" type="image/x-icon"/>
-    <link href="static/bootstrap.min.css" rel="stylesheet"/>
-    <script src="static/jquery-3.3.1.slim.min.js"></script>
-    <script src="static/popper.min.js"></script>
-    <script src="static/bootstrap.min.js"></script>
-    <script>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<link rel="icon" href="static/ts2.ico" type="image/x-icon"/>
+	<link rel="shortcut icon" href="static/ts2.ico" type="image/x-icon"/>
+	<link href="static/bootstrap.min.css" rel="stylesheet"/>
+	<script src="static/jquery-3.3.1.slim.min.js"></script>
+	<script src="static/popper.min.js"></script>
+	<script src="static/bootstrap.min.js"></script>
+	<script>
         window.addEventListener("load", function (evt) {
             var input = document.getElementById("input");
             var ws = null;
@@ -85,6 +85,11 @@
             };
             document.getElementById("removeListenerTmpl").onclick = function (evt) {
                 input.value = '{"object": "server", "action": "removeListener", "params": {"event": "clock"}}';
+                input.focus();
+                return false;
+            };
+            document.getElementById("renotifyTmpl").onclick = function (evt) {
+                input.value = '{"object": "server", "action": "renotify"}';
                 input.focus();
                 return false;
             };
@@ -185,169 +190,171 @@
             };
             showConnected(false);
         });
-    </script>
+	</script>
 </head>
 <body>
 
 <nav class="navbar navbar-expand-sm navbar-dark bg-dark">
-    <img src="static/ts2.ico"/>
-    <a class="navbar-brand" href="#">TS2 Sim Server</a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
-            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-    </button>
+	<img src="static/ts2.ico"/>
+	<a class="navbar-brand" href="#">TS2 Sim Server</a>
+	<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+			aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+		<span class="navbar-toggler-icon"></span>
+	</button>
 
-    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <ul class="navbar-nav mr-auto">
-            <li class="nav-item active">
-                <a class="nav-link" href="#">Home</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="https://godoc.org/github.com/ts2/ts2-sim-server" target="_godoc">Godoc</a>
-            </li>
-        </ul>
-    </div>
+	<div class="collapse navbar-collapse" id="navbarSupportedContent">
+		<ul class="navbar-nav mr-auto">
+			<li class="nav-item active">
+				<a class="nav-link" href="#">Home</a>
+			</li>
+			<li class="nav-item">
+				<a class="nav-link" href="https://godoc.org/github.com/ts2/ts2-sim-server" target="_godoc">Godoc</a>
+			</li>
+		</ul>
+	</div>
 </nav>
 
 <div class="container">
-    <div class="card m-3">
-        <div class="card-body">
-            <h3 class="card-title">Loaded Simulation</h3>
-            <table class="table table-bordered table-condensed">
-                <tr>
-                    <th>Title:</th>
-                    <td>{{ .Title }}</td>
-                </tr>
-                <tr>
-                    <th>Description:</th>
-                    <td>{{ .Description }}</td>
-                </tr>
-                <tr>
-                    <th>WebSocket Server:</th>
-                    <td>{{ .Host }}</td>
-                </tr>
-            </table>
-        </div>
-    </div>
+	<div class="card m-3">
+		<div class="card-body">
+			<h3 class="card-title">Loaded Simulation</h3>
+			<table class="table table-bordered table-condensed">
+				<tr>
+					<th>Title:</th>
+					<td>{{ .Title }}</td>
+				</tr>
+				<tr>
+					<th>Description:</th>
+					<td>{{ .Description }}</td>
+				</tr>
+				<tr>
+					<th>WebSocket Server:</th>
+					<td>{{ .Host }}</td>
+				</tr>
+			</table>
+		</div>
+	</div>
 
-    <div class="card m-3">
-        <div class="card-body">
-            <h3 class="card-title">Test WebSocket</h3>
-            <p>
-                Click "Open" to create a connection to the server,
-                "Send" to send a message to the server and "Close" to close the connection.
-                You can change the message and send multiple times.
-            </p>
+	<div class="card m-3">
+		<div class="card-body">
+			<h3 class="card-title">Test WebSocket</h3>
+			<p>
+				Click "Open" to create a connection to the server,
+				"Send" to send a message to the server and "Close" to close the connection.
+				You can change the message and send multiple times.
+			</p>
 
-            <form>
-                <div class="form-row">
-                    <div class="form-group">
-                        <button id="btnOpen" type="button" class="btn btn-info">Open</button>
-                        <button id="btnClose" type="button" class="btn btn-info">Close</button>
-                        <span class="badge badge-danger mx-3" id="lblStatus">Disconnected</span>
-                    </div>
-                    <div class="form-group">
-                        <div class="btn-group">
-                            <button type="button" class="btn btn-default dropdown-toggle"
-                                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Server
-                            </button>
-                            <div class="dropdown-menu">
-                                <a id="loginTmpl" class="dropdown-item" href="#">Login</a></li>
-                                <div class="dropdown-divider"></div>
-                                <a id="addListenerTmpl" class="dropdown-item" href="#">Add Listener</a></li>
-                                <a id="removeListenerTmpl" class="dropdown-item" href="#">Remove Listener</a></li>
-                            </div>
-                        </div>
-                        <div class="btn-group">
-                            <button type="button" class="btn btn-default dropdown-toggle"
-                                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Simulation
-                            </button>
-                            <div class="dropdown-menu">
-                                <a id="simStartTmpl" class="dropdown-item" href="#">Start</a>
-                                <a id="simPauseTmpl" class="dropdown-item" href="#">Pause</a>
-                                <div class="dropdown-divider"></div>
-                                <a id="simDumpTmpl" class="dropdown-item" href="#">Dump</a>
-                                <div class="dropdown-divider"></div>
-                                <a id="optionsListTmpl" class="dropdown-item" href="#">List Options</a>
-                                <a id="optionsSetTmpl" class="dropdown-item" href="#">Set Option</a>
-                            </div>
-                        </div>
-                        <div class="btn-group">
-                            <button type="button" class="btn btn-default dropdown-toggle"
-                                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Routes
-                            </button>
-                            <div class="dropdown-menu">
-                                <a id="routeListTmpl" class="dropdown-item" href="#">List</a>
-                                <a id="routeShowTmpl" class="dropdown-item" href="#">Show</a>
-                                <div class="dropdown-divider"></div>
-                                <a id="routeActivateTmpl" class="dropdown-item" href="#">Activate</a>
-                                <a id="routeDeactivateTmpl" class="dropdown-item" href="#">Deactivate</a>
-                            </div>
-                        </div>
-                        <div class="btn-group">
-                            <button type="button" class="btn btn-default dropdown-toggle"
-                                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Trains
-                            </button>
-                            <div class="dropdown-menu">
-                                <a id="trainListTmpl" class="dropdown-item" href="#">List</a>
-                                <a id="trainShowTmpl" class="dropdown-item" href="#">Show</a>
-                            </div>
-                        </div>
-                        <div class="btn-group">
-                            <button type="button" class="btn btn-default dropdown-toggle"
-                                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Track Items
-                            </button>
-                            <div class="dropdown-menu">
-                                <a id="tiListTmpl" class="dropdown-item" href="#">List</a>
-                                <a id="tiShowTmpl" class="dropdown-item" href="#">Show</a>
-                            </div>
-                        </div>
-                        <div class="btn-group">
-                            <button type="button" class="btn btn-default dropdown-toggle"
-                                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Places
-                            </button>
-                            <div class="dropdown-menu">
-                                <a id="plListTmpl" class="dropdown-item" href="#">List</a>
-                                <a id="plShowTmpl" class="dropdown-item" href="#">Show</a>
-                            </div>
-                        </div>
-                        <div class="btn-group">
-                            <button type="button" class="btn btn-default dropdown-toggle"
-                                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Train Types
-                            </button>
-                            <div class="dropdown-menu">
-                                <a id="ttListTmpl" class="dropdown-item" href="#">List</a>
-                                <a id="ttShowTmpl" class="dropdown-item" href="#">Show</a>
-                            </div>
-                        </div>
-                        <div class="btn-group">
-                            <button type="button" class="btn btn-default dropdown-toggle"
-                                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Services
-                            </button>
-                            <div class="dropdown-menu">
-                                <a id="serviceListTmpl" class="dropdown-item" href="#">List</a>
-                                <a id="serviceShowTmpl" class="dropdown-item" href="#">Show</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="form-group form-row">
-                    <input type="text" id="input" style="width:500px" placeHolder="Message">
-                    <button id="btnClearInput" type="button" class="btn btn-outline-dark">X</button>
-                    <button id="btnSend" type="button" class="btn btn-success">Send</button>
-                    <button id="btnClear" type="button" class="btn btn-default">Clear</button>
-                </div>
-            </form>
+			<form>
+				<div class="form-row">
+					<div class="form-group">
+						<button id="btnOpen" type="button" class="btn btn-info">Open</button>
+						<button id="btnClose" type="button" class="btn btn-info">Close</button>
+						<span class="badge badge-danger mx-3" id="lblStatus">Disconnected</span>
+					</div>
+					<div class="form-group">
+						<div class="btn-group">
+							<button type="button" class="btn btn-default dropdown-toggle"
+									data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Server
+							</button>
+							<div class="dropdown-menu">
+								<a id="loginTmpl" class="dropdown-item" href="#">Login</a></li>
+								<div class="dropdown-divider"></div>
+								<a id="addListenerTmpl" class="dropdown-item" href="#">Add Listener</a></li>
+								<a id="removeListenerTmpl" class="dropdown-item" href="#">Remove Listener</a></li>
+								<div class="dropdown-divider"></div>
+								<a id="renotifyTmpl" class="dropdown-item" href="#">Renotify</a></li>
+							</div>
+						</div>
+						<div class="btn-group">
+							<button type="button" class="btn btn-default dropdown-toggle"
+									data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Simulation
+							</button>
+							<div class="dropdown-menu">
+								<a id="simStartTmpl" class="dropdown-item" href="#">Start</a>
+								<a id="simPauseTmpl" class="dropdown-item" href="#">Pause</a>
+								<div class="dropdown-divider"></div>
+								<a id="simDumpTmpl" class="dropdown-item" href="#">Dump</a>
+								<div class="dropdown-divider"></div>
+								<a id="optionsListTmpl" class="dropdown-item" href="#">List Options</a>
+								<a id="optionsSetTmpl" class="dropdown-item" href="#">Set Option</a>
+							</div>
+						</div>
+						<div class="btn-group">
+							<button type="button" class="btn btn-default dropdown-toggle"
+									data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Routes
+							</button>
+							<div class="dropdown-menu">
+								<a id="routeListTmpl" class="dropdown-item" href="#">List</a>
+								<a id="routeShowTmpl" class="dropdown-item" href="#">Show</a>
+								<div class="dropdown-divider"></div>
+								<a id="routeActivateTmpl" class="dropdown-item" href="#">Activate</a>
+								<a id="routeDeactivateTmpl" class="dropdown-item" href="#">Deactivate</a>
+							</div>
+						</div>
+						<div class="btn-group">
+							<button type="button" class="btn btn-default dropdown-toggle"
+									data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Trains
+							</button>
+							<div class="dropdown-menu">
+								<a id="trainListTmpl" class="dropdown-item" href="#">List</a>
+								<a id="trainShowTmpl" class="dropdown-item" href="#">Show</a>
+							</div>
+						</div>
+						<div class="btn-group">
+							<button type="button" class="btn btn-default dropdown-toggle"
+									data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Track Items
+							</button>
+							<div class="dropdown-menu">
+								<a id="tiListTmpl" class="dropdown-item" href="#">List</a>
+								<a id="tiShowTmpl" class="dropdown-item" href="#">Show</a>
+							</div>
+						</div>
+						<div class="btn-group">
+							<button type="button" class="btn btn-default dropdown-toggle"
+									data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Places
+							</button>
+							<div class="dropdown-menu">
+								<a id="plListTmpl" class="dropdown-item" href="#">List</a>
+								<a id="plShowTmpl" class="dropdown-item" href="#">Show</a>
+							</div>
+						</div>
+						<div class="btn-group">
+							<button type="button" class="btn btn-default dropdown-toggle"
+									data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Train Types
+							</button>
+							<div class="dropdown-menu">
+								<a id="ttListTmpl" class="dropdown-item" href="#">List</a>
+								<a id="ttShowTmpl" class="dropdown-item" href="#">Show</a>
+							</div>
+						</div>
+						<div class="btn-group">
+							<button type="button" class="btn btn-default dropdown-toggle"
+									data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Services
+							</button>
+							<div class="dropdown-menu">
+								<a id="serviceListTmpl" class="dropdown-item" href="#">List</a>
+								<a id="serviceShowTmpl" class="dropdown-item" href="#">Show</a>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="form-group form-row">
+					<input type="text" id="input" style="width:500px" placeHolder="Message">
+					<button id="btnClearInput" type="button" class="btn btn-outline-dark">X</button>
+					<button id="btnSend" type="button" class="btn btn-success">Send</button>
+					<button id="btnClear" type="button" class="btn btn-default">Clear</button>
+				</div>
+			</form>
 
 
-            <div class="container">
-                <form>
+			<div class="container">
+				<form>
                     <textarea id="output" style="margin-top: 10px; width:100%; height:300px; overflow: auto;"
-                              placeHolder="Log"></textarea>
-                </form>
-            </div>
-        </div>
-    </div>
+							  placeHolder="Log"></textarea>
+				</form>
+			</div>
+		</div>
+	</div>
 </div>
 </body>
 </html>

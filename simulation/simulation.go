@@ -79,6 +79,9 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 		MessageLogger *MessageLogger        `json:"messageLogger"`
 	}
 
+	sim.EventChan = make(chan *Event)
+	sim.stopChan = make(chan bool)
+
 	var rawSim auxSim
 	if err := json.Unmarshal(data, &rawSim); err != nil {
 		return fmt.Errorf("unable to decode simulation JSON: %s", err)
@@ -255,8 +258,6 @@ func (sim Simulation) MarshalJSON() ([]byte, error) {
 // This method must be called before Start.
 func (sim *Simulation) Initialize() error {
 	sim.MessageLogger.addMessage("Simulation initializing", softwareMsg)
-	sim.EventChan = make(chan *Event)
-	sim.stopChan = make(chan bool)
 	return nil
 }
 
@@ -305,7 +306,7 @@ func (sim *Simulation) IsStarted() bool {
 // sendEvent sends the given event on the event channel to notify clients.
 // Sending is done asynchronously so as not to block.
 func (sim *Simulation) sendEvent(evt *Event) {
-	go func(evtChan chan *Event) { evtChan <- evt }(sim.EventChan)
+	go func() { sim.EventChan <- evt }()
 }
 
 // increaseTime adds the step to the simulation time.
