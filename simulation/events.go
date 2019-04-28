@@ -18,16 +18,13 @@
 
 package simulation
 
-import "fmt"
-
 // An EventName is the name of a event
 type EventName string
 
 // Events that can be send to clients that add a listener to them.
 const (
 	ClockEvent                    EventName = "clock"
-	PausedEvent                   EventName = "simulationPaused"
-	StartedEvent                  EventName = "simulationStarted"
+	StateChangedEvent             EventName = "stateChanged"
 	OptionsChangedEvent           EventName = "optionsChanged"
 	RouteActivatedEvent           EventName = "routeActivated"
 	RouteDeactivatedEvent         EventName = "routeDeactivated"
@@ -55,7 +52,17 @@ type IntObject struct {
 	Value int `json:"value"`
 }
 
-// ID method to implement SimObject. Returns the Value as a string.
+// ID method to implement SimObject. Returns an empty string.
 func (io IntObject) ID() string {
-	return fmt.Sprint(io.Value)
+	return ""
+}
+
+// An BoolObject is a SimObject that wraps a single boolean value
+type BoolObject struct {
+	Value bool `json:"value"`
+}
+
+// ID method to implement SimObject. Returns an empty string.
+func (bo BoolObject) ID() string {
+	return ""
 }

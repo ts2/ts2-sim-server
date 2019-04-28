@@ -273,7 +273,7 @@ func (sim *Simulation) Start() {
 	}
 	sim.started = true
 	go sim.run()
-	sim.sendEvent(&Event{Name: StartedEvent, Object: sim.Options.CurrentTime})
+	sim.sendEvent(&Event{Name: StateChangedEvent, Object: BoolObject{Value: true}})
 	Logger.Info("Simulation started")
 }
 
@@ -284,7 +284,7 @@ func (sim *Simulation) run() {
 		select {
 		case <-sim.stopChan:
 			clockTicker.Stop()
-			sim.sendEvent(&Event{Name: PausedEvent, Object: sim.Options.CurrentTime})
+			sim.sendEvent(&Event{Name: StateChangedEvent, Object: BoolObject{Value: false}})
 			Logger.Info("Simulation paused")
 			return
 		case <-clockTicker.C:
