@@ -26,6 +26,9 @@ type EventName string
 // Events that can be send to clients that add a listener to them.
 const (
 	ClockEvent                    EventName = "clock"
+	PausedEvent                   EventName = "simulationPaused"
+	StartedEvent                  EventName = "simulationStarted"
+	OptionsChangedEvent           EventName = "optionsChanged"
 	RouteActivatedEvent           EventName = "routeActivated"
 	RouteDeactivatedEvent         EventName = "routeDeactivated"
 	TrainStoppedAtStationEvent    EventName = "trainStoppedAtStation"
@@ -34,7 +37,6 @@ const (
 	SignalaspectChanged           EventName = "signalAspectChanged"
 	TrackItemChanged              EventName = "trackItemChanged"
 	MessageReceived               EventName = "messageReceived"
-	ScoreChanged                  EventName = "scoreChanged"
 )
 
 // A SimObject can be serialized in an event

@@ -149,6 +149,7 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 	}
 
 	sim.Options = rawSim.Options
+	sim.Options.simulation = sim
 	sim.Routes = make(map[string]*Route)
 	for num, route := range rawSim.Routes {
 		route.setSimulation(sim)
@@ -272,6 +273,7 @@ func (sim *Simulation) Start() {
 	}
 	sim.started = true
 	go sim.run()
+	sim.sendEvent(&Event{Name: StartedEvent, Object: sim.Options.CurrentTime})
 	Logger.Info("Simulation started")
 }
 
@@ -282,11 +284,12 @@ func (sim *Simulation) run() {
 		select {
 		case <-sim.stopChan:
 			clockTicker.Stop()
+			sim.sendEvent(&Event{Name: PausedEvent, Object: sim.Options.CurrentTime})
 			Logger.Info("Simulation paused")
 			return
 		case <-clockTicker.C:
 			sim.increaseTime(timeStep)
-			sim.sendEvent(&Event{ClockEvent, sim.Options.CurrentTime})
+			sim.sendEvent(&Event{Name: ClockEvent, Object: sim.Options.CurrentTime})
 			sim.updateTrains()
 		}
 	}
@@ -367,8 +370,8 @@ func (sim *Simulation) updateTrains() {
 func (sim *Simulation) updateScore(penalty int) {
 	sim.Options.CurrentScore += penalty
 	sim.sendEvent(&Event{
-		Name:   ScoreChanged,
-		Object: IntObject{Value: sim.Options.CurrentScore},
+		Name:   OptionsChangedEvent,
+		Object: sim.Options,
 	})
 }
 
