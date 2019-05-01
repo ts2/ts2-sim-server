@@ -20,6 +20,7 @@ package simulation
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"testing"
 
@@ -273,9 +274,17 @@ func TestSimulationLoading(t *testing.T) {
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldEqual, "unable to decode simulation JSON: json: cannot unmarshal array into Go struct field auxSim.routes of type map[string]*simulation.Route")
 		})
+		Convey("Loading simulation with wrong version should fail", func() {
+			err := json.Unmarshal([]byte(`{"options": {"version": "0.6"}, "signalLibrary": {}}`), &sim)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldEqual, fmt.Sprintf("version mismatch: server: %s / file: 0.6", Version))
+		})
 		Convey("Loading with wrong signalLibrary should fail", func() {
 			err := json.Unmarshal([]byte(`
-{"signalLibrary": {
+{"options": {
+	"version": "0.7"
+},
+"signalLibrary": {
 	"signalTypes": {
 		"BUFFER": {
 			"states": [
@@ -293,6 +302,9 @@ func TestSimulationLoading(t *testing.T) {
 		Convey("Wrong trackItem type should fail", func() {
 			err := json.Unmarshal([]byte(`
 {
+	"options": {
+		"version": "0.7"
+	},
 	"trackItems": {
 		"3": {
 			"__type__": "undefined"
@@ -305,6 +317,9 @@ func TestSimulationLoading(t *testing.T) {
 		Convey("Wrong trackItem definition should fail", func() {
 			err := json.Unmarshal([]byte(`
 {
+	"options": {
+		"version": "0.7"
+	},
 	"trackItems": {
 		"3": {
 			"__type__": "SignalItem",

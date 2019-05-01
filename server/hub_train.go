@@ -50,12 +50,12 @@ func (t *trainObject) dispatch(h *Hub, req Request, conn *connection) {
 			return
 		}
 		ts := make([]*simulation.Train, len(idsParams.IDs))
-		for _, id := range idsParams.IDs {
-			if id >= len(sim.Trains) {
+		for i, id := range idsParams.IDs {
+			if id < 0 || id >= len(sim.Trains) {
 				ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown train: %d", id))
 				return
 			}
-			ts[id] = sim.Trains[id]
+			ts[i] = sim.Trains[id]
 		}
 		tid, err := json.Marshal(ts)
 		if err != nil {

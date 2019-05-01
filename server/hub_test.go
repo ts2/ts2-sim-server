@@ -256,6 +256,16 @@ func TestHub(t *testing.T) {
 				So(resp.MsgType, ShouldEqual, TypeResponse)
 				So(resp.Data.Status, ShouldEqual, Fail)
 				So(resp.Data.Message, ShouldEqual, "Error: unknown train: 999")
+
+				resp = sendRequestStatus(c, "train", "show", `{"ids": [-1]}`)
+				So(resp.MsgType, ShouldEqual, TypeResponse)
+				So(resp.Data.Status, ShouldEqual, Fail)
+				So(resp.Data.Message, ShouldEqual, "Error: unknown train: -1")
+
+				resp = sendRequestStatus(c, "train", "show", `{"ids": [3]}`)
+				So(resp.MsgType, ShouldEqual, TypeResponse)
+				So(resp.Data.Status, ShouldEqual, Fail)
+				So(resp.Data.Message, ShouldEqual, "Error: unknown train: 3")
 			})
 		})
 		Convey("TrackItems functions", func() {
@@ -279,7 +289,7 @@ func TestHub(t *testing.T) {
 				var trackItems map[string]trackStruct
 				err = json.Unmarshal(resp.Data, &trackItems)
 				So(err, ShouldBeNil)
-				So(trackItems, ShouldHaveLength, 26)
+				So(trackItems, ShouldHaveLength, 29)
 			})
 			Convey("Showing a trackItem", func() {
 				err = c.WriteJSON(Request{Object: "trackItem", Action: "show", Params: RawJSON(`{"ids": ["2"]}`)})
@@ -463,7 +473,7 @@ func TestHub(t *testing.T) {
 				var simu simulation.Simulation
 				err := json.Unmarshal(resp.Data, &simu)
 				So(err, ShouldBeNil)
-				So(simu.TrackItems, ShouldHaveLength, 26)
+				So(simu.TrackItems, ShouldHaveLength, 29)
 				So(simu.Places, ShouldHaveLength, 3)
 				So(simu.Places, ShouldContainKey, "STN")
 			})

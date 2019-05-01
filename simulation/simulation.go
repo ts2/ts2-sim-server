@@ -30,6 +30,9 @@ import (
 
 const timeStep = 500 * time.Millisecond
 
+// Version of the software, mostly used for file format
+const Version = "0.7"
+
 var (
 	Logger               log.Logger
 	routesManagers       []RoutesManager
@@ -86,6 +89,9 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &rawSim); err != nil {
 		return fmt.Errorf("unable to decode simulation JSON: %s", err)
 	}
+	if rawSim.Options.Version != Version {
+		return fmt.Errorf("version mismatch: server: %s / file: %s", Version, rawSim.Options.Version)
+	}
 	sim.SignalLib = rawSim.SignalLib
 	if err := sim.SignalLib.initialize(); err != nil {
 		return fmt.Errorf("error initializing signal Library: %s", err)
@@ -134,7 +140,6 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 		case `"Place"`:
 			var pl Place
 			err = unmarshalItem(&pl)
-			delete(sim.TrackItems, pl.ID())
 			sim.Places[pl.PlaceCode] = &pl
 		default:
 			return fmt.Errorf("unknown TrackItem type: %s", rawItem["__type__"])
