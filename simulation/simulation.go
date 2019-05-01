@@ -30,8 +30,11 @@ import (
 
 const timeStep = 500 * time.Millisecond
 
+// Version of the software, mostly used for file format
+const Version = "0.7"
+
 var (
-	logger               log.Logger
+	Logger               log.Logger
 	routesManagers       []RoutesManager
 	trainsManagers       map[string]TrainsManager
 	lineItemManager      LineItemManager
@@ -41,9 +44,9 @@ var (
 	signalConditionTypes map[string]ConditionType
 )
 
-// InitializeLogger creates the logger for the simulation module
+// InitializeLogger creates the Logger for the simulation module
 func InitializeLogger(parentLogger log.Logger) {
-	logger = parentLogger.New("module", "simulation")
+	Logger = parentLogger.New("module", "simulation")
 }
 
 // Simulation holds all the game logic.
@@ -79,14 +82,19 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 		MessageLogger *MessageLogger        `json:"messageLogger"`
 	}
 
+	sim.EventChan = make(chan *Event)
+	sim.stopChan = make(chan bool)
+
 	var rawSim auxSim
 	if err := json.Unmarshal(data, &rawSim); err != nil {
 		return fmt.Errorf("unable to decode simulation JSON: %s", err)
 	}
+	if rawSim.Options.Version != Version {
+		return fmt.Errorf("version mismatch: server: %s / file: %s", Version, rawSim.Options.Version)
+	}
 	sim.SignalLib = rawSim.SignalLib
 	if err := sim.SignalLib.initialize(); err != nil {
-		logger.Crit("error initializing signal Library", "error", err)
-		panic(err)
+		return fmt.Errorf("error initializing signal Library: %s", err)
 	}
 	sim.TrackItems = make(map[string]TrackItem)
 	sim.Places = make(map[string]*Place)
@@ -103,70 +111,72 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 			}
 			ti.underlying().simulation = sim
 			ti.underlying().tsId = tiId
-			if err := ti.initialize(); err != nil {
-				return err
-			}
 			sim.TrackItems[tiId] = ti
 			return nil
 		}
-
+		var err error
 		switch tiType {
 		case `"LineItem"`:
 			var ti LineItem
-			unmarshalItem(&ti)
+			err = unmarshalItem(&ti)
 		case `"InvisibleLinkItem"`:
 			var ti InvisibleLinkItem
-			unmarshalItem(&ti)
+			err = unmarshalItem(&ti)
 		case `"EndItem"`:
 			var ti EndItem
-			unmarshalItem(&ti)
+			err = unmarshalItem(&ti)
 		case `"PlatformItem"`:
 			var ti PlatformItem
-			unmarshalItem(&ti)
+			err = unmarshalItem(&ti)
 		case `"TextItem"`:
 			var ti TextItem
-			unmarshalItem(&ti)
+			err = unmarshalItem(&ti)
 		case `"PointsItem"`:
 			var ti PointsItem
-			unmarshalItem(&ti)
+			err = unmarshalItem(&ti)
 		case `"SignalItem"`:
 			var ti SignalItem
-			unmarshalItem(&ti)
+			err = unmarshalItem(&ti)
 		case `"Place"`:
 			var pl Place
-			unmarshalItem(&pl)
-			delete(sim.TrackItems, pl.ID())
+			err = unmarshalItem(&pl)
 			sim.Places[pl.PlaceCode] = &pl
 		default:
 			return fmt.Errorf("unknown TrackItem type: %s", rawItem["__type__"])
 		}
-
+		if err != nil {
+			return err
+		}
 	}
+
 	if err := sim.checkTrackItemsLinks(); err != nil {
 		return err
 	}
 
 	sim.Options = rawSim.Options
+	sim.Options.simulation = sim
 	sim.Routes = make(map[string]*Route)
 	for num, route := range rawSim.Routes {
 		route.setSimulation(sim)
 		sim.Routes[num] = route
-		if err := route.initialize(num); err != nil {
-			logger.Crit("error initializing route", "route", route.routeID, "error", err)
-			panic(err)
-		}
 	}
+
 	sim.TrainTypes = rawSim.TrainTypes
 	for ttCode, tt := range sim.TrainTypes {
 		tt.setSimulation(sim)
 		tt.initialize(ttCode)
 	}
+
 	sim.Services = rawSim.Services
 	for sCode, s := range sim.Services {
 		s.setSimulation(sim)
 		s.initialize(sCode)
 	}
+
 	sim.Trains = rawSim.Trains
+	for _, t := range sim.Trains {
+		t.setSimulation(sim)
+	}
 	sort.Slice(sim.Trains, func(i, j int) bool {
 		switch {
 		case len(sim.Trains[i].Service().Lines) == 0 && len(sim.Trains[j].Service().Lines) == 0:
@@ -181,15 +191,28 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 		}
 	})
 	for i, t := range sim.Trains {
-		t.setSimulation(sim, fmt.Sprintf("%d", i))
+		t.initialize(fmt.Sprintf("%d", i))
 	}
+
+	for _, ti := range sim.TrackItems {
+		if err := ti.initialize(); err != nil {
+			return err
+		}
+	}
+
+	for num, r := range sim.Routes {
+		if err := r.initialize(num); err != nil {
+			return fmt.Errorf("error initializing route %s: %s", r.routeID, err)
+		}
+	}
+
 	sim.MessageLogger = rawSim.MessageLogger
 	sim.MessageLogger.setSimulation(sim)
 	return nil
 }
 
 // MarshalJSON for the Simulation type
-func (sim *Simulation) MarshalJSON() ([]byte, error) {
+func (sim Simulation) MarshalJSON() ([]byte, error) {
 	var res bytes.Buffer
 	res.WriteString(`{
 	"__type__": "Simulation",
@@ -198,7 +221,7 @@ func (sim *Simulation) MarshalJSON() ([]byte, error) {
 	logr, _ := json.Marshal(sim.MessageLogger)
 	res.Write(logr)
 	res.WriteString(`,
-	"Options": `)
+	"options": `)
 	opts, _ := json.Marshal(sim.Options)
 	res.Write(opts)
 	res.WriteString(`,
@@ -241,8 +264,6 @@ func (sim *Simulation) MarshalJSON() ([]byte, error) {
 // This method must be called before Start.
 func (sim *Simulation) Initialize() error {
 	sim.MessageLogger.addMessage("Simulation initializing", softwareMsg)
-	sim.EventChan = make(chan *Event)
-	sim.stopChan = make(chan bool)
 	return nil
 }
 
@@ -252,12 +273,13 @@ func (sim *Simulation) Start() {
 		panic("You must call Initialize before starting the simulation")
 	}
 	if sim.started {
-		logger.Debug("Simulation already started")
+		Logger.Debug("Simulation already started")
 		return
 	}
 	sim.started = true
 	go sim.run()
-	logger.Info("Simulation started")
+	sim.sendEvent(&Event{Name: StateChangedEvent, Object: BoolObject{Value: true}})
+	Logger.Info("Simulation started")
 }
 
 // run enters the main loop of the simulation
@@ -267,11 +289,12 @@ func (sim *Simulation) run() {
 		select {
 		case <-sim.stopChan:
 			clockTicker.Stop()
-			logger.Info("Simulation paused")
+			sim.sendEvent(&Event{Name: StateChangedEvent, Object: BoolObject{Value: false}})
+			Logger.Info("Simulation paused")
 			return
 		case <-clockTicker.C:
 			sim.increaseTime(timeStep)
-			sim.sendEvent(&Event{ClockEvent, sim.Options.CurrentTime})
+			sim.sendEvent(&Event{Name: ClockEvent, Object: sim.Options.CurrentTime})
 			sim.updateTrains()
 		}
 	}
@@ -281,6 +304,11 @@ func (sim *Simulation) run() {
 func (sim *Simulation) Pause() {
 	sim.stopChan <- true
 	sim.started = false
+}
+
+// IsStarted returns true if the simulation clock is running.
+func (sim *Simulation) IsStarted() bool {
+	return sim.started
 }
 
 // sendEvent sends the given event on the event channel to notify clients.
@@ -335,12 +363,21 @@ func (sim *Simulation) checkTrackItemsLinks() error {
 // updateTrains update all trains information such as status, position, speed, etc.
 func (sim *Simulation) updateTrains() {
 	for _, train := range sim.Trains {
+		train.activate(sim.Options.CurrentTime)
 		if !train.IsActive() {
 			continue
 		}
-		train.activate(sim.Options.CurrentTime)
-		train.advance(timeStep)
+		train.advance(timeStep * time.Duration(sim.Options.TimeFactor))
 	}
+}
+
+// updateScore updates the score by adding penalty and notifiying clients
+func (sim *Simulation) updateScore(penalty int) {
+	sim.Options.CurrentScore += penalty
+	sim.sendEvent(&Event{
+		Name:   OptionsChangedEvent,
+		Object: sim.Options,
+	})
 }
 
 // RegisterRoutesManager registers the given route manager in the simulation.

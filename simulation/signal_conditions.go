@@ -191,7 +191,6 @@ func (tpoi TrainPresentOnItems) SetupTriggers(item *SignalItem, params []string)
 			item.updateSignalState()
 		})
 	}
-
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -257,18 +256,7 @@ func (nsa NextSignalAspects) Solve(item *SignalItem, values []string, params []s
 
 // SetupTriggers installs needed triggers for the given SignalItem, with the
 // given Condition.
-func (nsa NextSignalAspects) SetupTriggers(item *SignalItem, params []string) {
-	for _, id := range params {
-		r, ok := item.Simulation().Routes[id]
-		if !ok {
-			panic(fmt.Errorf("RouteSet: error in simulation definition.\n"+
-				"SignalItem %s reference unknown Route %s", item.ID(), id))
-		}
-		r.addTrigger(func(r *Route) {
-			item.updateSignalState()
-		})
-	}
-}
+func (nsa NextSignalAspects) SetupTriggers(item *SignalItem, params []string) {}
 
 // ---------------------------------------------------------------------------------------------------------------
 

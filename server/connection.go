@@ -22,6 +22,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
 
 	"github.com/gorilla/websocket"
 )
@@ -70,11 +71,12 @@ func (conn *connection) processRead(ctx context.Context) {
 		var req Request
 		err := conn.ReadJSON(&req)
 		if err != nil {
-			if _, ok := err.(*websocket.CloseError); ok {
+			switch err.(type) {
+			case *websocket.CloseError, net.Error:
 				logger.Debug("Connection closed by peer", "connection", conn.RemoteAddr())
 				// We don't close connection here because the WS server will take care of it
 				return
-			} else {
+			default:
 				logger.Info("Error while reading", "connection", conn.RemoteAddr(), "error", err)
 				conn.pushChan <- NewErrorResponse(req.ID, err)
 				continue

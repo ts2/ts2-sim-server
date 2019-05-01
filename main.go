@@ -26,6 +26,7 @@ import (
 	"os"
 	"os/signal"
 
+	_ "github.com/ts2/ts2-sim-server/plugins/lines"
 	_ "github.com/ts2/ts2-sim-server/plugins/points"
 	_ "github.com/ts2/ts2-sim-server/plugins/routes"
 	_ "github.com/ts2/ts2-sim-server/plugins/signals"
@@ -43,6 +44,7 @@ func main() {
 	addr := flag.String("addr", server.DefaultAddr, "The address on which the server will listen. Set to 0.0.0.0 to listen on all addresses.")
 	logFile := flag.String("logfile", "", "The filename in which to save the logs. If not specified, the logs are sent to stderr.")
 	logLevel := flag.String("loglevel", "info", "The minimum level of log to be written. Possible values are 'crit', 'error', 'warn', 'info' and 'debug'.")
+	version := flag.Bool("version", false, "Display version and exit.")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, `Usage of ts2-sim-server:
@@ -58,6 +60,11 @@ OPTIONS:
 	}
 
 	flag.Parse()
+	// Version
+	if *version {
+		fmt.Printf("ts2-sim-server (TS2 Simulation Server) %s\n", simulation.Version)
+		os.Exit(0)
+	}
 
 	// Handle ctrl+c to kill on terminal
 	killChan := make(chan os.Signal, 1)

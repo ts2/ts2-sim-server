@@ -103,7 +103,7 @@ func (sa *SignalAction) MarshalJSON() ([]byte, error) {
 // SignalAspect class represents an aspect of a signal, that is a combination of
 // on and off lights with a meaning for the train driver.
 type SignalAspect struct {
-	Name         string
+	Name         string          `json:"name"`
 	LineStyle    signalLineStyle `json:"lineStyle"`
 	OuterShapes  [6]signalShape  `json:"outerShapes"`
 	OuterColors  [6]Color        `json:"outerColors"`
@@ -183,8 +183,8 @@ func (s *SignalState) conditionsMet(signal *SignalItem) bool {
 // UnmarshalJSON for the SignalState Type
 func (s *SignalState) UnmarshalJSON(data []byte) error {
 	var rawSignalState struct {
-		AspectName string
-		Conditions map[string][]string
+		AspectName string              `json:"aspectName"`
+		Conditions map[string][]string `json:"conditions"`
 	}
 	if err := json.Unmarshal(data, &rawSignalState); err != nil {
 		return fmt.Errorf("unable to read signal state: %s (%s)", data, err)
@@ -209,8 +209,8 @@ func (s *SignalState) UnmarshalJSON(data []byte) error {
 // MarshalJSON for the SignalState type
 func (s *SignalState) MarshalJSON() ([]byte, error) {
 	var rawSignalState struct {
-		AspectName string
-		Conditions map[string][]string
+		AspectName string              `json:"aspectName"`
+		Conditions map[string][]string `json:"conditions"`
 	}
 	rawSignalState.AspectName = s.Aspect.Name
 	rawSignalState.Conditions = make(map[string][]string)
@@ -223,8 +223,8 @@ func (s *SignalState) MarshalJSON() ([]byte, error) {
 // A SignalType describes a type of signals which can have different aspects and
 // the logic for displaying aspects.
 type SignalType struct {
-	Name   string
-	States []SignalState
+	Name   string        `json:"name"`
+	States []SignalState `json:"states"`
 }
 
 // getCustomParams
@@ -254,8 +254,8 @@ type SignalItem struct {
 	Yb             float64 `json:"yn"`
 	SignalTypeCode string  `json:"signalType"`
 	Reverse        bool    `json:"reverse"`
-	TrainID        string  `json:"trainID"`
 
+	train               *Train
 	previousActiveRoute *Route
 	nextActiveRoute     *Route
 	activeAspect        *SignalAspect
@@ -263,7 +263,19 @@ type SignalItem struct {
 
 // initialize this signalItem
 func (si *SignalItem) initialize() error {
+	if err := si.trackStruct.initialize(); err != nil {
+		return err
+	}
 	si.activeAspect = si.SignalType().getDefaultAspect()
+	for _, st := range si.SignalType().States {
+		for ct := range st.Conditions {
+			var params []string
+			for _, vals := range si.CustomProperties[ct] {
+				params = append(params, vals...)
+			}
+			signalConditionTypes[ct].SetupTriggers(si, params)
+		}
+	}
 	return nil
 }
 
@@ -296,8 +308,21 @@ func (si *SignalItem) ActiveAspect() *SignalAspect {
 // setActiveRoute sets the given route as active on this SignalItem.
 // previous gives the direction.
 func (si *SignalItem) setActiveRoute(r *Route, previous TrackItem) {
+	if previous != nil && !previous.Equals(si.NextItem()) {
+		Logger.Error("Trying to set signal active route the wrong way", "signal", si.ID(), "route", r.ID())
+		return
+	}
 	si.trackStruct.setActiveRoute(r, previous)
 	si.updateSignalState()
+}
+
+// setTrainID sets the train associated with this signal train to display in berth.
+func (si *SignalItem) setTrain(t *Train) {
+	si.train = t
+	si.simulation.sendEvent(&Event{
+		Name:   TrackItemChanged,
+		Object: si,
+	})
 }
 
 // IsOnPosition returns true if this signal item is the track item of
@@ -340,6 +365,7 @@ func (si *SignalItem) trainHeadActions(train *Train) {
 	// descriptor only in this case. For this, we move backwards from the train
 	// head to this signal.
 	// We do not use isOut, because we are backwards
+	si.trackStruct.trainHeadActions(train)
 	for pos := train.TrainHead; pos.TrackItem().Type() != TypeEnd; pos = pos.Previous() {
 		if !pos.TrackItem().Equals(si) {
 			continue
@@ -349,16 +375,15 @@ func (si *SignalItem) trainHeadActions(train *Train) {
 			return
 		}
 		if nextSignal := si.getNextSignal(); nextSignal != nil {
-			nextSignal.TrainID = train.trainID
+			nextSignal.setTrain(train)
 		}
-		if si.TrainID == train.trainID {
+		if si.train == train {
 			// Only reset train descriptor if it is ours, as it may
 			// be the one of a train behind in the same block
-			si.TrainID = ""
+			si.setTrain(nil)
 		}
 	}
 	si.updateSignalState()
-	si.trackStruct.trainHeadActions(train)
 }
 
 // trainTailActions performs the actions to be done when a train tail reaches this signal item.
@@ -375,22 +400,25 @@ func (si *SignalItem) trainTailActions(train *Train) {
 		si.trackStruct.trainTailActions(train)
 		return
 	}
+	si.releaseRouteBehind()
+}
+
+// releaseRouteBehind automatically releases the route after train passed if applicable
+func (si *SignalItem) releaseRouteBehind() {
 	// For cleaning purposes: activeRoute not used in this direction
 	si.resetActiveRoute()
-
-	if si.previousActiveRoute != nil && si.previousActiveRoute.State != Persistent {
+	if si.previousActiveRoute != nil && si.previousActiveRoute.State() != Persistent {
 		beginSignalNextRoute := si.previousActiveRoute.BeginSignal().nextActiveRoute
-		if beginSignalNextRoute == nil || beginSignalNextRoute.Equals(si.previousActiveRoute) {
+		if beginSignalNextRoute == nil || !beginSignalNextRoute.Equals(si.previousActiveRoute) {
 			// Only reset previous route if the user did not reactivate it in the meantime
 			si.PreviousItem().resetActiveRoute()
 			si.resetPreviousActiveRoute(nil)
 		}
 	}
-	if si.nextActiveRoute != nil && si.nextActiveRoute.State != Persistent {
+	if si.nextActiveRoute != nil && si.nextActiveRoute.State() != Persistent {
 		si.resetNextActiveRoute(nil)
 	}
 	si.updateSignalState()
-	// TODO: trigger previous signal recalculation ?
 }
 
 // updateSignalState updates the current signal aspect.
@@ -457,13 +485,17 @@ func (si *SignalItem) MarshalJSON() ([]byte, error) {
 	if si.nextActiveRoute != nil {
 		narID = si.nextActiveRoute.ID()
 	}
+	var trainID string
+	if si.train != nil {
+		trainID = si.train.ID()
+	}
 	aSI := jsonSignalItem{
 		jsonTrackStruct:     si.asJSONStruct(),
 		Xb:                  si.Xb,
 		Yb:                  si.Yb,
 		SignalTypeCode:      si.SignalTypeCode,
 		Reverse:             si.Reverse,
-		TrainID:             si.TrainID,
+		TrainID:             trainID,
 		PreviousActiveRoute: parID,
 		NextActiveRoute:     narID,
 		ActiveAspect:        si.activeAspect.Name,
@@ -483,14 +515,16 @@ type SignalLibrary struct {
 
 // initialize this SignalLibrary
 func (sl *SignalLibrary) initialize() error {
+	for aName, a := range sl.Aspects {
+		a.Name = aName
+	}
 	for tName, t := range sl.Types {
 		t.Name = tName
 		for i, s := range t.States {
 			asp, ok := sl.Aspects[s.AspectName]
 			if !ok {
-				return fmt.Errorf("not aspect with code %s found", s.AspectName)
+				return fmt.Errorf("no aspect with code %s found", s.AspectName)
 			}
-			asp.Name = s.AspectName
 			t.States[i].Aspect = asp
 		}
 	}

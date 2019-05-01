@@ -106,8 +106,8 @@ func (dg DelayGenerator) Yield() time.Duration {
 	}
 
 	// Then pick up a number inside our segment
-	r1 := rand.Intn(1)
-	return time.Duration(r1*(dg.data[seg].high-dg.data[seg].low)+dg.data[seg].low) * time.Second
+	r1 := rand.Float64()
+	return time.Duration(r1*float64(dg.data[seg].high-dg.data[seg].low)+float64(dg.data[seg].low)) * time.Second
 }
 
 // Time type for the simulation (HH:MM:SS).
@@ -178,3 +178,7 @@ func (h Time) After(u Time) bool {
 
 var _ json.Marshaler = Time{}
 var _ json.Unmarshaler = new(Time)
+
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}

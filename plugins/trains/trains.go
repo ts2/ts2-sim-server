@@ -52,7 +52,7 @@ func (m StandardManager) Speed(t *simulation.Train, timeElapsed time.Duration) f
 	dtnSpeedLimit, speedLimit, okSpeedLimit := nextSpeedLimit(t, maxDistance, secs)
 	dtnTrain, okTrain := distanceToNextTrain(t, maxDistance)
 	safetyDistance := lineSafetyDistance
-	if t.Shunting() {
+	if t.IsShunting() {
 		safetyDistance = 0
 	}
 	if okTrain {
@@ -107,6 +107,15 @@ func (m StandardManager) Speed(t *simulation.Train, timeElapsed time.Duration) f
 			math.Min(targetSpeedForTrain, targetSpeedForSignal)))
 	acceleration := math.Max(-t.TrainType().EmergBraking,
 		math.Min(1/secs*(targetSpeed-t.Speed), t.TrainType().StdAccel))
+	simulation.Logger.Debug("Set Train speed", "ID", t.ID(),
+		"dtnStation", dtnStation,
+		"dtnSpeedLimit", dtnSpeedLimit,
+		"dtnTrain", dtnTrain,
+		"dtnSignal", dtnSignal,
+		"targetSpeedForStation", targetSpeedForStation,
+		"targetSpeedForLimit", targetSpeedForLimit,
+		"targetSpeedForTrain", targetSpeedForTrain,
+		"targetSpeedForSignal", targetSpeedForSignal)
 	return math.Max(0, t.Speed+acceleration*secs)
 }
 
@@ -159,7 +168,7 @@ func distanceToNextStop(t *simulation.Train, maxDistance float64) (float64, bool
 			// We have found a red signal, no need to go further
 			return 0, false
 		}
-		if ti.Place().ID() == line.Place().ID() {
+		if ti.Place() == line.Place() {
 			return distance, true
 		}
 		pos = pos.Next(simulation.DirectionCurrent)
