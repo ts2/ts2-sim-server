@@ -87,15 +87,17 @@ func (dg DelayGenerator) MarshalJSON() ([]byte, error) {
 // Yield a delay from this DelayGenerator
 func (dg DelayGenerator) Yield() time.Duration {
 	probas := []int{0}
+	cumsum := 0
 	for _, p := range dg.data {
-		probas = append(probas, p.high)
+		cumsum += p.prob
+		probas = append(probas, cumsum)
 	}
 
 	// First determine our segment
 	r0 := rand.Intn(100)
 	seg := 0
 	for i := range probas {
-		if probas[i] < r0 && r0 < probas[i+1] {
+		if probas[i] <= r0 && r0 < probas[i+1] {
 			break
 		}
 		seg += 1
