@@ -25,6 +25,8 @@ _testmain.go
 
 *.pyc
 
+.vscode
+*.code-workspace
 .idea
 *.iml
 ts2-sim-server
