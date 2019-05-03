@@ -25,11 +25,18 @@ _testmain.go
 
 *.pyc
 
+# editors
 .vscode
 *.code-workspace
 .idea
 *.iml
+.sass-cache/
+
+# ts2
 ts2-sim-server
 docker/demo.json
 docker/ts2-sim-server
 coverage.txt
+
+# embeded files during build
+rice-box.go

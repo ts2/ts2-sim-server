@@ -1,6 +1,7 @@
 module github.com/ts2/ts2-sim-server
 
 require (
+	github.com/GeertJohan/go.rice v1.0.0
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/gorilla/websocket v1.4.0
 	github.com/mattn/go-colorable v0.1.1 // indirect
