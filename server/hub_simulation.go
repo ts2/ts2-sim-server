@@ -36,26 +36,26 @@ func (s *simulationObject) dispatch(h *Hub, req Request, conn *connection) {
 	switch req.Action {
 	case "start":
 		sim.Start()
-		ch <- NewOkResponse(req.ID, s.objectName(), req.Action, "Simulation started successfully")
+		ch <- NewOkResponse(req, "Simulation started successfully")
 	case "pause":
 		sim.Pause()
-		ch <- NewOkResponse(req.ID, s.objectName(), req.Action, "Simulation paused successfully")
+		ch <- NewOkResponse(req, "Simulation paused successfully")
 	case "isStarted":
 		j, err := json.Marshal(sim.IsStarted())
 		if err != nil {
-			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
+			ch <- NewErrorResponse(req, fmt.Errorf("internal error: %s", err))
 			return
 		}
-		ch <- NewResponse(req.ID, RawJSON(j))
+		ch <- NewResponse(req, RawJSON(j))
 	case "dump":
 		data, err := json.Marshal(sim)
 		if err != nil {
-			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
+			ch <- NewErrorResponse(req, fmt.Errorf("internal error: %s", err))
 			return
 		}
-		ch <- NewResponse(req.ID, data)
+		ch <- NewResponse(req, data)
 	default:
-		ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown action %s/%s", req.Object, req.Action))
+		ch <- NewErrorResponse(req, fmt.Errorf("unknown action %s/%s", req.Object, req.Action))
 		logger.Debug("Request for unknown action received", "submodule", "hub", "object", req.Object, "action", req.Action)
 	}
 }

@@ -39,10 +39,10 @@ func (p *placeObject) dispatch(h *Hub, req Request, conn *connection) {
 		logger.Debug("Request for place list received", "submodule", "hub", "object", req.Object, "action", req.Action)
 		til, err := json.Marshal(sim.Places)
 		if err != nil {
-			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
+			ch <- NewErrorResponse(req, fmt.Errorf("internal error: %s", err))
 			return
 		}
-		ch <- NewResponse(req.ID, til)
+		ch <- NewResponse(req, til)
 	case "show":
 		var idsParams = struct {
 			IDs []string `json:"ids"`
@@ -50,26 +50,26 @@ func (p *placeObject) dispatch(h *Hub, req Request, conn *connection) {
 		err := json.Unmarshal(req.Params, &idsParams)
 		logger.Debug("Request for place show received", "submodule", "hub", "object", req.Object, "action", req.Action, "params", idsParams)
 		if err != nil {
-			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
+			ch <- NewErrorResponse(req, fmt.Errorf("internal error: %s", err))
 			return
 		}
 		tkis := make(map[string]*simulation.Place)
 		for _, id := range idsParams.IDs {
 			tsID, ok := sim.Places[id]
 			if !ok {
-				ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown place: %s", id))
+				ch <- NewErrorResponse(req, fmt.Errorf("unknown place: %s", id))
 				return
 			}
 			tkis[id] = tsID
 		}
 		tid, err := json.Marshal(tkis)
 		if err != nil {
-			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
+			ch <- NewErrorResponse(req, fmt.Errorf("internal error: %s", err))
 			return
 		}
-		ch <- NewResponse(req.ID, tid)
+		ch <- NewResponse(req, tid)
 	default:
-		ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown action %s/%s", req.Object, req.Action))
+		ch <- NewErrorResponse(req, fmt.Errorf("unknown action %s/%s", req.Object, req.Action))
 		logger.Debug("Request for unknown action received", "submodule", "hub", "object", req.Object, "action", req.Action)
 	}
 }

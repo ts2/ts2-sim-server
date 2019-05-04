@@ -45,12 +45,16 @@ type connection struct {
 	Requests    []Request
 }
 
-// loop starts the reading and writing loops of the connection.
+// loop starts the reading and writing of the connection.
 func (conn *connection) loop(ctx context.Context) {
 	logger.Debug("New connection", "remote", conn.RemoteAddr())
-	if err, req := conn.registerClient(); err != nil {
+
+	// TODO said pedro
+	if err, _ := conn.registerClient(); err != nil {
+		//if err, req := conn.registerClient(); err != nil {
+
 		// Try to notify client
-		_ = conn.WriteJSON(NewErrorResponse(req.ID, err))
+		//_ = conn.WriteJSON(NewErrorResponse(req, err))
 		logger.Error("Error while login", "connection", conn.RemoteAddr(), "error", err)
 		return
 	}
@@ -78,7 +82,7 @@ func (conn *connection) processRead(ctx context.Context) {
 				return
 			default:
 				logger.Info("Error while reading", "connection", conn.RemoteAddr(), "error", err)
-				conn.pushChan <- NewErrorResponse(req.ID, err)
+				conn.pushChan <- NewErrorResponse(req, err)
 				continue
 			}
 		}
@@ -126,7 +130,7 @@ func (conn *connection) registerClient() (error, *Request) {
 	}
 
 	// authenticated, so setup
-	if err := conn.WriteJSON(NewOkResponse(req.ID, "login", "register", "Successfully registered")); err != nil {
+	if err := conn.WriteJSON(NewOkResponse(*req, "Successfully registered")); err != nil {
 		logger.Info("Error while writing", "connection", conn.RemoteAddr(), "request", "NewOkResponse", "error", err)
 	}
 	hub.registerChan <- conn

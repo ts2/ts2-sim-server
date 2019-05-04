@@ -40,10 +40,10 @@ func (trki *trackItemObject) dispatch(h *Hub, req Request, conn *connection) {
 		logger.Debug("Request for trackitem list received", "submodule", "hub", "object", req.Object, "action", req.Action)
 		til, err := json.Marshal(sim.TrackItems)
 		if err != nil {
-			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
+			ch <- NewErrorResponse(req, fmt.Errorf("internal error: %s", err))
 			return
 		}
-		ch <- NewResponse(req.ID, trki.objectName(), req.Action, til)
+		ch <- NewResponse(req, til)
 
 	case "show":
 		var idsParams = struct {
@@ -52,27 +52,27 @@ func (trki *trackItemObject) dispatch(h *Hub, req Request, conn *connection) {
 		err := json.Unmarshal(req.Params, &idsParams)
 		logger.Debug("Request for trackItem show received", "submodule", "hub", "object", req.Object, "action", req.Action, "params", idsParams)
 		if err != nil {
-			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
+			ch <- NewErrorResponse(req, fmt.Errorf("internal error: %s", err))
 			return
 		}
 		tkis := make(map[string]simulation.TrackItem)
 		for _, id := range idsParams.IDs {
 			tsID, ok := sim.TrackItems[id]
 			if !ok {
-				ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown trackItem: %s", id))
+				ch <- NewErrorResponse(req, fmt.Errorf("unknown trackItem: %s", id))
 				return
 			}
 			tkis[id] = tsID
 		}
 		tid, err := json.Marshal(tkis)
 		if err != nil {
-			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
+			ch <- NewErrorResponse(req, fmt.Errorf("internal error: %s", err))
 			return
 		}
-		ch <- NewResponse(req.ID, tid)
+		ch <- NewResponse(req, tid)
 
 	default:
-		ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown action %s/%s", req.Object, req.Action))
+		ch <- NewErrorResponse(req, fmt.Errorf("unknown action %s/%s", req.Object, req.Action))
 		logger.Debug("Request for unknown action received", "submodule", "hub", "object", req.Object, "action", req.Action)
 	}
 }
