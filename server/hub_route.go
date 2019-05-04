@@ -27,6 +27,10 @@ import (
 
 type routeObject struct{}
 
+func (r *routeObject) objectName() string {
+	return "route"
+}
+
 // dispatch processes requests made on the route object
 func (r *routeObject) dispatch(h *Hub, req Request, conn *connection) {
 	ch := conn.pushChan
@@ -85,7 +89,7 @@ func (r *routeObject) dispatch(h *Hub, req Request, conn *connection) {
 			ch <- NewErrorResponse(req.ID, fmt.Errorf("cannot activate route %s: %s", actParams.ID, err))
 			return
 		}
-		ch <- NewOkResponse(req.ID, fmt.Sprintf("Route %s activated successfully", actParams.ID))
+		ch <- NewOkResponse(req.ID, r.objectName(), req.Action, fmt.Sprintf("Route %s activated successfully", actParams.ID))
 	case "deactivate":
 		var idParams = struct {
 			ID string `json:"id"`
@@ -106,7 +110,7 @@ func (r *routeObject) dispatch(h *Hub, req Request, conn *connection) {
 			ch <- NewErrorResponse(req.ID, fmt.Errorf("cannot deactivate route %s: %s", idParams.ID, err))
 			return
 		}
-		ch <- NewOkResponse(req.ID, fmt.Sprintf("Route %s deactivated successfully", idParams.ID))
+		ch <- NewOkResponse(req.ID, r.objectName(), req.Action, fmt.Sprintf("Route %s deactivated successfully", idParams.ID))
 	default:
 		ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown action %s/%s", req.Object, req.Action))
 		logger.Debug("Request for unknown action received", "submodule", "hub", "object", req.Object, "action", req.Action)

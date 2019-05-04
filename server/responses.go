@@ -56,6 +56,8 @@ type DataStatus struct {
 type ResponseStatus struct {
 	ID      int         `json:"id"`
 	MsgType MessageType `json:"msgType"`
+	Object  string      `json:"object"`
+	Action  string      `json:"action"`
 	Data    DataStatus  `json:"data"`
 }
 
@@ -95,10 +97,12 @@ func NewErrorResponse(id int, e error) *ResponseStatus {
 }
 
 // NewOkResponse returns a new ResponseStatus object with OK status and empty message.
-func NewOkResponse(id int, msg string) *ResponseStatus {
+func NewOkResponse(id int, obj string, action string, msg string) *ResponseStatus {
 	sr := ResponseStatus{
 		ID:      id,
 		MsgType: TypeResponse,
+		Object:  obj,
+		Action:  action,
 		Data: DataStatus{
 			Ok,
 			msg,

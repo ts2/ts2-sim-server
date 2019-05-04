@@ -25,6 +25,10 @@ import (
 
 type serverObject struct{}
 
+func (s *serverObject) objectName() string {
+	return "server"
+}
+
 // dispatch processes requests made on the Server object
 func (s *serverObject) dispatch(h *Hub, req Request, conn *connection) {
 	ch := conn.pushChan
@@ -38,21 +42,21 @@ func (s *serverObject) dispatch(h *Hub, req Request, conn *connection) {
 			ch <- NewErrorResponse(req.ID, err)
 			return
 		}
-		ch <- NewOkResponse(req.ID, "Listener added successfully")
+		ch <- NewOkResponse(req.ID, s.objectName(), req.Action, "Listener added successfully")
 	case "removeListener":
 		logger.Debug("Request for removeListener received", "submodule", "hub", "object", req.Object, "action", req.Action, "params", req.Params)
 		if err := h.removeRegistryEntry(req, conn); err != nil {
 			ch <- NewErrorResponse(req.ID, err)
 			return
 		}
-		ch <- NewOkResponse(req.ID, "Listener removed successfully")
+		ch <- NewOkResponse(req.ID, s.objectName(), req.Action, "Listener removed successfully")
 	case "renotify":
 		logger.Debug("Request for renotify received", "submodule", "hub", "object", req.Object, "action", req.Action, "params", req.Params)
 		if err := h.renotifyClient(req, conn); err != nil {
 			ch <- NewErrorResponse(req.ID, err)
 			return
 		}
-		ch <- NewOkResponse(req.ID, "Renotify request taken into account")
+		ch <- NewOkResponse(req.ID, s.objectName(), req.Action, "Renotify request taken into account")
 	default:
 		ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown action %s/%s", req.Object, req.Action))
 		logger.Debug("Request for unknown action received", "submodule", "hub", "object", req.Object, "action", req.Action, "params", req.Params)

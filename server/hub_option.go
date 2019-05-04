@@ -25,8 +25,12 @@ import (
 
 type optionObject struct{}
 
+func (oo *optionObject) objectName() string {
+	return "option"
+}
+
 // dispatch processes requests made on the Option object
-func (s *optionObject) dispatch(h *Hub, req Request, conn *connection) {
+func (oo *optionObject) dispatch(h *Hub, req Request, conn *connection) {
 	ch := conn.pushChan
 	switch req.Action {
 	case "list":
@@ -53,7 +57,7 @@ func (s *optionObject) dispatch(h *Hub, req Request, conn *connection) {
 			ch <- NewErrorResponse(req.ID, fmt.Errorf("error while setting option: %s", err))
 			return
 		}
-		ch <- NewOkResponse(req.ID, fmt.Sprintf("option %s set successfully to %v", setParams.Name, setParams.Value))
+		ch <- NewOkResponse(req.ID, oo.objectName(), req.Action, fmt.Sprintf("option %s set successfully to %v", setParams.Name, setParams.Value))
 	default:
 		ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown action %s/%s", req.Object, req.Action))
 		logger.Debug("Request for unknown action received", "submodule", "hub", "object", req.Object, "action", req.Action)

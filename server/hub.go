@@ -49,6 +49,7 @@ type Hub struct {
 
 type hubObject interface {
 	dispatch(h *Hub, req Request, c *connection)
+	objectName() string
 }
 
 // run is the loop for handling dispatching requests and responses

@@ -27,6 +27,10 @@ import (
 
 type trainTypeObject struct{}
 
+func (s *trainTypeObject) objectName() string {
+	return "trainType"
+}
+
 // dispatch processes requests made on the TrainType object
 func (s *trainTypeObject) dispatch(h *Hub, req Request, conn *connection) {
 	ch := conn.pushChan

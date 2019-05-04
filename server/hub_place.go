@@ -27,6 +27,10 @@ import (
 
 type placeObject struct{}
 
+func (s *placeObject) objectName() string {
+	return "place"
+}
+
 // dispatch processes requests made on the Place object
 func (s *placeObject) dispatch(h *Hub, req Request, conn *connection) {
 	ch := conn.pushChan

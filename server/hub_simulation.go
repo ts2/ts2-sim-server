@@ -25,6 +25,10 @@ import (
 
 type simulationObject struct{}
 
+func (s *simulationObject) objectName() string {
+	return "simulation"
+}
+
 // dispatch processes requests made on the Simulation object
 func (s *simulationObject) dispatch(h *Hub, req Request, conn *connection) {
 	ch := conn.pushChan
@@ -32,10 +36,10 @@ func (s *simulationObject) dispatch(h *Hub, req Request, conn *connection) {
 	switch req.Action {
 	case "start":
 		sim.Start()
-		ch <- NewOkResponse(req.ID, "Simulation started successfully")
+		ch <- NewOkResponse(req.ID, s.objectName(), req.Action, "Simulation started successfully")
 	case "pause":
 		sim.Pause()
-		ch <- NewOkResponse(req.ID, "Simulation paused successfully")
+		ch <- NewOkResponse(req.ID, s.objectName(), req.Action, "Simulation paused successfully")
 	case "isStarted":
 		j, err := json.Marshal(sim.IsStarted())
 		if err != nil {

@@ -126,7 +126,7 @@ func (conn *connection) registerClient() (error, *Request) {
 	}
 
 	// authenticated, so setup
-	if err := conn.WriteJSON(NewOkResponse(req.ID, "Successfully registered")); err != nil {
+	if err := conn.WriteJSON(NewOkResponse(req.ID, "login", "register", "Successfully registered")); err != nil {
 		logger.Info("Error while writing", "connection", conn.RemoteAddr(), "request", "NewOkResponse", "error", err)
 	}
 	hub.registerChan <- conn
