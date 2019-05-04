@@ -20,6 +20,22 @@ body {
   font-family: monospace;
   padding: 5px; }
 
+.ts2_sim_info {
+  margin-left: 10px; }
+  .ts2_sim_info p {
+    font-size: 10pt;
+    padding: 5px;
+    margin: 0; }
+
+#clock {
+  font-family: monospace;
+  background-color: #444444;
+  color: #eeeeee;
+  font-size: 18pt;
+  border-radius: 8px;
+  padding: 5px 10px;
+  margin-left: 20px; }
+
 #lblConnectedStatus {
   font-size: 12pt; }
 

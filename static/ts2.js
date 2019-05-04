@@ -52,7 +52,9 @@ window.addEventListener("load", function (evt) {
         $('#btnOpen').prop("disabled", connected);
         $('#btnSend').prop("disabled", !connected);
         $('#btnSendClear').prop("disabled", !connected);
-
+        $('#btnSimStartLogin').prop("disabled", !connected);
+        $('#btnSimStart').prop("disabled", !connected);
+        $('#btnSimPause').prop("disabled", !connected);
         setLogoState(connected, false);
        
 
@@ -81,20 +83,32 @@ window.addEventListener("load", function (evt) {
         ws.onmessage = function (evt) {
             print("= RESPONSE: " + evt.data);
             try {
-                console.log(evt.data);
                 var blob = JSON.parse(evt.data);
-                console.log(blob);
-                if (blob.msgType == "response"){
-                    if(blob.data.status == "OK"){
-                        setLogoState(true, true); // workaround
-                        var lbl = $("#lblRecvOkCount");
-                        lbl.html(parseInt(lbl.text(), 10) + 1);
-                    } else if(blob.data.status == "FAIL"){
-                        var lbl = $("#lblRecvFailCount");
-                        lbl.html(parseInt(lbl.text(), 10) + 1);
-                   }    
+
+                switch(blob.msgType){
+                    case "notification":
+                        if(blob.data.name == "clock"){
+                            setLogoState(true, true); // workaround
+                            var lbl = $("#clock");
+                            lbl.html(blob.data.object);
+
+                        }   
+                        break;
+                
+                    case "response":
+                        if(blob.data.status == "OK"){
+                            setLogoState(true, true); // workaround
+                            var lbl = $("#lblRecvOkCount");
+                            lbl.html(parseInt(lbl.text(), 10) + 1);
+
+                        } else if(blob.data.status == "FAIL"){
+                            var lbl = $("#lblRecvFailCount");
+                            lbl.html(parseInt(lbl.text(), 10) + 1);
+                    }    
+                    break;
                 }
                 return false;
+
             } catch (err) {
                 print(ReferenceError)
                 print("< ERROR decoding json: " + evt.data);
@@ -107,6 +121,7 @@ window.addEventListener("load", function (evt) {
         input.focus();
         return false;
     };
+    
     document.getElementById("btnSend").onclick = function (evt) {
         if (!ws) {
             return false;
@@ -148,6 +163,25 @@ window.addEventListener("load", function (evt) {
         input.focus();
         return false;
     };
+    //#####################################
+    document.getElementById("btnSimStartLogin").onclick = function (evt) {
+        var btnSend = document.getElementById("btnSend")
+        document.getElementById("loginTmpl").click();
+        btnSend.click();
+        document.getElementById("addListenerTmpl").click();
+        btnSend.click();
+        document.getElementById("simStartTmpl").click();
+        btnSend.click();
+        
+    }
+    document.getElementById("btnSimStart").onclick = function (evt) {
+        document.getElementById("simStartTmpl").click();
+        document.getElementById("btnSend").click();
+    }
+    document.getElementById("btnSimPause").onclick = function (evt) {
+        document.getElementById("simPauseTmpl").click();
+        document.getElementById("btnSend").click();
+    }
     // Templates
     document.getElementById("loginTmpl").onclick = function (evt) {
         input.value = '{"object": "server", "action": "register", "params": {"type": "client", "token": "client-secret"}}';

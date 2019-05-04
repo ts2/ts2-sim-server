@@ -62,7 +62,7 @@
 <div class="container">
     <div class="row">
 
-            <div class="col-md-6">
+            <div class="col-md-5">
                     <div class="card m-3">
                         <div class="card-body">
                             <h3 class="card-title">WebSocket Connection</h3>
@@ -92,24 +92,26 @@
                     
                 </div>
 
-        <div class="col-md-6">
+        <div class="col-md-7">
             <div class="card m-3">
                     <div class="card-body">
-                        <h3 class="card-title">Loaded Simulation</h3>
-                        <table class="table stable-bordered table-condensed">
-                            <tr>
-                                <th>Title:</th>
-                                <td>{{ .Title }}</td>
-                            </tr>
-                            <tr>
-                                <th>Description:</th>
-                                <td>{{ .Description }}</td>
-                            </tr>
-                            <tr>
-                                <th>WebSocket Server:</th>
-                                <td>{{ .Host }}</td>
-                            </tr>
-                        </table>
+                        <h3 class="card-title">Simulation</h3>
+                            <div class="ts2_sim_info">
+                                <p>Title:<br><b>{{ .Title }}</b></p>
+                                <p>Description:<br><b>{{ .Description }}</b></p>
+                           </div>
+                            <div class="form-row">
+                                    <div class="col">
+                                            <button id="btnSimStartLogin" type="button" class="btn btn-info">Start &amp; Login</button>
+                                            <button id="btnSimStart" type="button" class="btn btn-info">Start</button>
+                                            <button id="btnSimPause" type="button" class="btn btn-info">Pause</button>
+                                            <div class="badge" id="clock">06:01:07</div>
+                                            <div class="badge not-connected mx-3">Idle</div>
+                                    </div>            
+                            </div>
+                           
+                        </div>
+                        
                     </div>
                 </div>
         </div>
