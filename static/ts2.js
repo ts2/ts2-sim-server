@@ -26,10 +26,10 @@ window.addEventListener("load", function (evt) {
     };
     var showConnected = function (connected) {
         print(connected ? "# WS Connected" : "# WS Disconnected");
-        var label = $('#lblStatus');
+        var label = $('#lblConnectedStatus');
         label.text(connected ? "Connected" : "Disconnected");
-        label.toggleClass("badge-success", connected);
-        label.toggleClass("badge-danger", !connected);
+        label.toggleClass("connected", connected);
+        label.toggleClass("not-connected", !connected);
         $('#btnClose').prop("disabled", !connected);
         $('#btnOpen').prop("disabled", connected);
         $('#btnSend').prop("disabled", !connected);

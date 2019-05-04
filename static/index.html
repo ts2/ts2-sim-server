@@ -4,7 +4,8 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 	<link rel="icon" href="/static/ts2.ico" type="image/x-icon"/>
-	<link rel="shortcut icon" href="/static/ts2.ico" type="image/x-icon"/>
+    <link rel="shortcut icon" href="/static/ts2.ico" type="image/x-icon"/>
+    <title>TS" Sim Server</title>
     
     <link href="/static/bootstrap.min.css" rel="stylesheet"/>
     <link href="/static/css/ts2.css" rel="stylesheet"/>
@@ -80,12 +81,12 @@
                 <div class="card-body">
                     <h3 class="card-title">WebSocket Connection</h3>
                     
-                    <form>
+                   
                         <div class="form-row">
                             <div class="form-group">
                                 <button id="btnOpen" type="button" class="btn btn-info">Open</button>
                                 <button id="btnClose" type="button" class="btn btn-info">Close</button>
-                                <span class="badge badge-danger mx-3" id="lblStatus">Disconnected</span>
+                                <span class="badge not-connected mx-3" id="lblConnectedStatus">Disconnected</span>
                             </div>
                         </div>
                         <div class="form-row">
@@ -94,7 +95,7 @@
                                 <h5>Recv Fail:<span class="badge badge-danger mx-3" id="lblRecvFailCount">0</span></h5>
 
                         </div>
-                    </form>
+                   
                 </div>
             </div>
             
