@@ -1,0 +1,31 @@
+.card .card-body {
+  padding: 15px; }
+  .card .card-body h3 {
+    font-size: 14pt;
+    border-bottom: 1px solid #dddddd; }
+
+.table {
+  font-size: 10pt; }
+  .table th {
+    text-align: right;
+    font-weight: normal;
+    border-right: 1px solid #dddddd; }
+  .table td {
+    font-weight: bold; }
+  .table th, .table td {
+    border-top: none;
+    border-bottom: 1px solid #dddddd; }
+
+#input, #output {
+  width: 100%;
+  font-size: 9pt;
+  font-family: monospace;
+  background-color: #ffffdd; }
+
+#input {
+  margin-top: 10px; }
+
+#output {
+  margin-top: 10px;
+  height: 300px;
+  overflow: auto; }
