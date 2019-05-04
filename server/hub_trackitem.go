@@ -27,10 +27,6 @@ import (
 
 type trackItemObject struct{}
 
-func (trki *trackItemObject) objectName() string {
-	return "trackitem"
-}
-
 // dispatch processes requests made on the TrackItem object
 func (trki *trackItemObject) dispatch(h *Hub, req Request, conn *connection) {
 	ch := conn.pushChan

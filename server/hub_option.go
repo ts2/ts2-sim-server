@@ -25,10 +25,6 @@ import (
 
 type optionObject struct{}
 
-func (oo *optionObject) objectName() string {
-	return "option"
-}
-
 // dispatch processes requests made on the Option object
 func (oo *optionObject) dispatch(h *Hub, req Request, conn *connection) {
 	ch := conn.pushChan

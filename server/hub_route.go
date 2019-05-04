@@ -27,10 +27,6 @@ import (
 
 type routeObject struct{}
 
-func (r *routeObject) objectName() string {
-	return "route"
-}
-
 // dispatch processes requests made on the route object
 func (r *routeObject) dispatch(h *Hub, req Request, conn *connection) {
 	ch := conn.pushChan

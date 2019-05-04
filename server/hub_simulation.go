@@ -25,10 +25,6 @@ import (
 
 type simulationObject struct{}
 
-func (s *simulationObject) objectName() string {
-	return "simulation"
-}
-
 // dispatch processes requests made on the Simulation object
 func (s *simulationObject) dispatch(h *Hub, req Request, conn *connection) {
 	ch := conn.pushChan

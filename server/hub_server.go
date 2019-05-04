@@ -25,10 +25,6 @@ import (
 
 type serverObject struct{}
 
-func (s *serverObject) objectName() string {
-	return "server"
-}
-
 // dispatch processes requests made on the Server object
 func (s *serverObject) dispatch(h *Hub, req Request, conn *connection) {
 	ch := conn.pushChan
