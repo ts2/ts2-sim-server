@@ -20,6 +20,15 @@ function makeLogo(){
     aspects.red = Logo.circle(circleRadius).move(cent, down + (circleRadius * 2) + space + space).attr({ fill: 'red' });
 }
 
+function setLogoState(connected, auth){
+
+    var offColor = "#444444";
+    aspects.green.attr({fill: !connected ? offColor : auth ? "#62D637" : offColor});
+    aspects.amber.attr({fill: connected && !auth ? "orange" :  offColor});
+    aspects.red.attr({fill: !connected ? "red" : offColor});
+
+}
+
 
 window.addEventListener("load", function (evt) {
 
@@ -28,7 +37,6 @@ window.addEventListener("load", function (evt) {
 
 
     // ----
-    var Auth = false;
     var input = document.getElementById("input");
     var ws = null;
     var print = function (message) {
@@ -45,11 +53,8 @@ window.addEventListener("load", function (evt) {
         $('#btnSend').prop("disabled", !connected);
         $('#btnSendClear').prop("disabled", !connected);
 
-        
-        var offColor = "#444444";
-        aspects.green.attr({fill: !connected ? offColor : Auth ? "green" : offColor});
-        aspects.amber.attr({fill: connected && !Auth ? "orange" :  offColor});
-        aspects.red.attr({fill: !connected ? "red" : offColor});
+        setLogoState(connected, false);
+       
 
 
     };
@@ -76,9 +81,12 @@ window.addEventListener("load", function (evt) {
         ws.onmessage = function (evt) {
             print("= RESPONSE: " + evt.data);
             try {
-                var blob = JSON.parse(evt.data)
+                console.log(evt.data);
+                var blob = JSON.parse(evt.data);
+                console.log(blob);
                 if (blob.msgType == "response"){
                     if(blob.data.status == "OK"){
+                        setLogoState(true, true); // workaround
                         var lbl = $("#lblRecvOkCount");
                         lbl.html(parseInt(lbl.text(), 10) + 1);
                     } else if(blob.data.status == "FAIL"){
@@ -86,7 +94,9 @@ window.addEventListener("load", function (evt) {
                         lbl.html(parseInt(lbl.text(), 10) + 1);
                    }    
                 }
+                return false;
             } catch (err) {
+                print(ReferenceError)
                 print("< ERROR decoding json: " + evt.data);
                 return false; 
             }

@@ -7,6 +7,7 @@
     <link rel="shortcut icon" href="/static/ts2.ico" type="image/x-icon"/>
     <title>TS2 Sim Server</title>
     
+    <base ref="/">
     <link href="/static/bootstrap.min.css" rel="stylesheet"/>
     <link href="/static/css/ts2.css" rel="stylesheet"/>
     
@@ -28,7 +29,8 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-2"></div>
-        <div class="col-md-3">
+        <div class="col-md-8"></div>
+        <div class="col-md-2">
             <nav class="navbar navbar-expand-sm navbar-dark sbg-dark">
                 <!-- <img src="/static/ts2.ico"/> -->
 
@@ -43,10 +45,10 @@
                             <!-- <li class="nav-item active">
                                 <a class="nav-link" href="#">Home</a>
                             </li> -->
-                            <li class="nav-item active">
+                            <li class="nav-item">
                                 <a class="nav-link" href="https://godoc.org/github.com/ts2/ts2-sim-server" target="_godoc">Godoc</a>
                             </li>
-                            <li class="nav-item active">
+                            <li class="nav-item">
                                 <a class="nav-link" href="https://github.com/ts2/ts2-sim-server" target="_github">github</a>
                             </li>
                         </ul>
@@ -60,7 +62,37 @@
 <div class="container">
     <div class="row">
 
-        <div class="col-md-7">
+            <div class="col-md-6">
+                    <div class="card m-3">
+                        <div class="card-body">
+                            <h3 class="card-title">WebSocket Connection</h3>
+                            
+                           
+                                <div class="form-row">
+                                    <div class="col">
+                                        <button id="btnOpen" type="button" class="btn btn-info">Open</button>
+                                        <button id="btnClose" type="button" class="btn btn-info">Close</button>
+                                    </div>
+                                    <div class="col">
+                                        <div class="badge not-connected mx-3" id="lblConnectedStatus">Disconnected</div>
+                                        <div class="ts2_host">{{ .Host }}</div>
+                                        
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                        <div class="stats">Sent: <span class="badge badge-pill badge-secondary mx-3" id="lblSentCount">0</span></div>
+                                        <div class="stats">Recv Ok:<span class="badge badge-pill badge-success mx-3" id="lblRecvOkCount">0</span></div>
+                                        <div class="stats">Recv Fail:<span class="badge badge-pill badge-danger mx-3" id="lblRecvFailCount">0</span></div>
+        
+                                </div>
+                           
+                        </div>
+                    </div>
+                    
+                    
+                </div>
+
+        <div class="col-md-6">
             <div class="card m-3">
                     <div class="card-body">
                         <h3 class="card-title">Loaded Simulation</h3>
@@ -83,31 +115,7 @@
         </div>
 
 
-        <div class="col-md-5">
-            <div class="card m-3">
-                <div class="card-body">
-                    <h3 class="card-title">WebSocket Connection</h3>
-                    
-                   
-                        <div class="form-row">
-                            <div class="form-group">
-                                <button id="btnOpen" type="button" class="btn btn-info">Open</button>
-                                <button id="btnClose" type="button" class="btn btn-info">Close</button>
-                                <span class="badge not-connected mx-3" id="lblConnectedStatus">Disconnected</span>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                                <h5>Sent: <span class="badge badge-secondary mx-3" id="lblSentCount">0</span></h5>
-                                <h5>Recv Ok:<span class="badge badge-success mx-3" id="lblRecvOkCount">0</span></h5>
-                                <h5>Recv Fail:<span class="badge badge-danger mx-3" id="lblRecvFailCount">0</span></h5>
-
-                        </div>
-                   
-                </div>
-            </div>
-            
-            
-        </div>
+        
     </div>
 </div>
 

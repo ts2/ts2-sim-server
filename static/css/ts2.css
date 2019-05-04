@@ -15,6 +15,11 @@ body {
   font-family: monospace;
   margin: 20px 0 0 100px; }
 
+.ts2_host {
+  font-size: 9pt;
+  font-family: monospace;
+  padding: 5px; }
+
 #lblConnectedStatus {
   font-size: 12pt; }
 
@@ -32,15 +37,18 @@ body {
     padding: 0; }
     .card .card-body h3.card-title {
       padding: 5px 10px;
-      font-size: 12pt;
+      font-size: 10pt;
       font-family: monospace;
-      border-bottom: 1px solid #dddddd;
-      background-color: #eeeeee !important;
-      background: linear-gradient(to left, #cccccc, #dddddd 20%, #eee 75%); }
-    .card .card-body h5 {
-      font-size: 11pt; }
+      border-bottom: 1px solid #999999;
+      color: #444444;
+      background: linear-gradient(to left, #999999, #777777 20%, transparent 75%); }
     .card .card-body .form-row {
       margin: 10px; }
+    .card .card-body .stats {
+      font-size: 11pt; }
+      .card .card-body .stats .badge {
+        font-size: 13pt;
+        min-width: 40px; }
 
 .table {
   font-size: 10pt; }
