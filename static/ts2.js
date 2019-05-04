@@ -81,7 +81,7 @@ window.addEventListener("load", function (evt) {
             ws = null;
         };
         ws.onmessage = function (evt) {
-            print("= RESPONSE: " + evt.data);
+            
             try {
                 var blob = JSON.parse(evt.data);
 
@@ -96,6 +96,7 @@ window.addEventListener("load", function (evt) {
                         break;
                 
                     case "response":
+                    print("= RESPONSE: " + evt.data);
                         if(blob.data.status == "OK"){
                             setLogoState(true, true); // workaround
                             var lbl = $("#lblRecvOkCount");
