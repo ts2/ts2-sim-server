@@ -88,6 +88,12 @@
                                 <span class="badge badge-danger mx-3" id="lblStatus">Disconnected</span>
                             </div>
                         </div>
+                        <div class="form-row">
+                                <h5>Sent: <span class="badge badge-secondary mx-3" id="lblSentCount">0</span></h5>
+                                <h5>Recv Ok:<span class="badge badge-success mx-3" id="lblRecvOkCount">0</span></h5>
+                                <h5>Recv Fail:<span class="badge badge-danger mx-3" id="lblRecvFailCount">0</span></h5>
+
+                        </div>
                     </form>
                 </div>
             </div>
@@ -210,13 +216,14 @@
                 
     <!-- Send message-->
     <div class="row">
-        <div class="col-md-9">
+        <div class="col-md-8">
             <input type="text" id="input" placeHolder="Message">
         </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
             <button id="btnClearInput" type="button" class="btn btn-outline-dark">X</button>
+            <button id="btnSendClear" type="button" class="btn btn-success">Send &amp; Clear</button>
             <button id="btnSend" type="button" class="btn btn-success">Send</button>
-            <button id="btnClear" type="button" class="btn btn-default">Clear Log</button>
+            <button id="btnClearLog" type="button" class="btn btn-default">Clear Log</button>
         </div>
     </div>
 				

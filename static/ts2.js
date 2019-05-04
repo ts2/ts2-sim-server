@@ -33,8 +33,9 @@ window.addEventListener("load", function (evt) {
         $('#btnClose').prop("disabled", !connected);
         $('#btnOpen').prop("disabled", connected);
         $('#btnSend').prop("disabled", !connected);
+        $('#btnSendClear').prop("disabled", !connected);
 
-        
+
         var offColor = "#333333";
         aspects.green.attr({fill: !connected ? offColor : Auth ? "green" : offColor});
         aspects.amber.attr({fill: connected && !Auth ? "orange" :  offColor});
@@ -63,7 +64,22 @@ window.addEventListener("load", function (evt) {
             ws = null;
         };
         ws.onmessage = function (evt) {
-            print("< RESPONSE: " + evt.data);
+            print("= RESPONSE: " + evt.data);
+            try {
+                var blob = JSON.parse(evt.data)
+                if (blob.msgType == "response"){
+                    if(blob.data.status == "OK"){
+                        var lbl = $("#lblRecvOkCount");
+                        lbl.html(parseInt(lbl.text(), 10) + 1);
+                    } else if(blob.data.status == "FAIL"){
+                        var lbl = $("#lblRecvFailCount");
+                        lbl.html(parseInt(lbl.text(), 10) + 1);
+                   }    
+                }
+            } catch (err) {
+                print("< ERROR decoding json: " + evt.data);
+                return false; 
+            }
         };
         ws.onerror = function (evt) {
             print("< ERROR: " + evt.data);
@@ -75,11 +91,27 @@ window.addEventListener("load", function (evt) {
         if (!ws) {
             return false;
         }
-        print("> SEND: " + input.value);
-        ws.send(input.value);
+        var vv = input.value.trim();
+        if(vv.length < 10){
+            input.focus();
+            return
+        }
+        print("> SENT: " + vv);
+        ws.send(vv);
         $('#input').val("");
         input.focus();
+
+        var lblSentCount = $("#lblSentCount");
+        lblSentCount.html(parseInt(lblSentCount.text(), 10) + 1);
+
         return false;
+    };
+    document.getElementById("btnSendClear").onclick = function (evt) {
+        if (!ws) {
+            return false;
+        }
+        document.getElementById("btnClearLog").click();
+        document.getElementById("btnSend").click();
     };
     document.getElementById("btnClose").onclick = function (evt) {
         if (ws) {
@@ -87,7 +119,7 @@ window.addEventListener("load", function (evt) {
         }
         return false;
     };
-    document.getElementById("btnClear").onclick = function (evt) {
+    document.getElementById("btnClearLog").onclick = function (evt) {
         $('#output').empty();
         return false;
     };

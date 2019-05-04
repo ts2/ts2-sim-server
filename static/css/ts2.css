@@ -3,6 +3,8 @@
   .card .card-body h3 {
     font-size: 14pt;
     border-bottom: 1px solid #dddddd; }
+  .card .card-body h5 {
+    font-size: 12pt; }
 
 .table {
   font-size: 10pt; }
