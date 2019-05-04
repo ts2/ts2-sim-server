@@ -1,3 +1,20 @@
+body {
+  background: #050418;
+  background: radial-gradient(circle, rgba(5, 4, 24, 0.7007177871) 0%, #181a1f 35%, black 100%); }
+
+#ts2_logo {
+  position: absolute;
+  z-index: 99999;
+  top: 15px;
+  left: 15px; }
+
+#ts2_brand {
+  font-size: 14pt;
+  float: left;
+  color: #cccccc;
+  font-family: monospace;
+  margin: 20px 0 0 100px; }
+
 #lblConnectedStatus {
   font-size: 12pt; }
 

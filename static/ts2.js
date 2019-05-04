@@ -1,21 +1,31 @@
+//var Logo;
+var aspects = {};
+function makeLogo(){
+    
+    var w = 60;
+    var h = 120;
+    var bw = 5;
+    
+    var circleRadius = 30;
+    var cent = (w / 2) - (circleRadius / 2);
+
+    var Logo = SVG('ts2_logo').size(w, h);
+    Logo.rect(w, h).radius(10).attr({ fill: '#999999' })
+    Logo.rect(w - bw, h - bw).radius(10).move(bw / 2, bw / 2).attr({ fill: '#222222' })
+
+    var down = 10;
+    var space = 4;
+    aspects.green = Logo.circle(circleRadius).move(cent, down).attr({ fill: 'green' });
+    aspects.amber = Logo.circle(circleRadius).move(cent, down + circleRadius + space).attr({ fill: 'orange' });
+    aspects.red = Logo.circle(circleRadius).move(cent, down + (circleRadius * 2) + space + space).attr({ fill: 'red' });
+}
+
+
 window.addEventListener("load", function (evt) {
 
-    var lw = 40;
-    var lh = 70;
-    var bw = 3;
-   
-    var cr = 18;
-    var cent = 12;
 
-    var Logo = SVG('ts2_logo').size(lw, lh);
-    Logo.rect(lw, lh).radius(10).attr({ fill: '#666666' })
-    Logo.rect(lw - bw, lh - bw).radius(10).move(bw / 2, bw / 2).attr({ fill: '#222222' })
+    makeLogo();
 
-    var down = 5;
-    var aspects = {};
-    aspects.green = Logo.circle(cr).move(cent, down).attr({ fill: 'green' });
-    aspects.amber = Logo.circle(cr).move(cent, down + cr + 2).attr({ fill: 'orange' });
-    aspects.red = Logo.circle(cr).move(cent, down + (cr * 2) + 4).attr({ fill: 'red' });
 
     // ----
     var Auth = false;
@@ -35,8 +45,8 @@ window.addEventListener("load", function (evt) {
         $('#btnSend').prop("disabled", !connected);
         $('#btnSendClear').prop("disabled", !connected);
 
-
-        var offColor = "#333333";
+        
+        var offColor = "#444444";
         aspects.green.attr({fill: !connected ? offColor : Auth ? "green" : offColor});
         aspects.amber.attr({fill: connected && !Auth ? "orange" :  offColor});
         aspects.red.attr({fill: !connected ? "red" : offColor});
