@@ -5,7 +5,7 @@
 }
 
 #lblConnectedStatus {
-    font-size: 16pt;
+    font-size: 12pt;
     
 }
 .connected {
@@ -19,19 +19,23 @@
     //border: 1px solid #990000;
 }
 .card {
+
+    box-shadow: 3px 3px #888888;
     .card-body {
     
         padding: 0;
 
         h3.card-title {
             padding: 5px 10px;
-            font-size: 14pt;
+            font-size: 12pt;
+            font-family: monospace;
             border-bottom: 1px solid #dddddd;
             background-color: #eeeeee !important;
+            background: linear-gradient(to left, #cccccc, #dddddd 20%, #eee 75%);
         }
 
         h5 {
-            font-size: 12pt;
+            font-size: 11pt;
             //display: block;
         }
 
@@ -43,21 +47,24 @@
 }
 
 .table {
-
+    //margin: 10px;
     font-size: 10pt;
 
     th {
         text-align: right;
         font-weight: normal;
         border-right: 1px solid #dddddd; 
+        //background-color: #eeeeee;
+        //
     }
     td {
         font-weight: bold;
     }
 
     th, td {
-        border-top: none;
-        border-bottom: 1px solid #dddddd;
+       border: none;
+       border-bottom: 1px solid #dddddd;
+       padding: 5px;
     }
     
 }
