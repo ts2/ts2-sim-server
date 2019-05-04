@@ -74,10 +74,12 @@ type ResponseNotification struct {
 }
 
 // NewResponse returns a Response with the given data
-func NewResponse(id int, data RawJSON) *Response {
+func NewResponse(id int, obj string, action string, data RawJSON) *Response {
 	r := Response{
 		ID:      id,
 		MsgType: TypeResponse,
+		Object:  obj,
+		Action:  action,
 		Data:    data,
 	}
 	return &r

@@ -27,14 +27,15 @@ import (
 
 type trackItemObject struct{}
 
-func (s *trackItemObject) objectName() string {
+func (trki *trackItemObject) objectName() string {
 	return "trackitem"
 }
 
 // dispatch processes requests made on the TrackItem object
-func (s *trackItemObject) dispatch(h *Hub, req Request, conn *connection) {
+func (trki *trackItemObject) dispatch(h *Hub, req Request, conn *connection) {
 	ch := conn.pushChan
 	switch req.Action {
+
 	case "list":
 		logger.Debug("Request for trackitem list received", "submodule", "hub", "object", req.Object, "action", req.Action)
 		til, err := json.Marshal(sim.TrackItems)
@@ -42,7 +43,8 @@ func (s *trackItemObject) dispatch(h *Hub, req Request, conn *connection) {
 			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
 			return
 		}
-		ch <- NewResponse(req.ID, til)
+		ch <- NewResponse(req.ID, trki.objectName(), req.Action, til)
+
 	case "show":
 		var idsParams = struct {
 			IDs []string `json:"ids"`
@@ -68,6 +70,7 @@ func (s *trackItemObject) dispatch(h *Hub, req Request, conn *connection) {
 			return
 		}
 		ch <- NewResponse(req.ID, tid)
+
 	default:
 		ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown action %s/%s", req.Object, req.Action))
 		logger.Debug("Request for unknown action received", "submodule", "hub", "object", req.Object, "action", req.Action)

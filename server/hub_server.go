@@ -33,9 +33,11 @@ func (s *serverObject) objectName() string {
 func (s *serverObject) dispatch(h *Hub, req Request, conn *connection) {
 	ch := conn.pushChan
 	switch req.Action {
+
 	case "register":
 		ch <- NewErrorResponse(req.ID, fmt.Errorf("can't call register when already registered"))
 		logger.Warn("Request for second register received", "submodule", "hub", "object", req.Object, "action", req.Action)
+
 	case "addListener":
 		logger.Debug("Request for addListener received", "submodule", "hub", "object", req.Object, "action", req.Action, "params", req.Params)
 		if err := h.addRegistryEntry(req, conn); err != nil {
@@ -43,6 +45,7 @@ func (s *serverObject) dispatch(h *Hub, req Request, conn *connection) {
 			return
 		}
 		ch <- NewOkResponse(req.ID, s.objectName(), req.Action, "Listener added successfully")
+
 	case "removeListener":
 		logger.Debug("Request for removeListener received", "submodule", "hub", "object", req.Object, "action", req.Action, "params", req.Params)
 		if err := h.removeRegistryEntry(req, conn); err != nil {
@@ -50,6 +53,7 @@ func (s *serverObject) dispatch(h *Hub, req Request, conn *connection) {
 			return
 		}
 		ch <- NewOkResponse(req.ID, s.objectName(), req.Action, "Listener removed successfully")
+
 	case "renotify":
 		logger.Debug("Request for renotify received", "submodule", "hub", "object", req.Object, "action", req.Action, "params", req.Params)
 		if err := h.renotifyClient(req, conn); err != nil {
@@ -57,6 +61,7 @@ func (s *serverObject) dispatch(h *Hub, req Request, conn *connection) {
 			return
 		}
 		ch <- NewOkResponse(req.ID, s.objectName(), req.Action, "Renotify request taken into account")
+
 	default:
 		ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown action %s/%s", req.Object, req.Action))
 		logger.Debug("Request for unknown action received", "submodule", "hub", "object", req.Object, "action", req.Action, "params", req.Params)
