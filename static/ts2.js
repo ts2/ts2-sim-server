@@ -1,4 +1,24 @@
 window.addEventListener("load", function (evt) {
+
+    var lw = 40;
+    var lh = 70;
+    var bw = 3;
+   
+    var cr = 18;
+    var cent = 12;
+
+    var Logo = SVG('ts2_logo').size(lw, lh);
+    Logo.rect(lw, lh).radius(10).attr({ fill: '#666666' })
+    Logo.rect(lw - bw, lh - bw).radius(10).move(bw / 2, bw / 2).attr({ fill: '#222222' })
+
+    var down = 5;
+    var aspects = {};
+    aspects.green = Logo.circle(cr).move(cent, down).attr({ fill: 'green' });
+    aspects.amber = Logo.circle(cr).move(cent, down + cr + 2).attr({ fill: 'orange' });
+    aspects.red = Logo.circle(cr).move(cent, down + (cr * 2) + 4).attr({ fill: 'red' });
+
+    // ----
+    var Auth = false;
     var input = document.getElementById("input");
     var ws = null;
     var print = function (message) {
@@ -13,6 +33,14 @@ window.addEventListener("load", function (evt) {
         $('#btnClose').prop("disabled", !connected);
         $('#btnOpen').prop("disabled", connected);
         $('#btnSend').prop("disabled", !connected);
+
+        
+        var offColor = "#333333";
+        aspects.green.attr({fill: !connected ? offColor : Auth ? "green" : offColor});
+        aspects.amber.attr({fill: connected && !Auth ? "orange" :  offColor});
+        aspects.red.attr({fill: !connected ? "red" : offColor});
+
+
     };
     document.getElementById("btnOpen").onclick = function (evt) {
         if (ws) {
@@ -186,3 +214,4 @@ window.addEventListener("load", function (evt) {
     };
     showConnected(false);
 });
+
