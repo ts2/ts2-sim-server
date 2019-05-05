@@ -48,11 +48,27 @@ window.addEventListener("load", function (evt) {
         $('#output').append(message + "\n")
     };
     var updateWidgets = function () {
-        print(STA.connected ? "# WS Connected" : "# WS Disconnected");
+        console.log(STA);
+        //print(STA.connected ? "# WS Connected" : "# WS Disconnected");
+
         var label = $('#lblConnectedStatus');
         label.text(STA.connected ? "Connected" : "Disconnected");
         label.toggleClass("connected", STA.connected);
         label.toggleClass("not-connected", !STA.connected);
+
+        var label = $('#lblRunningStatus');
+        label.text((!STA.connnected && !STA.auth) ? "-------" : STA.running ? "Running" : "Paused");
+        if(STA.connnected && STA.auth && STA.running){
+            console.log("RUNNNNNNNNNNN")
+            label.removeClass("not-running");
+            label.addClass("running");
+        } else {
+            console.log("STOPPEDddddddddd")
+            label.removeClass("running");
+            label.addClass("not-running");
+        }
+        
+
         $('#btnClose').prop("disabled", !STA.connected);
         $('#btnOpen').prop("disabled", STA.connected);
         $('#btnSend').prop("disabled", !STA.connected);
@@ -104,17 +120,18 @@ window.addEventListener("load", function (evt) {
                 switch(resp.msgType){
                     case "notification":
                         if(resp.data.name == "clock"){
-                            //setLogoState(true, true); // workaround
+                            
                             var lbl = $("#clock");
                             lbl.html(resp.data.object);
-                            incrementCounter("#lblRecvOkCount")
+                            return // get outta here
 
                         } else if (resp.data.name == "stateChanged"){
                             print("= RESPONSE: " + evt.data);
                             // {"msgType":"notification","data":{"name":"stateChanged","object":{"value":false}}}
+                            console.log("RUNNING============", resp.data.object.value, resp.data)
                             STA.running = resp.data.object.value
                         }
-                        
+                        incrementCounter("#lblNoticesCount")
 
                         break;
                 

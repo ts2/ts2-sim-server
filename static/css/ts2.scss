@@ -33,17 +33,18 @@ body {
     }
 }
 #clock {
+    float: right;
     font-family: monospace;
     background-color: #444444;
     color: #eeeeee;
-    font-size: 18pt;
-    border-radius: 8px;
+    font-size: 22pt;
+    border-radius: 2px;
     padding: 5px 10px;
-    margin-left: 20px;
+    margin-right: 20px;
 }
 
 
-#lblConnectedStatus {
+#lblConnectedStatus, #lblRunningStatus {
     font-size: 12pt;
 }
 .connected {
@@ -54,7 +55,14 @@ body {
     background-color: #FFE4E2;
     color: #990000;
 }
-
+.running {
+    background-color: #E3FFCE;
+    color: green;
+}
+.not-running {
+    background-color: yellow;
+    color: #333333;
+}
 
 .card {
     //background-color: #444444;
@@ -80,7 +88,7 @@ body {
         }
 
         .stats {
-            font-size: 11pt;
+            font-size: 10pt;
 
             .badge {
                 font-size: 13pt;
