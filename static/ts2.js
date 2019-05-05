@@ -29,10 +29,10 @@ function makeSignal(){
 function updateSignalState(){
     //console.log(STA);
     var offColor = "#444444";
-    aspects.yelltop.attr({fill: STA.connected && !STA.auth && !STA.running ?  "yellow" : offColor});
-    aspects.green.attr({fill: STA.connected && STA.auth && STA.running ? "#62D637" : offColor});
-    aspects.yellbottom.attr({fill: (STA.connected && !STA.auth && !STA.running) || (STA.connected && STA.auth && !STA.running) ? "yellow" :  offColor});
-    aspects.red.attr({fill: !STA.connected ? "red" : offColor});
+    aspects.yelltop.animate(300).attr({fill: STA.connected && !STA.auth && !STA.running ?  "yellow" : offColor});
+    aspects.green.animate(300).attr({fill: STA.connected && STA.auth && STA.running ? "#62D637" : offColor});
+    aspects.yellbottom.animate(300).attr({fill: (STA.connected && !STA.auth && !STA.running) || (STA.connected && STA.auth && !STA.running) ? "yellow" :  offColor});
+    aspects.red.animate(300).attr({fill: !STA.connected ? "red" : offColor});
 }
 
 
