@@ -100,5 +100,5 @@ body {
 
 #output {
   margin-top: 10px;
-  height: 300px;
+  min-height: 300px;
   overflow: auto; }

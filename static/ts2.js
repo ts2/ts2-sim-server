@@ -115,46 +115,42 @@ window.addEventListener("load", function (evt) {
                 var resp = JSON.parse(evt.data);
 
                 switch(resp.msgType){
+
                     case "notification":
+                    
+                        incrementCounter("#lblNoticesCount")
+
+                        // Clock
                         if(resp.data.name == "clock"){
                             
                             var lbl = $("#clock");
                             lbl.html(resp.data.object);
                             return // get outta here
 
-                        } else if (resp.data.name == "stateChanged"){
-                            print("= RESPONSE: " + evt.data);
-                            // {"msgType":"notification","data":{"name":"stateChanged","object":{"value":false}}}
-                            console.log("RUNNING============", resp.data.object.value, resp.data)
+                        // Sim running or paused
+                        } else if (resp.data.name == "stateChanged"){ 
+                            print("= NOTICE: " + evt.data);
                             STA.running = resp.data.object.value
                         }
-                        incrementCounter("#lblNoticesCount")
-
                         break;
                 
                     case "response":
-                    
+                        print("= RESPONSE: " + evt.data);
+
                         if(resp.data.status == "OK"){
-                            print("= RESPONSE: " + evt.data);
-                            //setLogoState(true, true); // workaround
                             incrementCounter("#lblRecvOkCount")
-                            //var lbl = $("#lblRecvOkCount");
-                            //lbl.html(parseInt(lbl.text(), 10) + 1);
 
                         } else if(resp.data.status == "FAIL"){
-                            print("= RESPONSE: " + evt.data);
-                            //var lbl = $("#lblRecvFailCount");
-                            //lbl.html(parseInt(lbl.text(), 10) + 1);
                             incrementCounter("#lblRecvFailCount")
-                    }    
-                    break;
+                        }    
+                        break;
                 }
                 updateWidgets();
                 return false;
 
             } catch (err) {
+                print("< ERROR: " + evt.data);
                 print(err)
-                print("< ERROR decoding json: " + evt.data);
                 return false; 
             }
         };
@@ -344,5 +340,22 @@ window.addEventListener("load", function (evt) {
         return false;
     };
     updateWidgets();
+    do_resize();
 });
 
+
+// resize output to bottom of page
+function do_resize(){
+    var ele = document.getElementById("output");
+    var rect = ele.getBoundingClientRect();
+    var height = window.innerHeight;
+    var inpHeight = height - rect.y - 10;
+    if(inpHeight < 300) {
+        inpHeight  = 300
+    }
+    ele.style.height = inpHeight + "px";
+}
+
+window.addEventListener("resize", function (evt) {
+    do_resize();
+});
