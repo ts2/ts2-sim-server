@@ -123,7 +123,10 @@ body {
     
 }
 
-#input, #output, #outputNotifications {
+// Inputs, outputs stuff ===============
+
+// applies to txt elements
+.consoleTxt {
     width: 100%; 
     font-size: 9pt;
     font-family: monospace;
@@ -132,11 +135,26 @@ body {
 
 #input {
     margin-top: 10px; 
+    background-color: #DAFBE2;
 }
 #output, #outputNotifications {
-    //margin-top: 10px; 
     min-height: 300px; 
     overflow: auto;
 }
+#outputNotifications {
+    background-color: #F8E3FF;
+}
 
 
+#viewTabs {
+    margin-top: 10px;
+
+    a.nav-link {
+        color: #999999;
+        background-color: #333333;
+    }
+    a.active {
+        background-color: #666666;
+        color: white;
+    }
+}

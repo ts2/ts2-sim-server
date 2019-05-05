@@ -236,10 +236,10 @@
     <!-- Send message-->
     <div class="row">
         <div class="col-md-8">
-            <input type="text" id="input" placeHolder="Message">
+            <input type="text" id="input" class="consoleTxt" placeHolder="Message">
         </div>
         <div class="col-md-4">
-            <button id="btnClearInput" type="button" class="btn btn-outline-dark">X</button>
+            <button id="btnClearInput" type="button" class="btn btn-outline"><i class="fa fa-times"></i></button>
             <button id="btnSendClear" type="button" class="btn btn-success">Send &amp; Clear</button>
             <button id="btnSend" type="button" class="btn btn-success">Send</button>
             <button id="btnClearLog" type="button" class="btn btn-default">Clear Log</button>
@@ -247,7 +247,7 @@
     </div>
         
     <!-- Tabs -->
-    <ul class="nav nav-tabs" id="vTabs" role="tablist">
+    <ul class="nav nav-tabs" id="viewTabs" role="tablist">
         <li class="nav-item">
           <a class="nav-link active" id="response-tab" data-toggle="tab" href="#response-view" role="tab" aria-controls="home" aria-selected="true">Responses</a>
         </li>
@@ -257,19 +257,20 @@
         <li class="nav-item">
           <a class="nav-link" id="data-tab" data-toggle="tab" href="#data-view" role="tab" aria-controls="contact" aria-selected="false">Data</a>
         </li>
-      </ul>
-    <!-- Output-->
+    </ul>
+
+    <!-- Tab Content-->
     <div class="tab-content" id="myTabContent">
-        <div class="tab-pane fade show active" id="response-view" role="tabpanel" aria-labelledby="response-tab">
-            <textarea id="output" placeHolder="Log"></textarea>
+        <div class="tab-pane active" id="response-view" role="tabpanel" aria-labelledby="response-tab">
+            <textarea id="output" class="consoleTxt" placeHolder="Log"></textarea>
         </div>
-        <div class="tab-pane fade" id="notice-view" role="tabpanel" aria-labelledby="notice-tab">
-            <textarea id="outputNotifications" placeHolder="Notifications"></textarea>
+        <div class="tab-pane" id="notice-view" role="tabpanel" aria-labelledby="notice-tab">
+            <textarea id="outputNotifications" class="consoleTxt" placeHolder="Notifications"></textarea>
         </div>
-        <div class="tab-pane fade" id="data-view" role="tabpanel" aria-labelledby="data-tab">
+        <div class="tab-pane" id="data-view" role="tabpanel" aria-labelledby="data-tab">
             <div id="data-table"></div>
         </div>
-      </div>
+    </div>
     
 			
 			

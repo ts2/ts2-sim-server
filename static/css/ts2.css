@@ -89,15 +89,28 @@ body {
     border-bottom: 1px solid #dddddd;
     padding: 5px; }
 
-#input, #output, #outputNotifications {
+.consoleTxt {
   width: 100%;
   font-size: 9pt;
   font-family: monospace;
   background-color: #ffffdd; }
 
 #input {
-  margin-top: 10px; }
+  margin-top: 10px;
+  background-color: #DAFBE2; }
 
 #output, #outputNotifications {
   min-height: 300px;
   overflow: auto; }
+
+#outputNotifications {
+  background-color: #F8E3FF; }
+
+#viewTabs {
+  margin-top: 10px; }
+  #viewTabs a.nav-link {
+    color: #999999;
+    background-color: #333333; }
+  #viewTabs a.active {
+    background-color: #666666;
+    color: white; }
