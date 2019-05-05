@@ -34,7 +34,38 @@ function updateSignalState(){
     aspects.yellbottom.animate(300).attr({fill: (STA.connected && !STA.auth && !STA.running) || (STA.connected && STA.auth && !STA.running) ? "yellow" :  offColor});
     aspects.red.animate(300).attr({fill: !STA.connected ? "red" : offColor});
 }
+function updateWidgets() {
+        
+    updateSignalState();
 
+    // WS stuff
+    var label = $('#lblConnectedStatus');
+    label.text(STA.connected ? "Connected" : "Disconnected");
+    label.toggleClass("connected", STA.connected);
+    label.toggleClass("not-connected", !STA.connected);
+
+    $('#btnClose').prop("disabled", !STA.connected);
+    $('#btnOpen').prop("disabled", STA.connected);
+
+    // Sim Stuff
+    var label = $('#lblRunningStatus');
+    label.text((!STA.connnected && !STA.auth) ? "-------" : STA.running ? "Running" : "Paused");
+    if(STA.running){
+        label.removeClass("not-running");
+        label.addClass("running");
+    } else {
+        label.removeClass("running");
+        label.addClass("not-running");
+    }
+    
+    $('#btnSend').prop("disabled", !STA.connected);
+    $('#btnSendClear').prop("disabled", !STA.connected);
+    $('#btnLogin').prop("disabled", !STA.connected);
+    $('#btnSimStart').prop("disabled", !STA.connected && !STA.auth);
+    $('#btnSimPause').prop("disabled", !STA.connected && !STA.auth);
+    
+    $("#action_buttons_div button").prop("disabled", !STA.connected);
+};
 
 window.addEventListener("load", function (evt) {
 
@@ -47,36 +78,10 @@ window.addEventListener("load", function (evt) {
     var print = function (message) {
         $('#output').append(message + "\n")
     };
-    var updateWidgets = function () {
-        
-
-        var label = $('#lblConnectedStatus');
-        label.text(STA.connected ? "Connected" : "Disconnected");
-        label.toggleClass("connected", STA.connected);
-        label.toggleClass("not-connected", !STA.connected);
-
-        var label = $('#lblRunningStatus');
-        label.text((!STA.connnected && !STA.auth) ? "-------" : STA.running ? "Running" : "Paused");
-        if(STA.running){
-            label.removeClass("not-running");
-            label.addClass("running");
-        } else {
-            label.removeClass("running");
-            label.addClass("not-running");
-        }
-        
-
-        $('#btnClose').prop("disabled", !STA.connected);
-        $('#btnOpen').prop("disabled", STA.connected);
-        $('#btnSend').prop("disabled", !STA.connected);
-        $('#btnSendClear').prop("disabled", !STA.connected);
-        $('#btnLogin').prop("disabled", !STA.connected);
-        $('#btnSimStart').prop("disabled", !STA.connected);
-        $('#btnSimPause').prop("disabled", !STA.connected);
-        updateSignalState();
-       
-        $("#action_buttons_div button").prop("disabled", !STA.connected);
+    var printNotice = function (message) {
+        $('#outputNotifications').append(message + "\n")
     };
+ 
 
 
     function incrementCounter(xid){
@@ -119,6 +124,7 @@ window.addEventListener("load", function (evt) {
                     case "notification":
                     
                         incrementCounter("#lblNoticesCount")
+                        printNotice("= NOTICE: " + evt.data);
 
                         // Clock
                         if(resp.data.name == "clock"){
@@ -129,7 +135,7 @@ window.addEventListener("load", function (evt) {
 
                         // Sim running or paused
                         } else if (resp.data.name == "stateChanged"){ 
-                            print("= NOTICE: " + evt.data);
+                            
                             STA.running = resp.data.object.value
                         }
                         break;
@@ -354,6 +360,7 @@ function do_resize(){
         inpHeight  = 300
     }
     ele.style.height = inpHeight + "px";
+    document.getElementById("outputNotifications").style.height = inpHeight + "px";
 }
 
 window.addEventListener("resize", function (evt) {

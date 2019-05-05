@@ -89,7 +89,7 @@ body {
     border-bottom: 1px solid #dddddd;
     padding: 5px; }
 
-#input, #output {
+#input, #output, #outputNotifications {
   width: 100%;
   font-size: 9pt;
   font-family: monospace;
@@ -98,7 +98,6 @@ body {
 #input {
   margin-top: 10px; }
 
-#output {
-  margin-top: 10px;
+#output, #outputNotifications {
   min-height: 300px;
   overflow: auto; }
