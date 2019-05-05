@@ -5,29 +5,47 @@ STA.connected = false; // ws connected
 STA.auth = false; // auth against server
 STA.running = false; // sim running
 
-//=============================
-// Signal top Right
+//====================================================
+// Signal Logo
 var aspects = {};
 
 function makeSignal(){
     
     var w = 60;
-    var h = 150;
-    var bw = 5;
+    var ih = 200; // img height
+    var sh = 150; // signal height
+    var bw = 5; // border width
     
     var circleRadius = 30;
-    var cent = (w / 2) - (circleRadius / 2);
+    var vCenter = (w / 2) - (circleRadius / 2);
 
-    var Logo = SVG('ts2_signal').size(w, h);
-    Logo.rect(w, h).radius(10).attr({ fill: '#999999' })
-    Logo.rect(w - bw, h - bw).radius(10).move(bw / 2, bw / 2).attr({ fill: '#222222' })
+    // create svg and make size (position is in css)
+    var sigi = SVG('ts2_signal').size(w, ih);
 
-    var down = 10;
-    var space = 4;
-    aspects.yelltop = Logo.circle(circleRadius).move(cent, down).attr({ fill: 'yellow' });
-    aspects.green = Logo.circle(circleRadius).move(cent, down + circleRadius + space).attr({ fill: '#62D637' });
-    aspects.yellbottom = Logo.circle(circleRadius).move(cent, down + (circleRadius * 2) + (space * 2)).attr({ fill: 'yellow' });
-    aspects.red = Logo.circle(circleRadius).move(cent, down + (circleRadius * 3) + (space * 3)).attr({ fill: 'red' });
+    sigi.rect(w, ih).attr({ fill: 'green' })
+
+    // make vertical pole in middle
+    //var poleSize = 16;
+    //sigi.rect(poleSize, h).move(vCenter - (poleSize/2), 0).attr({ fill: 'red' })
+
+    // fill background with light color as rect for border
+    sigi.rect(w, sh).radius(10).attr({ fill: '#999999' })
+    // fill the signal background color above with a darker layer above
+    sigi.rect(w - bw, sh - bw).radius(10).move(bw / 2, bw / 2).attr({ fill: '#222222' })
+
+    // add aspects
+    var down = 10; // vertical down start point
+    var space = 4; // space between
+    aspects.yelltop = sigi.circle(circleRadius).move(vCenter, down).attr({ fill: 'yellow' });
+    aspects.green = sigi.circle(circleRadius).move(vCenter, down + circleRadius + space).attr({ fill: '#62D637' });
+    aspects.yellbottom = sigi.circle(circleRadius).move(vCenter, down + (circleRadius * 2) + (space * 2)).attr({ fill: 'yellow' });
+    aspects.red = sigi.circle(circleRadius).move(vCenter, down + (circleRadius * 3) + (space * 3)).attr({ fill: 'red' });
+
+    // plates
+    var plate_width = w -   20;
+    sigi.circle(circleRadius).move(vCenter, down + (circleRadius * 4) + (space * 4)).attr({ fill: 'blue' });
+    sigi.rect(plate_width, 30).radius(5).move(vCenter - (plate_width), down + (circleRadius * 4) + (space * 6)).attr({ fill: '#cccccc' })
+
 }
 function updateSignalState(){
     //console.log(STA);
@@ -384,8 +402,8 @@ window.addEventListener("load", function (evt) {
     updateWidgets();
     do_resize();
 
-    $('#data-view').tab('show')
-    loadDataTable();
+    //$('#data-view').tab('show')
+    //loadDataTable();
 
 
 });
