@@ -1,40 +1,45 @@
-//var Logo;
+var STA = {}
+STA.running = false;
+STA.auth = false;
+STA.connected = false;
+
 var aspects = {};
-function makeLogo(){
+
+function makeSignal(){
     
     var w = 60;
-    var h = 120;
+    var h = 150;
     var bw = 5;
     
     var circleRadius = 30;
     var cent = (w / 2) - (circleRadius / 2);
 
-    var Logo = SVG('ts2_logo').size(w, h);
+    var Logo = SVG('ts2_signal').size(w, h);
     Logo.rect(w, h).radius(10).attr({ fill: '#999999' })
     Logo.rect(w - bw, h - bw).radius(10).move(bw / 2, bw / 2).attr({ fill: '#222222' })
 
     var down = 10;
     var space = 4;
-    aspects.green = Logo.circle(circleRadius).move(cent, down).attr({ fill: 'green' });
-    aspects.amber = Logo.circle(circleRadius).move(cent, down + circleRadius + space).attr({ fill: 'orange' });
-    aspects.red = Logo.circle(circleRadius).move(cent, down + (circleRadius * 2) + space + space).attr({ fill: 'red' });
+    aspects.yelltop = Logo.circle(circleRadius).move(cent, down).attr({ fill: 'yellow' });
+    aspects.green = Logo.circle(circleRadius).move(cent, down + circleRadius + space).attr({ fill: '#62D637' });
+    aspects.yellbottom = Logo.circle(circleRadius).move(cent, down + (circleRadius * 2) + (space * 2)).attr({ fill: 'yellow' });
+    aspects.red = Logo.circle(circleRadius).move(cent, down + (circleRadius * 3) + (space * 3)).attr({ fill: 'red' });
 }
 
-function setLogoState(connected, auth){
-
+function updateSignalState(){
+    //console.log(STA);
     var offColor = "#444444";
-    aspects.green.attr({fill: !connected ? offColor : auth ? "#62D637" : offColor});
-    aspects.amber.attr({fill: connected && !auth ? "orange" :  offColor});
-    aspects.red.attr({fill: !connected ? "red" : offColor});
-
+    aspects.yelltop.attr({fill: STA.connected && !STA.auth && !STA.running ?  "yellow" : offColor});
+    aspects.green.attr({fill: STA.connected && STA.auth && STA.running ? "#62D637" : offColor});
+    aspects.yellbottom.attr({fill: (STA.connected && !STA.auth && !STA.running) || (STA.connected && STA.auth && !STA.running) ? "yellow" :  offColor});
+    aspects.red.attr({fill: !STA.connected ? "red" : offColor});
 }
 
 
 window.addEventListener("load", function (evt) {
 
 
-    makeLogo();
-
+    makeSignal();
 
     // ----
     var input = document.getElementById("input");
@@ -42,23 +47,22 @@ window.addEventListener("load", function (evt) {
     var print = function (message) {
         $('#output').append(message + "\n")
     };
-    var showConnected = function (connected) {
-        print(connected ? "# WS Connected" : "# WS Disconnected");
+    var updateWidgets = function () {
+        print(STA.connected ? "# WS Connected" : "# WS Disconnected");
         var label = $('#lblConnectedStatus');
-        label.text(connected ? "Connected" : "Disconnected");
-        label.toggleClass("connected", connected);
-        label.toggleClass("not-connected", !connected);
-        $('#btnClose').prop("disabled", !connected);
-        $('#btnOpen').prop("disabled", connected);
-        $('#btnSend').prop("disabled", !connected);
-        $('#btnSendClear').prop("disabled", !connected);
-        $('#btnSimStartLogin').prop("disabled", !connected);
-        $('#btnSimStart').prop("disabled", !connected);
-        $('#btnSimPause').prop("disabled", !connected);
-        setLogoState(connected, false);
+        label.text(STA.connected ? "Connected" : "Disconnected");
+        label.toggleClass("connected", STA.connected);
+        label.toggleClass("not-connected", !STA.connected);
+        $('#btnClose').prop("disabled", !STA.connected);
+        $('#btnOpen').prop("disabled", STA.connected);
+        $('#btnSend').prop("disabled", !STA.connected);
+        $('#btnSendClear').prop("disabled", !STA.connected);
+        $('#btnLogin').prop("disabled", !STA.connected);
+        $('#btnSimStart').prop("disabled", !STA.connected);
+        $('#btnSimPause').prop("disabled", !STA.connected);
+        updateSignalState();
        
-        $("#action_buttons_div button").prop("disabled", !connected);
-
+        $("#action_buttons_div button").prop("disabled", !STA.connected);
     };
 
 
@@ -81,42 +85,57 @@ window.addEventListener("load", function (evt) {
         ws.automaticOpen = true;
 
         ws.onopen = function (evt) {
-            showConnected(true);
+            STA.connected = true;
+            updateWidgets();
+            
         };
         ws.onclose = function (evt) {
-            showConnected(false);
+            STA.connected = false;
+            STA.auth = false;
+            STA.running = false;
+            updateWidgets();
             ws = null;
         };
         ws.onmessage = function (evt) {
-            print("= RESPONSE: " + evt.data);
+            
             try {
                 var resp = JSON.parse(evt.data);
 
                 switch(resp.msgType){
                     case "notification":
                         if(resp.data.name == "clock"){
-                            setLogoState(true, true); // workaround
+                            //setLogoState(true, true); // workaround
                             var lbl = $("#clock");
                             lbl.html(resp.data.object);
                             incrementCounter("#lblRecvOkCount")
-                        }   
+
+                        } else if (resp.data.name == "stateChanged"){
+                            print("= RESPONSE: " + evt.data);
+                            // {"msgType":"notification","data":{"name":"stateChanged","object":{"value":false}}}
+                            STA.running = resp.data.object.value
+                        }
+                        
+
                         break;
                 
                     case "response":
                     
                         if(resp.data.status == "OK"){
-                            setLogoState(true, true); // workaround
+                            print("= RESPONSE: " + evt.data);
+                            //setLogoState(true, true); // workaround
                             incrementCounter("#lblRecvOkCount")
                             //var lbl = $("#lblRecvOkCount");
                             //lbl.html(parseInt(lbl.text(), 10) + 1);
 
                         } else if(resp.data.status == "FAIL"){
+                            print("= RESPONSE: " + evt.data);
                             //var lbl = $("#lblRecvFailCount");
                             //lbl.html(parseInt(lbl.text(), 10) + 1);
                             incrementCounter("#lblRecvFailCount")
                     }    
                     break;
                 }
+                updateWidgets();
                 return false;
 
             } catch (err) {
@@ -173,16 +192,17 @@ window.addEventListener("load", function (evt) {
         return false;
     };
     //#####################################
-    document.getElementById("btnSimStartLogin").onclick = function (evt) {
+    document.getElementById("btnLogin").onclick = function (evt) {
         var btnSend = document.getElementById("btnSend")
         document.getElementById("loginTmpl").click();
         btnSend.click();
         document.getElementById("addListenerTmpl").click();
         btnSend.click();
-        //$("#input").val('{"object": "server", "action": "addListener", "params": {"event": "stateChanged"}}');
-        //btnSend.click();
-        document.getElementById("simStartTmpl").click();
+        $("#input").val('{"object": "server", "action": "addListener", "params": {"event": "stateChanged"}}');
         btnSend.click();
+        //document.getElementById("simStartTmpl").click();
+        //btnSend.click();
+        STA.auth = true;
         
     }
     document.getElementById("btnSimStart").onclick = function (evt) {
@@ -309,6 +329,6 @@ window.addEventListener("load", function (evt) {
         input.focus();
         return false;
     };
-    showConnected(false);
+    updateWidgets();
 });
 

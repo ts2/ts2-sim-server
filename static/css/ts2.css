@@ -2,7 +2,7 @@ body {
   background: #050418;
   background: radial-gradient(circle, rgba(5, 4, 24, 0.7007177871) 0%, #181a1f 35%, black 100%); }
 
-#ts2_logo {
+#ts2_signal {
   position: absolute;
   z-index: 99999;
   top: 15px;
