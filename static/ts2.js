@@ -48,8 +48,7 @@ window.addEventListener("load", function (evt) {
         $('#output').append(message + "\n")
     };
     var updateWidgets = function () {
-        console.log(STA);
-        //print(STA.connected ? "# WS Connected" : "# WS Disconnected");
+        
 
         var label = $('#lblConnectedStatus');
         label.text(STA.connected ? "Connected" : "Disconnected");
@@ -58,12 +57,10 @@ window.addEventListener("load", function (evt) {
 
         var label = $('#lblRunningStatus');
         label.text((!STA.connnected && !STA.auth) ? "-------" : STA.running ? "Running" : "Paused");
-        if(STA.connnected && STA.auth && STA.running){
-            console.log("RUNNNNNNNNNNN")
+        if(STA.running){
             label.removeClass("not-running");
             label.addClass("running");
         } else {
-            console.log("STOPPEDddddddddd")
             label.removeClass("running");
             label.addClass("not-running");
         }

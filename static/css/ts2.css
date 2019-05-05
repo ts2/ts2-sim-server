@@ -38,7 +38,8 @@ body {
   margin-right: 20px; }
 
 #lblConnectedStatus, #lblRunningStatus {
-  font-size: 12pt; }
+  font-size: 12pt;
+  width: 120px; }
 
 .connected {
   background-color: #E3FFCE;
