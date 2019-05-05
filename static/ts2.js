@@ -1,8 +1,12 @@
-var STA = {}
-STA.running = false;
-STA.auth = false;
-STA.connected = false;
 
+//= Client State
+var STA = {};
+STA.connected = false; // ws connected
+STA.auth = false; // auth against server
+STA.running = false; // sim running
+
+//=============================
+// Signal top Right
 var aspects = {};
 
 function makeSignal(){
@@ -25,7 +29,6 @@ function makeSignal(){
     aspects.yellbottom = Logo.circle(circleRadius).move(cent, down + (circleRadius * 2) + (space * 2)).attr({ fill: 'yellow' });
     aspects.red = Logo.circle(circleRadius).move(cent, down + (circleRadius * 3) + (space * 3)).attr({ fill: 'red' });
 }
-
 function updateSignalState(){
     //console.log(STA);
     var offColor = "#444444";
@@ -34,6 +37,9 @@ function updateSignalState(){
     aspects.yellbottom.animate(300).attr({fill: (STA.connected && !STA.auth && !STA.running) || (STA.connected && STA.auth && !STA.running) ? "yellow" :  offColor});
     aspects.red.animate(300).attr({fill: !STA.connected ? "red" : offColor});
 }
+
+//=============================
+// Updates all stuff dpending upon state STA
 function updateWidgets() {
         
     updateSignalState();
@@ -67,12 +73,42 @@ function updateWidgets() {
     $("#action_buttons_div button").prop("disabled", !STA.connected);
 };
 
-window.addEventListener("load", function (evt) {
+function loadDataTable(dict){
 
+    //for
+
+    $('#data_table').DataTable({
+        data: [[1,2,3]],
+        columns: [
+            { title: "Name" },
+            { title: "Name" },
+            { title: "Name" },
+        ]
+    });
+
+    // )
+    // $(document).ready(function() {
+    //     $('#example').DataTable( {
+    //         data: dataSet,
+    //         columns: [
+    //             { title: "Name" },
+    //             { title: "Position" },
+    //             { title: "Office" },
+    //             { title: "Extn." },
+    //             { title: "Start date" },
+    //             { title: "Salary" }
+    //         ]
+    //     } );
+    // } );
+}
+
+
+//= Lets go !
+window.addEventListener("load", function (evt) {
 
     makeSignal();
 
-    // ----
+    
     var input = document.getElementById("input");
     var ws = null;
     var print = function (message) {
@@ -347,6 +383,11 @@ window.addEventListener("load", function (evt) {
     };
     updateWidgets();
     do_resize();
+
+    $('#data-view').tab('show')
+    loadDataTable();
+
+
 });
 
 
@@ -359,8 +400,10 @@ function do_resize(){
     if(inpHeight < 300) {
         inpHeight  = 300
     }
-    ele.style.height = inpHeight + "px";
-    document.getElementById("outputNotifications").style.height = inpHeight + "px";
+    var hstyle = inpHeight + "px";
+    ele.style.height = hstyle
+    document.getElementById("outputNotifications").style.height = hstyle;
+    document.getElementById("data-table").style.height = hstyle;
 }
 
 window.addEventListener("resize", function (evt) {

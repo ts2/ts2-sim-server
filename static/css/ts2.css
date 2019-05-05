@@ -106,11 +106,11 @@ body {
 #outputNotifications {
   background-color: #F8E3FF; }
 
-#viewTabs {
+#mTabBar {
   margin-top: 10px; }
-  #viewTabs a.nav-link {
+  #mTabBar a.nav-link {
     color: #999999;
     background-color: #333333; }
-  #viewTabs a.active {
+  #mTabBar a.active {
     background-color: #666666;
     color: white; }
