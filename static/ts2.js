@@ -57,9 +57,16 @@ window.addEventListener("load", function (evt) {
         $('#btnSimPause').prop("disabled", !connected);
         setLogoState(connected, false);
        
-
+        $("#action_buttons_div button").prop("disabled", !connected);
 
     };
+
+
+    function incrementCounter(xid){
+        var lbl = $(xid);
+        lbl.html(parseInt(lbl.text(), 10) + 1);
+    }
+
     document.getElementById("btnOpen").onclick = function (evt) {
         if (ws) {
             return false;
@@ -81,37 +88,39 @@ window.addEventListener("load", function (evt) {
             ws = null;
         };
         ws.onmessage = function (evt) {
-            
+            print("= RESPONSE: " + evt.data);
             try {
-                var blob = JSON.parse(evt.data);
+                var resp = JSON.parse(evt.data);
 
-                switch(blob.msgType){
+                switch(resp.msgType){
                     case "notification":
-                        if(blob.data.name == "clock"){
+                        if(resp.data.name == "clock"){
                             setLogoState(true, true); // workaround
                             var lbl = $("#clock");
-                            lbl.html(blob.data.object);
-
+                            lbl.html(resp.data.object);
+                            incrementCounter("#lblRecvOkCount")
                         }   
                         break;
                 
                     case "response":
-                    print("= RESPONSE: " + evt.data);
-                        if(blob.data.status == "OK"){
+                    
+                        if(resp.data.status == "OK"){
                             setLogoState(true, true); // workaround
-                            var lbl = $("#lblRecvOkCount");
-                            lbl.html(parseInt(lbl.text(), 10) + 1);
+                            incrementCounter("#lblRecvOkCount")
+                            //var lbl = $("#lblRecvOkCount");
+                            //lbl.html(parseInt(lbl.text(), 10) + 1);
 
-                        } else if(blob.data.status == "FAIL"){
-                            var lbl = $("#lblRecvFailCount");
-                            lbl.html(parseInt(lbl.text(), 10) + 1);
+                        } else if(resp.data.status == "FAIL"){
+                            //var lbl = $("#lblRecvFailCount");
+                            //lbl.html(parseInt(lbl.text(), 10) + 1);
+                            incrementCounter("#lblRecvFailCount")
                     }    
                     break;
                 }
                 return false;
 
             } catch (err) {
-                print(ReferenceError)
+                print(err)
                 print("< ERROR decoding json: " + evt.data);
                 return false; 
             }
@@ -137,8 +146,7 @@ window.addEventListener("load", function (evt) {
         $('#input').val("");
         input.focus();
 
-        var lblSentCount = $("#lblSentCount");
-        lblSentCount.html(parseInt(lblSentCount.text(), 10) + 1);
+        incrementCounter("#lblSentCount");
 
         return false;
     };
@@ -171,6 +179,8 @@ window.addEventListener("load", function (evt) {
         btnSend.click();
         document.getElementById("addListenerTmpl").click();
         btnSend.click();
+        //$("#input").val('{"object": "server", "action": "addListener", "params": {"event": "stateChanged"}}');
+        //btnSend.click();
         document.getElementById("simStartTmpl").click();
         btnSend.click();
         
