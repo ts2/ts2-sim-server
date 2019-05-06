@@ -5,7 +5,6 @@ body {
 #ts2_signal {
   position: absolute;
   z-index: 99999;
-  top: 15px;
   left: 15px; }
 
 #ts2_brand {

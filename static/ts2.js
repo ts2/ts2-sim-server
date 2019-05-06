@@ -11,40 +11,51 @@ var aspects = {};
 
 function makeSignal(){
     
-    var w = 60;
-    var ih = 200; // img height
-    var sh = 150; // signal height
-    var bw = 5; // border width
-    
-    var circleRadius = 30;
-    var vCenter = (w / 2) - (circleRadius / 2);
+    var img_width = 60;
+    var img_height = 220; // img height
+    var CX = (img_width / 2)
 
     // create svg and make size (position is in css)
-    var sigi = SVG('ts2_signal').size(w, ih);
+    var isvg = SVG('ts2_signal').size(img_width, img_height);
 
-    sigi.rect(w, ih).attr({ fill: 'green' })
+    // fill with debug color.....
+    //isvg.rect(img_width, img_height).attr({ fill: 'green' })
 
-    // make vertical pole in middle
-    //var poleSize = 16;
-    //sigi.rect(poleSize, h).move(vCenter - (poleSize/2), 0).attr({ fill: 'red' })
+    //==== make vertical pole in middle
+    var poleWidth = 16;
+    isvg.rect(poleWidth, img_height).cx(CX).attr({ fill: 'brown' })
 
-    // fill background with light color as rect for border
-    sigi.rect(w, sh).radius(10).attr({ fill: '#999999' })
+    //== Signal
+    var sig_h = 150; // signal height = later derived ??
+    var sig_w = img_width; 
+    var sig_b = 5; // border width
+    
+    // signal by fill background with light color as rect for border
+    isvg.rect(sig_w, sig_h).radius(10).cx(CX).attr({ fill: '#999999' })
     // fill the signal background color above with a darker layer above
-    sigi.rect(w - bw, sh - bw).radius(10).move(bw / 2, bw / 2).attr({ fill: '#222222' })
-
+    isvg.rect(sig_w - sig_b, sig_h - (sig_b*2)).radius(10).cx(CX).y(sig_b).attr({ fill: '#222222' })
+    
     // add aspects
-    var down = 10; // vertical down start point
-    var space = 4; // space between
-    aspects.yelltop = sigi.circle(circleRadius).move(vCenter, down).attr({ fill: 'yellow' });
-    aspects.green = sigi.circle(circleRadius).move(vCenter, down + circleRadius + space).attr({ fill: '#62D637' });
-    aspects.yellbottom = sigi.circle(circleRadius).move(vCenter, down + (circleRadius * 2) + (space * 2)).attr({ fill: 'yellow' });
-    aspects.red = sigi.circle(circleRadius).move(vCenter, down + (circleRadius * 3) + (space * 3)).attr({ fill: 'red' });
+    var lampRadius = 30;
+    var aspDown = 10; // vertical down start point
+    var aspSpace = 4; // space between
+    aspects.yelltop = isvg.circle(lampRadius).cx(CX).y(aspDown).attr({ fill: 'yellow' });
+    aspects.green = isvg.circle(lampRadius).cx(CX).y(aspDown + lampRadius + aspSpace).attr({ fill: '#62D637' });
+    aspects.yellbottom = isvg.circle(lampRadius).cx(CX).y(aspDown + (lampRadius * 2) + (aspSpace * 2)).attr({ fill: 'yellow' });
+    aspects.red = isvg.circle(lampRadius).cx(CX).y(aspDown + (lampRadius * 3) + (aspSpace * 3)).attr({ fill: 'red' });
 
-    // plates
-    var plate_width = w -   20;
-    sigi.circle(circleRadius).move(vCenter, down + (circleRadius * 4) + (space * 4)).attr({ fill: 'blue' });
-    sigi.rect(plate_width, 30).radius(5).move(vCenter - (plate_width), down + (circleRadius * 4) + (space * 6)).attr({ fill: '#cccccc' })
+    // plate ts2
+    var pdown = aspects.red.y() + 40;
+    var plate_width = img_width - 10;
+    isvg.rect(plate_width, 25).radius(5).cx(CX).y(pdown).attr({ fill: '#efefef' });
+    isvg.text("TS2").font({family: 'monospace', size: 16}).cx(CX).y(pdown + 5).attr({ fill: '#111111' })
+
+    // Sim server plates
+    pdown = aspects.red.y() + 70;
+    //var ts2_server_plate_top = aspects.red.y() + 50;
+    isvg.rect(plate_width, 30).radius(5).cx(CX).y(pdown).attr({ fill: '#555555' });
+    isvg.text("SIM").font({family: 'monospace', size: 11}).cx(CX).y(pdown + 5).attr({ fill: '#dddddd' });
+    isvg.text("SERVER").font({family: 'monospace', size: 10}).cx(CX).y(pdown + 18).attr({ fill: '#dddddd' })
 
 }
 function updateSignalState(){
