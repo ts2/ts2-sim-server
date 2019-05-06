@@ -101,6 +101,15 @@ function updateWidgets() {
     $('#btnSimPause').prop("disabled", !STA.connected && !STA.auth);
     
     $("#action_buttons_div button").prop("disabled", !STA.connected);
+
+    var clockWidget = $('#ts2_clock');
+    if(STA.running){
+        clockWidget.removeClass("clock-not-running");
+        clockWidget.addClass("clock-running");
+    } else {
+        clockWidget.removeClass("clock-running");
+        clockWidget.addClass("clock-not-running");
+    }
 };
 
 function loadDataTable(dict){
@@ -195,7 +204,7 @@ window.addEventListener("load", function (evt) {
                         // Clock
                         if(resp.data.name == "clock"){
                             
-                            var lbl = $("#clock");
+                            var lbl = $("#ts2_clock");
                             lbl.html(resp.data.object);
                             return // get outta here
 

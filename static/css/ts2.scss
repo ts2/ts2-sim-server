@@ -25,6 +25,31 @@ body {
     margin: 20px 0 0 100px;
 }
 
+
+#ts2_clock{
+    float: right;
+    font-family: monospace;
+    background-color: 333333;
+    color: #eeeeee;
+    font-size: 24pt;
+    
+    padding: 5px;
+    margin: 10px;
+    border: 2px solid #444444;
+    border-radius: 5px;
+    width: 200px;   
+
+   
+}
+.clock-running {
+    border-color: #E3FFCE;
+    color: green;
+}
+.clock-not-running {
+    border-color: yellow;
+    color: #333333;
+}
+
 .ts2_host {
     font-size: 9pt;
     font-family: monospace;
@@ -38,22 +63,23 @@ body {
         margin: 0;
     }
 }
-#clock {
+
+
+
+
+//==================================
+.xstatus {
     float: right;
-    font-family: monospace;
-    background-color: #444444;
-    color: #eeeeee;
-    font-size: 22pt;
-    border-radius: 2px;
-    padding: 5px 10px;
-    margin-right: 20px;
-}
-
-
-#lblConnectedStatus, #lblRunningStatus {
-    font-size: 12pt;
+    margin: 4px;
     width: 120px;
+    font-size: 10pt;
+
 }
+
+// #lblConnectedStatus, #lblRunningStatus {
+//     font-size: 12pt;
+//     width: 120px;
+// }
 .connected {
     background-color: #E3FFCE;
     color: green;
