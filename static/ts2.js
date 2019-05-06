@@ -12,7 +12,7 @@ var aspects = {};
 function makeSignal(){
     
     var img_width = 60;
-    var img_height = 220; // img height
+    var img_height = 270; // img height
     var CX = (img_width / 2)
 
     // create svg and make size (position is in css)
@@ -23,21 +23,22 @@ function makeSignal(){
 
     //==== make vertical pole in middle
     var poleWidth = 16;
-    isvg.rect(poleWidth, img_height).cx(CX).attr({ fill: 'brown' })
+    isvg.rect(poleWidth, img_height).radius(5).cx(CX).attr({ fill: '#555555' })
 
     //== Signal
-    var sig_h = 150; // signal height = later derived ??
+    var sig_top = 20;
+    var sig_h = 160; // signal height = later derived ??
     var sig_w = img_width; 
     var sig_b = 5; // border width
     
     // signal by fill background with light color as rect for border
-    isvg.rect(sig_w, sig_h).radius(10).cx(CX).attr({ fill: '#999999' })
+    isvg.rect(sig_w, sig_h).radius(10).cx(CX).y(sig_top).attr({ fill: '#999999' })
     // fill the signal background color above with a darker layer above
-    isvg.rect(sig_w - sig_b, sig_h - (sig_b*2)).radius(10).cx(CX).y(sig_b).attr({ fill: '#222222' })
+    isvg.rect(sig_w - sig_b, sig_h - (sig_b*2)).radius(10).cx(CX).y(sig_top + sig_b).attr({ fill: '#222222' })
     
     // add aspects
     var lampRadius = 30;
-    var aspDown = 10; // vertical down start point
+    var aspDown = sig_top + sig_b + 10; // vertical down start point
     var aspSpace = 4; // space between
     aspects.yelltop = isvg.circle(lampRadius).cx(CX).y(aspDown).attr({ fill: 'yellow' });
     aspects.green = isvg.circle(lampRadius).cx(CX).y(aspDown + lampRadius + aspSpace).attr({ fill: '#62D637' });
@@ -45,17 +46,17 @@ function makeSignal(){
     aspects.red = isvg.circle(lampRadius).cx(CX).y(aspDown + (lampRadius * 3) + (aspSpace * 3)).attr({ fill: 'red' });
 
     // plate ts2
-    var pdown = aspects.red.y() + 40;
+    var pdown = aspects.red.y() + 50;
     var plate_width = img_width - 10;
-    isvg.rect(plate_width, 25).radius(5).cx(CX).y(pdown).attr({ fill: '#efefef' });
-    isvg.text("TS2").font({family: 'monospace', size: 16}).cx(CX).y(pdown + 5).attr({ fill: '#111111' })
+    isvg.rect(plate_width, 30).radius(5).cx(CX).y(pdown).attr({ fill: '#efefef' });
+    isvg.text("TS2").font({family: 'monospace', size: 18}).cx(CX).y(pdown + 5).attr({ fill: '#111111' })
 
     // Sim server plates
-    pdown = aspects.red.y() + 70;
+    pdown = aspects.red.y() + 85;
     //var ts2_server_plate_top = aspects.red.y() + 50;
-    isvg.rect(plate_width, 30).radius(5).cx(CX).y(pdown).attr({ fill: '#555555' });
+    isvg.rect(plate_width, 30).radius(5).cx(CX).y(pdown + 2).attr({ fill: '#9B5410' });
     isvg.text("SIM").font({family: 'monospace', size: 11}).cx(CX).y(pdown + 5).attr({ fill: '#dddddd' });
-    isvg.text("SERVER").font({family: 'monospace', size: 10}).cx(CX).y(pdown + 18).attr({ fill: '#dddddd' })
+    isvg.text("SERVER").font({family: 'monospace', size: 11}).cx(CX).y(pdown + 18).attr({ fill: '#dddddd' })
 
 }
 function updateSignalState(){

@@ -29,27 +29,24 @@
 </head>
 <body>
 
+<div id="ganrty"></div>
 <div id="ts2_signal"></div>
-<h1 id="ts2_brand">TS2 Sim Server</h1>
+
+<!--
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-2"></div>
         <div class="col-md-8"></div>
         <div class="col-md-2">
             <nav class="navbar navbar-expand-sm navbar-dark sbg-dark">
-                <!-- <img src="/static/ts2.ico"/> -->
-
-                    <!-- <a class="navbar-brand" href="#">TS2 Sim Server</a>-->
-                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+                      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
                             aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                         <span class="navbar-toggler-icon"></span>
                     </button>
 
                     <div class="collapse navbar-collapse" id="navbarSupportedContent">
                         <ul class="navbar-nav mr-auto">
-                            <!-- <li class="nav-item active">
-                                <a class="nav-link" href="#">Home</a>
-                            </li> -->
+         
                             <li class="nav-item">
                                 <a class="nav-link" href="https://godoc.org/github.com/ts2/ts2-sim-server" target="_godoc">Godoc</a>
                             </li>
@@ -62,6 +59,7 @@
             </nav>
         </div>
 </div>
+-->
 <!-- Top panels-->
 <form>
 <div class="container">
@@ -75,7 +73,7 @@
                            
                                 <div class="form-row">
                                     <div class="col">
-                                        <button id="btnOpen" type="button" class="btn btn-success"><i class="fa fa-toggle-on" aria-hidden="true"></i>&nbsp;Open</button>
+                                        <button id="btnOpen" type="button" class="btn btn-success"><i class="fa fa-play-circle" aria-hidden="true"></i>&nbsp;Connect</button>
                                         <button id="btnClose" type="button" class="btn btn-default"><i class="fa fa-toggle-off" aria-hidden="true"></i>&nbsp;Close</button>
                                     </div>
                                     <div class="col">
@@ -101,7 +99,7 @@
             <div class="card m-3">
                     <div class="card-body">
                         <h3 class="card-title">Simulation</h3>
-                            <div class="badge" id="clock">06:01:07</div>
+                            <div class="badge" id="clock">--:--:--</div>
                             <div class="ts2_sim_info">
                                 <p><b>{{ .Title }}</b><br>{{ .Description }}</p>
                            </div>
