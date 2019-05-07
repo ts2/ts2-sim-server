@@ -1,6 +1,5 @@
 
 
-var xids = {};
 
 
 //= Client State
@@ -117,34 +116,85 @@ function updateWidgets() {
     // }
 };
 
-function loadDataTable(dict){
+function loadDataTable(data){
 
-    //for
+    var cols = [];
+    var rows = [];
+    var keys = Object.keys(data);
+    console.log(keys)
 
-    $('#data_table').DataTable({
-        data: [[1,2,3]],
-        columns: [
-            { title: "Name" },
-            { title: "Name" },
-            { title: "Name" },
-        ]
+    if(keys.length == 0){
+        cols = [{ title: "-" }, { title: "-" },]
+        rows.push(["No", "Rows"]);
+
+    } else {
+
+        var colNames = Object.keys(data[keys[0]]);
+        for(var c=0; c < colNames.length; c++){
+            cols.push({title: colNames[c]})
+        }
+        for(var ki=0; ki < keys.length; ki++){
+            var drow = data[keys[ki]];
+            console.log("drow=", drow);
+            var row = [];
+            for(var c=0; c < colNames.length; c++){
+                row.push(drow[colNames[c]]);
+            }
+            console.log("row=", row)   
+            rows.push(row);
+        }
+    }
+     
+    console.log("cols==", cols)
+    console.log("rows==", rows)
+    var table = $('#data_table');
+
+    try {
+        //table.destroy();
+        console.log("destroyes");
+    } catch(err) {
+        console.log("err=", err);
+    }
+
+    table =  $('#data_table').DataTable({
+        destroy: true,
+        paging: false, searching: false,
+        data: rows,
+        columns: cols
     });
 
-    // )
-    // $(document).ready(function() {
-    //     $('#example').DataTable( {
-    //         data: dataSet,
-    //         columns: [
-    //             { title: "Name" },
-    //             { title: "Position" },
-    //             { title: "Office" },
-    //             { title: "Extn." },
-    //             { title: "Start date" },
-    //             { title: "Salary" }
-    //         ]
-    //     } );
-    // } );
+
 }
+
+
+var ws = null;
+var sentIDs = {};
+
+function SendListAction(target){
+    //{"object": "trainType", "action": "list"}
+    var ts  =  new Date().getTime();
+    var data = {id: ts, object: target, action: "list"}
+    
+    sentIDs[ts] = data;
+    console.log(ts, data, sentIDs)
+    var jso = JSON.stringify(data);
+    print("> SENT: " + jso);
+    ws.send(jso);
+    //$('#input').val("");
+    //input.focus();
+    incrementCounter("#lblSentCount");
+}
+function print(message) {
+    $('#output').append(message + "\n")
+};
+function printNotice(message) {
+    $('#outputNotifications').append(message )
+};
+function incrementCounter(xid){
+    var lbl = $(xid);
+    lbl.html(parseInt(lbl.text(), 10) + 1);
+}
+
 
 
 //= Lets go !
@@ -157,20 +207,8 @@ window.addEventListener("load", function (evt) {
     clockWidget = $('#ts2_clock');
     
     var input = document.getElementById("input");
-    var ws = null;
-    var print = function (message) {
-        $('#output').append(message + "\n")
-    };
-    var printNotice = function (message) {
-        $('#outputNotifications').append(message )
-    };
- 
+    
 
-
-    function incrementCounter(xid){
-        var lbl = $(xid);
-        lbl.html(parseInt(lbl.text(), 10) + 1);
-    }
 
     document.getElementById("btnOpen").onclick = function (evt) {
         if (ws) {
@@ -214,7 +252,6 @@ window.addEventListener("load", function (evt) {
                         if(resp.data.name == "clock"){
                             
                             clockWidget.html(resp.data.object);
-                            console.log("lock=", clockWidget, STA)
                             
                             return // get outta here
 
@@ -236,9 +273,22 @@ window.addEventListener("load", function (evt) {
                     case "response":
                         print("= RESPONSE: " + evt.data);
 
-                        if(resp.data.status == "OK"){
-                            incrementCounter("#lblRecvOkCount")
+                        
+                        if( resp.id > 0){
+                            var sent = sentIDs[resp.id];
+                            console.log("-----------------------------\nsent=", sent);
+                            console.log("resp=", resp)
+                            if(sent.action == "list"){
+                                console.log("YES");
+                                loadDataTable(resp.data);
 
+                            }
+                        }
+
+
+                        if(resp.data.status == "OK"){
+                            incrementCounter("#lblRecvOkCount");
+                            
                         } else if(resp.data.status == "FAIL"){
                             incrementCounter("#lblRecvFailCount")
                         }    
@@ -369,8 +419,9 @@ window.addEventListener("load", function (evt) {
         return false;
     };
     document.getElementById("tiListTmpl").onclick = function (evt) {
-        input.value = '{"object": "trackItem", "action": "list"}';
-        input.focus();
+        SendListAction("trackItem");
+        //input.value = '{"object": "trackItem", "action": "list"}';
+        //input.focus();
         return false;
     };
     document.getElementById("tiShowTmpl").onclick = function (evt) {
@@ -379,8 +430,9 @@ window.addEventListener("load", function (evt) {
         return false;
     };
     document.getElementById("plListTmpl").onclick = function (evt) {
-        input.value = '{"object": "place", "action": "list"}';
-        input.focus();
+        SendListAction("place");
+        //input.value = '{"object": "place", "action": "list"}';
+        //input.focus();
         return false;
     };
     document.getElementById("plShowTmpl").onclick = function (evt) {
@@ -389,8 +441,9 @@ window.addEventListener("load", function (evt) {
         return false;
     };
     document.getElementById("ttListTmpl").onclick = function (evt) {
-        input.value = '{"object": "trainType", "action": "list"}';
-        input.focus();
+        SendListAction("trainType");
+        //input.value = '{"object": "trainType", "action": "list"}';
+        //input.focus();
         return false;
     };
     document.getElementById("ttShowTmpl").onclick = function (evt) {
@@ -399,8 +452,9 @@ window.addEventListener("load", function (evt) {
         return false;
     };
     document.getElementById("serviceListTmpl").onclick = function (evt) {
-        input.value = '{"object": "service", "action": "list"}';
-        input.focus();
+        SendListAction("service");
+        //input.value = '{"object": "service", "action": "list"}';
+        //input.focus();
         return false;
     };
     document.getElementById("serviceShowTmpl").onclick = function (evt) {
@@ -409,8 +463,9 @@ window.addEventListener("load", function (evt) {
         return false;
     };
     document.getElementById("routeListTmpl").onclick = function (evt) {
-        input.value = '{"object": "route", "action": "list"}';
-        input.focus();
+        SendListAction("route");
+        //input.value = '{"object": "route", "action": "list"}';
+        //input.focus();
         return false;
     };
     document.getElementById("routeShowTmpl").onclick = function (evt) {
@@ -441,8 +496,8 @@ window.addEventListener("load", function (evt) {
     updateWidgets();
     do_resize();
 
-    //$('#data-view').tab('show')
-    //loadDataTable();
+    $('#data-tab').tab('show');
+    loadDataTable({});
 
 
 });
@@ -460,7 +515,7 @@ function do_resize(){
     var hstyle = inpHeight + "px";
     ele.style.height = hstyle
     document.getElementById("outputNotifications").style.height = hstyle;
-    document.getElementById("data-table").style.height = hstyle;
+    document.getElementById("data_table").style.height = hstyle;
 }
 
 window.addEventListener("resize", function (evt) {

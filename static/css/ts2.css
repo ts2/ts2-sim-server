@@ -167,3 +167,6 @@ body {
     text-align: center;
     padding: 2px;
     border-right: 1px solid #cccccc; }
+
+#data_table {
+  background-color: white; }
