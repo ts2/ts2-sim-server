@@ -51,13 +51,13 @@ do
     if [ $GOOS = "windows" ]; then
         ## Windows
         output_name+='.exe'
-        if [ $GOARCH = "amd64" ]; then
+        #if [ $GOARCH = "amd64" ]; then
             #build_opts="CXX_FOR_TARGET=i686-w64-mingw32-g++ CC_FOR_TARGET=i686-w64-mingw32-gcc"
             
             #build_opts="CC=x86_64-w64-mingw32-gcc"
-        else 
+        #else 
             #build_opts="CC=i686-w64-mingw32-gcc"
-        fi
+        #fi
 
     elif [ $GOOS = "linux" ]; then
 
