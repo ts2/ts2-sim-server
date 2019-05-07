@@ -2,9 +2,16 @@ body {
   background: #050418;
   background: radial-gradient(circle, rgba(5, 4, 24, 0.7007177871) 0%, #181a1f 35%, black 100%); }
 
+#gantry {
+  background-color: #555555;
+  margin-top: 5px;
+  width: 100%;
+  height: 15px; }
+
 #ts2_signal {
   position: absolute;
   z-index: 99999;
+  top: 0;
   left: 15px; }
 
 #ts2_brand {
@@ -125,3 +132,17 @@ body {
   #mTabBar a.active {
     background-color: #666666;
     color: white; }
+
+.ts2_stats_table {
+  margin: 10px;
+  width: 80%;
+  font-size: 8pt; }
+  .ts2_stats_table thead {
+    background-color: #efefef;
+    font-size: 9pt; }
+  .ts2_stats_table tbody td {
+    font-size: 10pt; }
+  .ts2_stats_table td {
+    text-align: center;
+    padding: 2px;
+    border-right: 1px solid #cccccc; }

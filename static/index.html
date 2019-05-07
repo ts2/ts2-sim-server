@@ -29,10 +29,10 @@
 </head>
 <body>
 
-
-<div id="ts2_clock">--:--:-</div>
+<div id="gantry"></div>
+<div id="ts2_clock" class="clock-not-running">--:--:-</div>
 <div id="ts2_signal"></div>
-<div id="ganrty"></div>
+
 
 <!--
 <div class="container-fluid">
@@ -67,11 +67,11 @@
 <div class="container">
     <div class="row">
 
-            <div class="col-md-6">
+            <div class="col-md-5">
                     <div class="card m-3">
                         <div class="card-body">
                             <div class="badge xstatus not-connected mx-3" id="lblConnectedStatus">Disconnected</div>
-                            <h3 class="card-title">WebSocket Connection</h3>
+                            <h3 class="card-title">WebSocket</h3>
                             
                            
                                 <div class="form-row">
@@ -79,17 +79,28 @@
                                         <button id="btnOpen" type="button" class="btn btn-success"><i class="fa fa-play-circle" aria-hidden="true"></i>&nbsp;Connect</button>
                                         <button id="btnClose" type="button" class="btn btn-default"><i class="fa fa-toggle-off" aria-hidden="true"></i>&nbsp;Close</button>
                                     </div>
-                                    <div class="col">
+                                    <!-- <div class="col">
                                         
                                         <div class="ts2_host">{{ .Host }}</div>
                                         
-                                    </div>
+                                    </div> -->
                                 </div>
+                                <table class="ts2_stats_table">
+                                    <thead><tr>
+                                        <td>Sent</td><td>Rcv OK</td><td>Rcv Fail</td><td>Notices</td><td>Total</td>
+                                    </tr></thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><span id="lblSentCount">0</span></div>
+                                            <td><span id="lblRecvOkCount">0</span></div>
+                                            <td><span id="lblRecvFailCount">0</span></div>
+                                            <td><span id="lblNoticesCount">0</span></div>
+                                            <td><span id="lblTotalCount">0</span></div>
+                                        </tr>
+                                    </tbody>
+                                </table>
                                 <div class="form-row">
-                                        <div class="stats">Sent: <span class="badge badge-pill bfadge-secondary mx-3" id="lblSentCount">0</span></div>
-                                        <div class="stats">Rcv Ok:<span class="badge badge-pill bfadge-success mx-3" id="lblRecvOkCount">0</span></div>
-                                        <div class="stats">Rcv Fail:<span class="badge badge-pill bafdge-danger mx-3" id="lblRecvFailCount">0</span></div>
-                                        <div class="stats">Notices:<span class="badge badge-pill bfadge-yellow mx-3" id="lblNoticesCount">0</span></div>
+                                        
                                 </div>
                            
                         </div>
@@ -98,15 +109,13 @@
                     
                 </div>
 
-        <div class="col-md-6">
+        <div class="col-md-5">
             <div class="card m-3">
                     <div class="card-body">
                         <div class="badge xstatus not-running mx-3" id="lblRunningStatus">Disconnected</div>
                         <h3 class="card-title">Simulation</h3>
                             
-                            <div class="ts2_sim_info">
-                                <p><b>{{ .Title }}</b><br>{{ .Description }}</p>
-                           </div>
+                           
                             <div class="form-row">
                                     <div class="col">
                                             <button id="btnLogin" type="button" class="btn btn-warning"><i class="fa fa-key" aria-hidden="true"></i>&nbsp;Login</button>
@@ -116,7 +125,9 @@
                                             
                                     </div>            
                             </div>
-                           
+                            <div class="ts2_sim_info">
+                                    <p><b>{{ .Title }}</b><br>{{ .Description }}</p>
+                               </div>
                         </div>
                         
                     </div>

@@ -26,7 +26,7 @@ function makeSignal(){
     isvg.rect(poleWidth, img_height).radius(5).cx(CX).attr({ fill: '#555555' })
 
     //== Signal
-    var sig_top = 20;
+    var sig_top = 30;
     var sig_h = 160; // signal height = later derived ??
     var sig_w = img_width; 
     var sig_b = 5; // border width
@@ -102,14 +102,15 @@ function updateWidgets() {
     
     $("#action_buttons_div button").prop("disabled", !STA.connected);
 
-    var clockWidget = $('#ts2_clock');
-    if(STA.running){
-        clockWidget.removeClass("clock-not-running");
-        clockWidget.addClass("clock-running");
-    } else {
-        clockWidget.removeClass("clock-running");
-        clockWidget.addClass("clock-not-running");
-    }
+    // var clockWidget = $('#ts2_clock');
+    // console.log("lock=", clockWidget, STA)
+    // if(STA.running){
+    //     clockWidget.removeClass("clock-not-running");
+    //     clockWidget.addClass("clock-running");
+    // } else {
+    //     clockWidget.removeClass("clock-running");
+    //     clockWidget.addClass("clock-not-running");
+    // }
 };
 
 function loadDataTable(dict){
@@ -143,10 +144,13 @@ function loadDataTable(dict){
 
 
 //= Lets go !
+
+var clockWidget;
+
 window.addEventListener("load", function (evt) {
 
     makeSignal();
-
+    clockWidget = $('#ts2_clock');
     
     var input = document.getElementById("input");
     var ws = null;
@@ -154,7 +158,7 @@ window.addEventListener("load", function (evt) {
         $('#output').append(message + "\n")
     };
     var printNotice = function (message) {
-        $('#outputNotifications').append(message + "\n")
+        $('#outputNotifications').append(message )
     };
  
 
@@ -193,7 +197,7 @@ window.addEventListener("load", function (evt) {
             
             try {
                 var resp = JSON.parse(evt.data);
-
+                incrementCounter("#lblTotalCount");
                 switch(resp.msgType){
 
                     case "notification":
@@ -204,8 +208,15 @@ window.addEventListener("load", function (evt) {
                         // Clock
                         if(resp.data.name == "clock"){
                             
-                            var lbl = $("#ts2_clock");
-                            lbl.html(resp.data.object);
+                            clockWidget.html(resp.data.object);
+                            console.log("lock=", clockWidget, STA)
+                            if(STA.running){
+                                clockWidget.removeClass("clock-not-running");
+                                clockWidget.addClass("clock-running");
+                            } else {
+                                clockWidget.removeClass("clock-running");
+                                clockWidget.addClass("clock-not-running");
+                            }
                             return // get outta here
 
                         // Sim running or paused
