@@ -30,7 +30,7 @@ echo "Built: $DATE" >> $INDEX_FILE
 echo "" >> $INDEX_FILE 
 
 # ALL Wanted
-platforms=( "linux/386" "linux/amd64" "linux/arm" "windows/amd64" "windows/386" "darwin/amd64" "darwin/386" "darwin/arm64" )
+platforms=( "linux/386" "linux/amd64" "linux/arm" "linux/arm64" "windows/amd64" "windows/386" "darwin/amd64" "darwin/386" )
 
 ## Working
 #platforms=(  "linux/arm" "windows/amd64" "windows/386" "linux/amd64" )
