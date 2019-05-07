@@ -210,19 +210,21 @@ window.addEventListener("load", function (evt) {
                             
                             clockWidget.html(resp.data.object);
                             console.log("lock=", clockWidget, STA)
-                            if(STA.running){
-                                clockWidget.removeClass("clock-not-running");
-                                clockWidget.addClass("clock-running");
-                            } else {
-                                clockWidget.removeClass("clock-running");
-                                clockWidget.addClass("clock-not-running");
-                            }
+                            
                             return // get outta here
 
                         // Sim running or paused
                         } else if (resp.data.name == "stateChanged"){ 
                             
                             STA.running = resp.data.object.value
+                            console.log("stateChanges", STA.running)
+                            if(STA.running){
+                                clockWidget.removeClass("clock-paused");
+                                clockWidget.addClass("clock-running");
+                            } else {
+                                clockWidget.removeClass("clock-running");
+                                clockWidget.addClass("clock-paused");
+                            }
                         }
                         break;
                 

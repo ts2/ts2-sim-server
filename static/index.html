@@ -30,7 +30,11 @@
 <body>
 
 <div id="gantry"></div>
-<div id="ts2_clock" class="clock-not-running">--:--:-</div>
+<div id="clock_holder">
+        <div id="clock_poles"></div>
+        <div id="ts2_clock" class="clock-paused">--:--:-</div>
+</div>
+
 <div id="ts2_signal"></div>
 
 
@@ -65,82 +69,79 @@
 <!-- Top panels-->
 <form>
 <div class="container">
-    <div class="row">
+    <div class="row xtop">
 
-            <div class="col-md-5">
-                    <div class="card m-3">
-                        <div class="card-body">
-                            <div class="badge xstatus not-connected mx-3" id="lblConnectedStatus">Disconnected</div>
-                            <h3 class="card-title">WebSocket</h3>
-                            
-                           
-                                <div class="form-row">
-                                    <div class="col">
-                                        <button id="btnOpen" type="button" class="btn btn-success"><i class="fa fa-play-circle" aria-hidden="true"></i>&nbsp;Connect</button>
-                                        <button id="btnClose" type="button" class="btn btn-default"><i class="fa fa-toggle-off" aria-hidden="true"></i>&nbsp;Close</button>
-                                    </div>
-                                    <!-- <div class="col">
-                                        
-                                        <div class="ts2_host">{{ .Host }}</div>
-                                        
-                                    </div> -->
-                                </div>
-                                <table class="ts2_stats_table">
-                                    <thead><tr>
-                                        <td>Sent</td><td>Rcv OK</td><td>Rcv Fail</td><td>Notices</td><td>Total</td>
-                                    </tr></thead>
-                                    <tbody>
-                                        <tr>
-                                            <td><span id="lblSentCount">0</span></div>
-                                            <td><span id="lblRecvOkCount">0</span></div>
-                                            <td><span id="lblRecvFailCount">0</span></div>
-                                            <td><span id="lblNoticesCount">0</span></div>
-                                            <td><span id="lblTotalCount">0</span></div>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                                <div class="form-row">
-                                        
-                                </div>
-                           
-                        </div>
-                    </div>
-                    
-                    
-                </div>
+        <div class="col-md-1"></div>
 
+        <!-- WebSocket -->
         <div class="col-md-5">
-            <div class="card m-3">
-                    <div class="card-body">
-                        <div class="badge xstatus not-running mx-3" id="lblRunningStatus">Disconnected</div>
-                        <h3 class="card-title">Simulation</h3>
+            <div class="xpoles"></div>
+            <div class="card">
                             
-                           
-                            <div class="form-row">
-                                    <div class="col">
-                                            <button id="btnLogin" type="button" class="btn btn-warning"><i class="fa fa-key" aria-hidden="true"></i>&nbsp;Login</button>
-                                            <button id="btnSimStart" type="button" class="btn btn-success"><i class="fa fa-play" aria-hidden="true"></i>&nbsp;Start</button>
-                                            <button id="btnSimPause" type="button" class="btn btn-default"><i class="fa fa-pause" aria-hidden="true"></i>&nbsp;Pause</button>
-                                            
-                                            
-                                    </div>            
-                            </div>
-                            <div class="ts2_sim_info">
-                                    <p><b>{{ .Title }}</b><br>{{ .Description }}</p>
-                               </div>
+                <div class="card-body">
+                    <div class="badge xstatus not-connected mx-3" id="lblConnectedStatus">Disconnected</div>
+                    <h3 class="card-title">WebSocket</h3>
+                             
+                    <div class="form-row">
+                        <div class="col">
+                            <button id="btnOpen" type="button" class="btn btn-success"><i class="fa fa-play-circle" aria-hidden="true"></i>&nbsp;Connect</button>
+                            <button id="btnClose" type="button" class="btn btn-default"><i class="fa fa-toggle-off" aria-hidden="true"></i>&nbsp;Close</button>
                         </div>
-                        
+                        <!-- <div class="col">
+                            
+                            <div class="ts2_host">{{ .Host }}</div>
+                            
+                        </div>  -->
                     </div>
+                    <table class="ts2_stats_table">
+                        <thead><tr>
+                            <td>Sent</td><td>Rcv OK</td><td>Rcv Fail</td><td>Notices</td><td>Total</td>
+                        </tr></thead>
+                        <tbody>
+                            <tr>
+                                <td><span id="lblSentCount">0</span></div>
+                                <td><span id="lblRecvOkCount">0</span></div>
+                                <td><span id="lblRecvFailCount">0</span></div>
+                                <td><span id="lblNoticesCount">0</span></div>
+                                <td><span id="lblTotalCount">0</span></div>
+                            </tr>
+                        </tbody>
+                    </table>
+                                  
                 </div>
+            </div>
+                           
         </div>
 
+        <!---- Simulation panel -->
+        <div class="col-md-5">
+            <div class="xpoles"></div>
+            <div class="card">
+                    
+                <div class="card-body">
+                    <div class="badge xstatus not-running mx-3" id="lblRunningStatus">Disconnected</div>
+                    <h3 class="card-title">Simulation</h3>
+                    <div class="form-row">
+                        <div class="col">
+                            <button id="btnLogin" type="button" class="btn btn-warning"><i class="fa fa-key" aria-hidden="true"></i>&nbsp;Login</button>
+                            <button id="btnSimStart" type="button" class="btn btn-success"><i class="fa fa-play" aria-hidden="true"></i>&nbsp;Start</button>
+                            <button id="btnSimPause" type="button" class="btn btn-default"><i class="fa fa-pause" aria-hidden="true"></i>&nbsp;Pause</button>     
+                        </div>            
+                    </div>
+                    <div class="ts2_sim_info">
+                        <p><b>{{ .Title }}</b><br>{{ .Description }}<br><span class="ts2_host">{{ .Host }}</span></p>
+                    </div>
+                    </div>
+                        
+                </div>
+            </div>
+        </div>
 
-        
-    </div>
+    </div> <!-- row -->
 </div>
 
 <!-- main content-->
-<div class="container">
+<div class="container xcontent">
 		
 
 	<!-- Actions-->
