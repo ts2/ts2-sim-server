@@ -121,48 +121,49 @@ function loadDataTable(data){
     var cols = [];
     var rows = [];
     var keys = Object.keys(data);
-    console.log(keys)
 
     if(keys.length == 0){
-        cols = [{ title: "-" }, { title: "-" },]
+        cols = [{ title: "-", className: "align-left" }, { title: "-" },]
         rows.push(["No", "Rows"]);
 
     } else {
 
         var colNames = Object.keys(data[keys[0]]);
         for(var c=0; c < colNames.length; c++){
-            cols.push({title: colNames[c]})
+            cols.push({title: colNames[c], className: "align-left"})
         }
         for(var ki=0; ki < keys.length; ki++){
             var drow = data[keys[ki]];
-            console.log("drow=", drow);
             var row = [];
             for(var c=0; c < colNames.length; c++){
                 row.push(drow[colNames[c]]);
             }
-            console.log("row=", row)   
             rows.push(row);
         }
     }
-     
-    console.log("cols==", cols)
-    console.log("rows==", rows)
-    var table = $('#data_table');
 
-    try {
-        //table.destroy();
-        console.log("destroyes");
-    } catch(err) {
-        console.log("err=", err);
-    }
+    // destroy and recreate dom element (couldnt figure out better way)
+    var element = document.getElementById("data_table");
+    element.parentNode.removeChild(element);
+    var newElement = document.createElement("table");
+    newElement.setAttribute("id", "data_table");
+    newElement.setAttribute("class","table table-striped table-bordered");
+    var parent = document.getElementById("data_table_container");
+    parent.appendChild(newElement);  
 
-    table =  $('#data_table').DataTable({
-        destroy: true,
-        paging: false, searching: false,
+    //$('#data_table').DataTable().clear().destroy();
+    var table =  $('#data_table').DataTable({
+        //destroy: false,
+        //retrieve: true, 
+        bInfo: false,
+        paging: false, 
+        defer: true,
+        searching: false,
         data: rows,
         columns: cols
     });
-
+    
+    //table.rows().invalidate().draw();
 
 }
 
@@ -176,13 +177,13 @@ function SendListAction(target){
     var data = {id: ts, object: target, action: "list"}
     
     sentIDs[ts] = data;
-    console.log(ts, data, sentIDs)
+    //console.log(ts, data, sentIDs)
     var jso = JSON.stringify(data);
+    
+    ws.send(jso);    
     print("> SENT: " + jso);
-    ws.send(jso);
-    //$('#input').val("");
-    //input.focus();
     incrementCounter("#lblSentCount");
+    $('#data-tab').tab('show');
 }
 function print(message) {
     $('#output').append(message + "\n")
@@ -208,7 +209,7 @@ window.addEventListener("load", function (evt) {
     
     var input = document.getElementById("input");
     
-
+    //$('#data_table').DataTable({retrieve: true, rows: [["No Data"]], columns:[{title: "-" }]});
 
     document.getElementById("btnOpen").onclick = function (evt) {
         if (ws) {
@@ -252,14 +253,12 @@ window.addEventListener("load", function (evt) {
                         if(resp.data.name == "clock"){
                             
                             clockWidget.html(resp.data.object);
-                            
                             return // get outta here
 
                         // Sim running or paused
                         } else if (resp.data.name == "stateChanged"){ 
                             
                             STA.running = resp.data.object.value
-                            console.log("stateChanges", STA.running)
                             if(STA.running){
                                 clockWidget.removeClass("clock-paused");
                                 clockWidget.addClass("clock-running");
@@ -271,17 +270,17 @@ window.addEventListener("load", function (evt) {
                         break;
                 
                     case "response":
+
                         print("= RESPONSE: " + evt.data);
 
                         
                         if( resp.id > 0){
+                            // Got back one of our own messages ?
                             var sent = sentIDs[resp.id];
-                            console.log("-----------------------------\nsent=", sent);
-                            console.log("resp=", resp)
+                            delete sentIDs[resp.id]
                             if(sent.action == "list"){
-                                console.log("YES");
                                 loadDataTable(resp.data);
-
+                                incrementCounter("#lblRecvOkCount");
                             }
                         }
 
@@ -325,7 +324,7 @@ window.addEventListener("load", function (evt) {
         input.focus();
 
         incrementCounter("#lblSentCount");
-
+        $('#response-tab').tab('show');
         return false;
     };
     document.getElementById("btnSendClear").onclick = function (evt) {
@@ -484,8 +483,9 @@ window.addEventListener("load", function (evt) {
         return false;
     };
     document.getElementById("trainListTmpl").onclick = function (evt) {
-        input.value = '{"object": "train", "action": "list"}';
-        input.focus();
+        SendListAction("train");
+        //input.value = '{"object": "train", "action": "list"}';
+        //input.focus();
         return false;
     };
     document.getElementById("trainShowTmpl").onclick = function (evt) {
@@ -496,9 +496,7 @@ window.addEventListener("load", function (evt) {
     updateWidgets();
     do_resize();
 
-    $('#data-tab').tab('show');
-    loadDataTable({});
-
+    
 
 });
 
@@ -515,7 +513,7 @@ function do_resize(){
     var hstyle = inpHeight + "px";
     ele.style.height = hstyle
     document.getElementById("outputNotifications").style.height = hstyle;
-    document.getElementById("data_table").style.height = hstyle;
+    document.getElementById("data_table_container").style.height = hstyle;
 }
 
 window.addEventListener("resize", function (evt) {

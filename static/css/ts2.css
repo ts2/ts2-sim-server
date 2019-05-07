@@ -126,7 +126,8 @@ body {
     padding: 5px; }
 
 .xcontent {
-  margin-top: 20px; }
+  margin-top: 20px;
+  padding-left: 30px; }
 
 .consoleTxt {
   width: 100%;
@@ -168,5 +169,12 @@ body {
     padding: 2px;
     border-right: 1px solid #cccccc; }
 
-#data_table {
+#data_table_container {
   background-color: white; }
+
+#data_table {
+  width: 100%;
+  background-color: white;
+  overflow: auto; }
+  #data_table .align-left {
+    text-align: left; }

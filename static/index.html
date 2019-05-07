@@ -254,13 +254,21 @@
     <!-- Send message-->
     <div class="row">
         <div class="col-md-8">
-            <input type="text" id="input" class="consoleTxt" placeHolder="Message">
+            <div class="input-group">
+                <input type="text" id="input" class="form-control " placeHolder="Message">
+                <span class="input-group-append">
+                        <button id="btnClearInput" class="btn btn-sm btn-outline-secondary" type="button">
+                            <i class="fa fa-times"></i>
+                        </button>
+                      </span>
+               
+            </div>
         </div>
         <div class="col-md-4">
-            <button id="btnClearInput" type="button" class="btn btn-outline"><i class="fa fa-times"></i></button>
+            <!-- <button id="btnClearInput" type="button" class="btn btn-outline"><i class="fa fa-times"></i></button> -->
             <button id="btnSendClear" type="button" class="btn btn-success">Send &amp; Clear</button>
             <button id="btnSend" type="button" class="btn btn-success">Send</button>
-            <button id="btnClearLog" type="button" class="btn btn-default">Clear Log</button>
+            <button id="btnClearLog" type="button" class="btn btn-default"><i class="fa fa-times" aria-hidden="true"></i>&nbsp;Clear</button>
         </div>
     </div>
         
@@ -277,8 +285,12 @@
         </li>
     </ul>
 
-    <!-- Tab Content-->
-    <div class="tab-content" id="mTabPanes">
+  
+		
+</div>
+
+  <!-- Tab Content-->
+  <div class="tab-content" id="mTabPanes">
         <div class="tab-pane active" id="response-view" role="tabpanel" aria-labelledby="response-tab">
             <textarea id="output" class="consoleTxt" placeHolder="Log"></textarea>
         </div>
@@ -286,15 +298,11 @@
             <textarea id="outputNotifications" class="consoleTxt" placeHolder="Notifications"></textarea>
         </div>
         <div class="tab-pane" id="data-view" role="tabpanel" aria-labelledby="data-tab">
-            <table id="data_table"></table>
+            <div id="data_table_container">
+                <table id="data_table"></table>
+            </div>
         </div>
-    </div>
-    
-			
-			
-			
-</div>
-
+    </div>	
 
 </body>
 </html>
