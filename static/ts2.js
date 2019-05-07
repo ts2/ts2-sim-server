@@ -1,4 +1,8 @@
 
+
+var xids = {};
+
+
 //= Client State
 var STA = {};
 STA.connected = false; // ws connected
@@ -198,6 +202,7 @@ window.addEventListener("load", function (evt) {
             try {
                 var resp = JSON.parse(evt.data);
                 incrementCounter("#lblTotalCount");
+
                 switch(resp.msgType){
 
                     case "notification":
