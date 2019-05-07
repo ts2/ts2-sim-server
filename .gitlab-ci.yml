@@ -12,6 +12,7 @@ pages:
   before_script:
     - apt-get update -qq
     - apt-get install -y -qq doxygen 
+
   script:
     - go mod download
     - go get github.com/GeertJohan/go.rice/rice
@@ -23,4 +24,4 @@ pages:
     paths:
     - public
   only:
-  - master
+  - pedro-html
