@@ -1117,7 +1117,7 @@ dl.section dd {
 
 
 #logo_txt {
-    float: right;
+    float: left;
     padding: 20px;
     font-family: monospace;
     color: #666666;
