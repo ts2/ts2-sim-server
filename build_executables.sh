@@ -20,6 +20,7 @@ INDEX_FILE="$HERE_DIR/build/index.md"
 
 cd $HERE_DIR/server 
 rice embed-go
+ls -al
 cd $HERE_DIR
 
 echo "# Downloads" > $INDEX_FILE
