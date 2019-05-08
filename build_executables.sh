@@ -72,7 +72,7 @@ do
 
     fi 
     #  -ldflags="-s -w"   CGO_ENABLED=1
-    env GOOS=$GOOS GOARCH=$GOARCH $build_opts go build -o "$BUILD_DIR/$output_name" $package
+    env GOOS=$GOOS GOARCH=$GOARCH $build_opts go build -o "$BUILD_DIR/$output_name" 
     if [ $? -ne 0 ]; then
         echo 'An error has occurred! Aborting the script execution...'
         exit 1
