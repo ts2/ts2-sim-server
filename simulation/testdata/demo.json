@@ -52,6 +52,7 @@
     "11": {
       "__type__": "Route",
       "beginSignal": "101",
+      "directions": {},
       "endSignal": "11",
       "initialState": 1
     },
@@ -417,7 +418,7 @@
       "__type__": "SignalItem",
       "conflictTiId": null,
       "maxSpeed": 0.0,
-      "name": "34",
+      "name": "35",
       "nextTiId": "12",
       "previousTiId": "104",
       "reverse": false,
@@ -478,7 +479,7 @@
       "__type__": "SignalItem",
       "conflictTiId": null,
       "maxSpeed": 0.0,
-      "name": "35",
+      "name": "36",
       "nextTiId": "14",
       "previousTiId": "16",
       "reverse": true,
@@ -507,7 +508,7 @@
       "__type__": "SignalItem",
       "conflictTiId": null,
       "maxSpeed": 0.0,
-      "name": null,
+      "name": "37",
       "nextTiId": "18",
       "previousTiId": "16",
       "reverse": false,
@@ -525,7 +526,7 @@
       "nextTiId": null,
       "previousTiId": "17",
       "x": 400.0,
-      "y": 0.0
+      "y": 25.0
     },
     "19": {
       "__type__": "Place",
