@@ -205,8 +205,15 @@ $gantry_color: #555555;
 }
 
 #input {
-    margin-top: 10px; 
+    //margin-top: 10px; 
     background-color: #DAFBE2;
+    height: 30px;
+    
+}
+#btnClearInput {
+    //margin-top: 10px; 
+    height: 30px;
+    vertical-align: middle;
 }
 #output, #outputNotifications {
     min-height: 300px; 
@@ -215,7 +222,6 @@ $gantry_color: #555555;
 #outputNotifications {
     background-color: #F8E3FF;
 }
-
 
 #mTabBar {
     margin-top: 10px;

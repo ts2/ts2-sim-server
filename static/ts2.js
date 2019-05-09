@@ -1,5 +1,5 @@
 
-
+var ws = null;
 
 
 //= Client State
@@ -105,17 +105,25 @@ function updateWidgets() {
     
     $("#action_buttons_div button").prop("disabled", !STA.connected);
 
-    // var clockWidget = $('#ts2_clock');
-    // console.log("lock=", clockWidget, STA)
-    // if(STA.running){
-    //     clockWidget.removeClass("clock-not-running");
-    //     clockWidget.addClass("clock-running");
-    // } else {
-    //     clockWidget.removeClass("clock-running");
-    //     clockWidget.addClass("clock-not-running");
-    // }
 };
 
+/* ------------------------->>
+// Datatable stuff for future
+var sentIDs = {};
+function SendListAction(target){
+    //{"object": "trainType", "action": "list"}
+    var ts  =  new Date().getTime();
+    var data = {id: ts, object: target, action: "list"}
+    
+    sentIDs[ts] = data;
+    //console.log(ts, data, sentIDs)
+    var jso = JSON.stringify(data);
+    
+    ws.send(jso);    
+    print("> SENT: " + jso);
+    incrementCounter("#lblSentCount");
+    $('#data-tab').tab('show');
+}
 function loadDataTable(data){
 
     var cols = [];
@@ -166,25 +174,11 @@ function loadDataTable(data){
     //table.rows().invalidate().draw();
 
 }
+-- dt stuff < */
 
 
-var ws = null;
-var sentIDs = {};
 
-function SendListAction(target){
-    //{"object": "trainType", "action": "list"}
-    var ts  =  new Date().getTime();
-    var data = {id: ts, object: target, action: "list"}
-    
-    sentIDs[ts] = data;
-    //console.log(ts, data, sentIDs)
-    var jso = JSON.stringify(data);
-    
-    ws.send(jso);    
-    print("> SENT: " + jso);
-    incrementCounter("#lblSentCount");
-    $('#data-tab').tab('show');
-}
+
 function print(message) {
     $('#output').append(message + "\n")
 };
@@ -196,12 +190,8 @@ function incrementCounter(xid){
     lbl.html(parseInt(lbl.text(), 10) + 1);
 }
 
-
-
 //= Lets go !
-
 var clockWidget;
-
 window.addEventListener("load", function (evt) {
 
     makeSignal();
@@ -273,7 +263,7 @@ window.addEventListener("load", function (evt) {
 
                         print("= RESPONSE: " + evt.data);
 
-                        
+                        /* Populate Datatable
                         if( resp.id > 0){
                             // Got back one of our own messages ?
                             var sent = sentIDs[resp.id];
@@ -283,7 +273,7 @@ window.addEventListener("load", function (evt) {
                                 incrementCounter("#lblRecvOkCount");
                             }
                         }
-
+                        */
 
                         if(resp.data.status == "OK"){
                             incrementCounter("#lblRecvOkCount");
@@ -358,8 +348,6 @@ window.addEventListener("load", function (evt) {
         btnSend.click();
         $("#input").val('{"object": "server", "action": "addListener", "params": {"event": "stateChanged"}}');
         btnSend.click();
-        //document.getElementById("simStartTmpl").click();
-        //btnSend.click();
         STA.auth = true;
         
     }
@@ -418,9 +406,9 @@ window.addEventListener("load", function (evt) {
         return false;
     };
     document.getElementById("tiListTmpl").onclick = function (evt) {
-        SendListAction("trackItem");
-        //input.value = '{"object": "trackItem", "action": "list"}';
-        //input.focus();
+        //SendListAction("trackItem");
+        input.value = '{"object": "trackItem", "action": "list"}';
+        input.focus();
         return false;
     };
     document.getElementById("tiShowTmpl").onclick = function (evt) {
@@ -429,9 +417,9 @@ window.addEventListener("load", function (evt) {
         return false;
     };
     document.getElementById("plListTmpl").onclick = function (evt) {
-        SendListAction("place");
-        //input.value = '{"object": "place", "action": "list"}';
-        //input.focus();
+        //SendListAction("place");
+        input.value = '{"object": "place", "action": "list"}';
+        input.focus();
         return false;
     };
     document.getElementById("plShowTmpl").onclick = function (evt) {
@@ -440,9 +428,9 @@ window.addEventListener("load", function (evt) {
         return false;
     };
     document.getElementById("ttListTmpl").onclick = function (evt) {
-        SendListAction("trainType");
-        //input.value = '{"object": "trainType", "action": "list"}';
-        //input.focus();
+        //SendListAction("trainType");
+        input.value = '{"object": "trainType", "action": "list"}';
+        input.focus();
         return false;
     };
     document.getElementById("ttShowTmpl").onclick = function (evt) {
@@ -451,9 +439,9 @@ window.addEventListener("load", function (evt) {
         return false;
     };
     document.getElementById("serviceListTmpl").onclick = function (evt) {
-        SendListAction("service");
-        //input.value = '{"object": "service", "action": "list"}';
-        //input.focus();
+        //SendListAction("service");
+        input.value = '{"object": "service", "action": "list"}';
+        input.focus();
         return false;
     };
     document.getElementById("serviceShowTmpl").onclick = function (evt) {
@@ -462,9 +450,9 @@ window.addEventListener("load", function (evt) {
         return false;
     };
     document.getElementById("routeListTmpl").onclick = function (evt) {
-        SendListAction("route");
-        //input.value = '{"object": "route", "action": "list"}';
-        //input.focus();
+        //SendListAction("route");
+        input.value = '{"object": "route", "action": "list"}';
+        input.focus();
         return false;
     };
     document.getElementById("routeShowTmpl").onclick = function (evt) {
@@ -483,9 +471,9 @@ window.addEventListener("load", function (evt) {
         return false;
     };
     document.getElementById("trainListTmpl").onclick = function (evt) {
-        SendListAction("train");
-        //input.value = '{"object": "train", "action": "list"}';
-        //input.focus();
+        //SendListAction("train");
+        input.value = '{"object": "train", "action": "list"}';
+        input.focus();
         return false;
     };
     document.getElementById("trainShowTmpl").onclick = function (evt) {

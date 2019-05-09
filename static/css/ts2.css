@@ -136,8 +136,12 @@ body {
   background-color: #ffffdd; }
 
 #input {
-  margin-top: 10px;
-  background-color: #DAFBE2; }
+  background-color: #DAFBE2;
+  height: 30px; }
+
+#btnClearInput {
+  height: 30px;
+  vertical-align: middle; }
 
 #output, #outputNotifications {
   min-height: 300px;
