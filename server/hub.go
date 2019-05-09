@@ -33,6 +33,9 @@ type Hub struct {
 	// Registry of client listeners
 	registry map[registryEntry]map[*connection]bool
 
+	// registryMutex protects the registry
+	registryMutex sync.RWMutex
+
 	// lastEvents holds the last event sent for each registryEntry
 	lastEvents map[registryEntry]*simulation.Event
 
@@ -90,6 +93,36 @@ func (h *Hub) register(c *connection) {
 	}
 }
 
+// addConnectionToRegistry adds this connection to the registry for eventName and id.
+func (h *Hub) addConnectionToRegistry(conn *connection, eventName simulation.EventName, id string) {
+	h.registryMutex.Lock()
+	defer h.registryMutex.Unlock()
+	re := registryEntry{eventName: eventName, id: id}
+	if _, ok := h.registry[re]; !ok {
+		h.registry[re] = make(map[*connection]bool)
+	}
+	h.registry[re][conn] = true
+}
+
+// removeEntryFromRegistry removes this connection from the registry for eventName and id.
+func (h *Hub) removeEntryFromRegistry(conn *connection, eventName simulation.EventName, id string) {
+	h.registryMutex.Lock()
+	defer h.registryMutex.Unlock()
+	re := registryEntry{eventName: eventName, id: id}
+	delete(h.registry[re], conn)
+}
+
+// removeConnectionFromRegistry removes all entries of this connection in the registry.
+func (h *Hub) removeConnectionFromRegistry(conn *connection) {
+	h.registryMutex.Lock()
+	defer h.registryMutex.Unlock()
+	for re, rv := range h.registry {
+		if _, ok := rv[conn]; ok {
+			delete(h.registry, re)
+		}
+	}
+}
+
 // unregister unregisters the connection to this hub
 func (h *Hub) unregister(c *connection) {
 	switch c.clientType {
@@ -97,11 +130,7 @@ func (h *Hub) unregister(c *connection) {
 		if _, ok := h.clientConnections[c]; ok {
 			delete(h.clientConnections, c)
 		}
-		for re, rv := range h.registry {
-			if _, ok := rv[c]; ok {
-				delete(h.registry, re)
-			}
-		}
+		h.removeConnectionFromRegistry(c)
 	}
 }
 
@@ -109,6 +138,8 @@ func (h *Hub) unregister(c *connection) {
 func (h *Hub) notifyClients(e *simulation.Event) {
 	logger.Debug("Notifying clients", "submodule", "hub", "event", e)
 	h.updateLastEvents(e)
+	h.registryMutex.RLock()
+	defer h.registryMutex.RUnlock()
 	// Notify clients that subscribed to all objects
 	for conn := range h.registry[registryEntry{eventName: e.Name, id: ""}] {
 		conn.pushChan <- NewNotificationResponse(e)

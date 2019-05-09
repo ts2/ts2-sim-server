@@ -67,20 +67,12 @@ func (h *Hub) addRegistryEntry(req Request, conn *connection) error {
 		return fmt.Errorf("unparsable request: %s (%s)", err, req.Params)
 	}
 	if len(pl.IDs) == 0 {
-		re := registryEntry{eventName: pl.Event, id: ""}
-		if _, ok := h.registry[re]; !ok {
-			h.registry[re] = make(map[*connection]bool)
-		}
-		h.registry[re][conn] = true
-		logger.Debug("Registry entry added", "submodule", "hub", "entry", re)
+		h.addConnectionToRegistry(conn, pl.Event, "")
+		logger.Debug("Registry entry added", "submodule", "hub", "eventName", pl.Event)
 		return nil
 	}
 	for _, id := range pl.IDs {
-		re := registryEntry{eventName: pl.Event, id: id}
-		if _, ok := h.registry[re]; !ok {
-			h.registry[re] = make(map[*connection]bool)
-		}
-		h.registry[re][conn] = true
+		h.addConnectionToRegistry(conn, pl.Event, id)
 	}
 	logger.Debug("Registry entries added", "submodule", "hub", "eventName", pl.Event, "ids", pl.IDs)
 	return nil
@@ -94,14 +86,12 @@ func (h *Hub) removeRegistryEntry(req Request, conn *connection) error {
 		return fmt.Errorf("unparsable request: %s (%s)", err, req.Params)
 	}
 	if len(pl.IDs) == 0 {
-		re := registryEntry{eventName: pl.Event, id: ""}
-		delete(h.registry[re], conn)
-		logger.Debug("Registry entry deleted", "submodule", "hub", "entry", re)
+		h.removeEntryFromRegistry(conn, pl.Event, "")
+		logger.Debug("Registry entry deleted", "submodule", "hub", "eventName", pl.Event)
 		return nil
 	}
 	for _, id := range pl.IDs {
-		re := registryEntry{eventName: pl.Event, id: id}
-		delete(h.registry[re], conn)
+		h.removeEntryFromRegistry(conn, pl.Event, id)
 	}
 	logger.Debug("Registry entries added", "submodule", "hub", "eventName", pl.Event, "ids", pl.IDs)
 	return nil

@@ -3,358 +3,308 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-	<link rel="icon" href="static/ts2.ico" type="image/x-icon"/>
-	<link rel="shortcut icon" href="static/ts2.ico" type="image/x-icon"/>
-	<link href="static/bootstrap.min.css" rel="stylesheet"/>
-	<script src="static/jquery-3.3.1.slim.min.js"></script>
-	<script src="static/popper.min.js"></script>
-	<script src="static/bootstrap.min.js"></script>
-	<script>
-        window.addEventListener("load", function (evt) {
-            var input = document.getElementById("input");
-            var ws = null;
-            var print = function (message) {
-                $('#output').append(message + "\n")
-            };
-            var showConnected = function (connected) {
-                print(connected ? "# WS Connected" : "# WS Disconnected");
-                var label = $('#lblStatus');
-                label.text(connected ? "Connected" : "Disconnected");
-                label.toggleClass("badge-success", connected);
-                label.toggleClass("badge-danger", !connected);
-                $('#btnClose').prop("disabled", !connected);
-                $('#btnOpen').prop("disabled", connected);
-                $('#btnSend').prop("disabled", !connected);
-            };
-            document.getElementById("btnOpen").onclick = function (evt) {
-                if (ws) {
-                    return false;
-                }
-                ws = new WebSocket("{{.Host}}");
-                ws.onopen = function (evt) {
-                    showConnected(true);
-                };
-                ws.onclose = function (evt) {
-                    showConnected(false);
-                    ws = null;
-                };
-                ws.onmessage = function (evt) {
-                    print("< RESPONSE: " + evt.data);
-                };
-                ws.onerror = function (evt) {
-                    print("< ERROR: " + evt.data);
-                };
-                input.focus();
-                return false;
-            };
-            document.getElementById("btnSend").onclick = function (evt) {
-                if (!ws) {
-                    return false;
-                }
-                print("> SEND: " + input.value);
-                ws.send(input.value);
-                $('#input').val("");
-                input.focus();
-                return false;
-            };
-            document.getElementById("btnClose").onclick = function (evt) {
-                if (ws) {
-                    ws.close();
-                }
-                return false;
-            };
-            document.getElementById("btnClear").onclick = function (evt) {
-                $('#output').empty();
-                return false;
-            };
-            document.getElementById("btnClearInput").onclick = function (evt) {
-                $('#input').val("");
-                input.focus();
-                return false;
-            };
-            // Templates
-            document.getElementById("loginTmpl").onclick = function (evt) {
-                input.value = '{"object": "server", "action": "register", "params": {"type": "client", "token": "client-secret"}}';
-                input.focus();
-                return false;
-            };
-            document.getElementById("addListenerTmpl").onclick = function (evt) {
-                input.value = '{"object": "server", "action": "addListener", "params": {"event": "clock", "ids": []}}';
-                input.focus();
-                return false;
-            };
-            document.getElementById("removeListenerTmpl").onclick = function (evt) {
-                input.value = '{"object": "server", "action": "removeListener", "params": {"event": "clock"}}';
-                input.focus();
-                return false;
-            };
-            document.getElementById("renotifyTmpl").onclick = function (evt) {
-                input.value = '{"object": "server", "action": "renotify"}';
-                input.focus();
-                return false;
-            };
-            document.getElementById("simStartTmpl").onclick = function (evt) {
-                input.value = '{"object": "simulation", "action": "start"}';
-                input.focus();
-                return false;
-            };
-            document.getElementById("simPauseTmpl").onclick = function (evt) {
-                input.value = '{"object": "simulation", "action": "pause"}';
-                input.focus();
-                return false;
-            };
-            document.getElementById("simDumpTmpl").onclick = function (evt) {
-                input.value = '{"object": "simulation", "action": "dump"}';
-                input.focus();
-                return false;
-            };
-            document.getElementById("optionsListTmpl").onclick = function (evt) {
-                input.value = '{"object": "option", "action": "list"}';
-                input.focus();
-                return false;
-            };
-            document.getElementById("optionsSetTmpl").onclick = function (evt) {
-                input.value = '{"object": "option", "action": "set", "params": {"name": "description", "value": "Demo Simulation"}}';
-                input.focus();
-                return false;
-            };
-            document.getElementById("tiListTmpl").onclick = function (evt) {
-                input.value = '{"object": "trackItem", "action": "list"}';
-                input.focus();
-                return false;
-            };
-            document.getElementById("tiShowTmpl").onclick = function (evt) {
-                input.value = '{"object": "trackItem", "action": "show", "params": {"ids": ["23", "24"]}}';
-                input.focus();
-                return false;
-            };
-            document.getElementById("plListTmpl").onclick = function (evt) {
-                input.value = '{"object": "place", "action": "list"}';
-                input.focus();
-                return false;
-            };
-            document.getElementById("plShowTmpl").onclick = function (evt) {
-                input.value = '{"object": "place", "action": "show", "params": {"ids": ["LFT", "STN"]}}';
-                input.focus();
-                return false;
-            };
-            document.getElementById("ttListTmpl").onclick = function (evt) {
-                input.value = '{"object": "trainType", "action": "list"}';
-                input.focus();
-                return false;
-            };
-            document.getElementById("ttShowTmpl").onclick = function (evt) {
-                input.value = '{"object": "trainType", "action": "show", "params": {"ids": ["UT"]}}';
-                input.focus();
-                return false;
-            };
-            document.getElementById("serviceListTmpl").onclick = function (evt) {
-                input.value = '{"object": "service", "action": "list"}';
-                input.focus();
-                return false;
-            };
-            document.getElementById("serviceShowTmpl").onclick = function (evt) {
-                input.value = '{"object": "service", "action": "show", "params": {"ids": ["S001"]}}';
-                input.focus();
-                return false;
-            };
-            document.getElementById("routeListTmpl").onclick = function (evt) {
-                input.value = '{"object": "route", "action": "list"}';
-                input.focus();
-                return false;
-            };
-            document.getElementById("routeShowTmpl").onclick = function (evt) {
-                input.value = '{"object": "route", "action": "show", "params": {"ids": ["1", "3"]}}';
-                input.focus();
-                return false;
-            };
-            document.getElementById("routeActivateTmpl").onclick = function (evt) {
-                input.value = '{"object": "route", "action": "activate", "params": {"id": "1"}}';
-                input.focus();
-                return false;
-            };
-            document.getElementById("routeDeactivateTmpl").onclick = function (evt) {
-                input.value = '{"object": "route", "action": "deactivate", "params": {"id": "1"}}';
-                input.focus();
-                return false;
-            };
-            document.getElementById("trainListTmpl").onclick = function (evt) {
-                input.value = '{"object": "train", "action": "list"}';
-                input.focus();
-                return false;
-            };
-            document.getElementById("trainShowTmpl").onclick = function (evt) {
-                input.value = '{"object": "train", "action": "show", "params": {"ids": [0]}}';
-                input.focus();
-                return false;
-            };
-            showConnected(false);
-        });
-	</script>
+	<link rel="icon" href="/static/ts2.ico" type="image/x-icon"/>
+    <link rel="shortcut icon" href="/static/ts2.ico" type="image/x-icon"/>
+    <title>TS2 Sim Server</title>
+    <base ref="/">
+
+    
+    <link href="/static/bootstrap.min.css" rel="stylesheet"/>
+    <link href="/static/fontawesome/css/all.min.css" rel="stylesheet"/>
+    <link href="/static/datatables/datatables.min.css" rel="stylesheet"/>
+    <link href="/static/css/ts2.css" rel="stylesheet"/>
+    
+    
+    <script src="/static/jquery-3.4.1.min.js"></script>
+	<script src="/static/popper.min.js"></script>
+    <script src="/static/bootstrap.min.js"></script>
+    <script src="/static/datatables/datatables.min.js"></script>
+    <script src="/static/svg.min.js"></script>
+    <script src="/static/reconnecting-websocket.js"></script>
+
+    <script>
+    var TS2_WEBSOCKET_HOST = "{{.Host}}";
+    </script>
+    <script src="/static/ts2.js"></script>
 </head>
 <body>
 
-<nav class="navbar navbar-expand-sm navbar-dark bg-dark">
-	<img src="static/ts2.ico"/>
-	<a class="navbar-brand" href="#">TS2 Sim Server</a>
-	<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
-			aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-		<span class="navbar-toggler-icon"></span>
-	</button>
-
-	<div class="collapse navbar-collapse" id="navbarSupportedContent">
-		<ul class="navbar-nav mr-auto">
-			<li class="nav-item active">
-				<a class="nav-link" href="#">Home</a>
-			</li>
-			<li class="nav-item">
-				<a class="nav-link" href="https://godoc.org/github.com/ts2/ts2-sim-server" target="_godoc">Godoc</a>
-			</li>
-		</ul>
-	</div>
-</nav>
-
-<div class="container">
-	<div class="card m-3">
-		<div class="card-body">
-			<h3 class="card-title">Loaded Simulation</h3>
-			<table class="table table-bordered table-condensed">
-				<tr>
-					<th>Title:</th>
-					<td>{{ .Title }}</td>
-				</tr>
-				<tr>
-					<th>Description:</th>
-					<td>{{ .Description }}</td>
-				</tr>
-				<tr>
-					<th>WebSocket Server:</th>
-					<td>{{ .Host }}</td>
-				</tr>
-			</table>
-		</div>
-	</div>
-
-	<div class="card m-3">
-		<div class="card-body">
-			<h3 class="card-title">Test WebSocket</h3>
-			<p>
-				Click "Open" to create a connection to the server,
-				"Send" to send a message to the server and "Close" to close the connection.
-				You can change the message and send multiple times.
-			</p>
-
-			<form>
-				<div class="form-row">
-					<div class="form-group">
-						<button id="btnOpen" type="button" class="btn btn-info">Open</button>
-						<button id="btnClose" type="button" class="btn btn-info">Close</button>
-						<span class="badge badge-danger mx-3" id="lblStatus">Disconnected</span>
-					</div>
-					<div class="form-group">
-						<div class="btn-group">
-							<button type="button" class="btn btn-default dropdown-toggle"
-									data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Server
-							</button>
-							<div class="dropdown-menu">
-								<a id="loginTmpl" class="dropdown-item" href="#">Login</a></li>
-								<div class="dropdown-divider"></div>
-								<a id="addListenerTmpl" class="dropdown-item" href="#">Add Listener</a></li>
-								<a id="removeListenerTmpl" class="dropdown-item" href="#">Remove Listener</a></li>
-								<div class="dropdown-divider"></div>
-								<a id="renotifyTmpl" class="dropdown-item" href="#">Renotify</a></li>
-							</div>
-						</div>
-						<div class="btn-group">
-							<button type="button" class="btn btn-default dropdown-toggle"
-									data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Simulation
-							</button>
-							<div class="dropdown-menu">
-								<a id="simStartTmpl" class="dropdown-item" href="#">Start</a>
-								<a id="simPauseTmpl" class="dropdown-item" href="#">Pause</a>
-								<div class="dropdown-divider"></div>
-								<a id="simDumpTmpl" class="dropdown-item" href="#">Dump</a>
-								<div class="dropdown-divider"></div>
-								<a id="optionsListTmpl" class="dropdown-item" href="#">List Options</a>
-								<a id="optionsSetTmpl" class="dropdown-item" href="#">Set Option</a>
-							</div>
-						</div>
-						<div class="btn-group">
-							<button type="button" class="btn btn-default dropdown-toggle"
-									data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Routes
-							</button>
-							<div class="dropdown-menu">
-								<a id="routeListTmpl" class="dropdown-item" href="#">List</a>
-								<a id="routeShowTmpl" class="dropdown-item" href="#">Show</a>
-								<div class="dropdown-divider"></div>
-								<a id="routeActivateTmpl" class="dropdown-item" href="#">Activate</a>
-								<a id="routeDeactivateTmpl" class="dropdown-item" href="#">Deactivate</a>
-							</div>
-						</div>
-						<div class="btn-group">
-							<button type="button" class="btn btn-default dropdown-toggle"
-									data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Trains
-							</button>
-							<div class="dropdown-menu">
-								<a id="trainListTmpl" class="dropdown-item" href="#">List</a>
-								<a id="trainShowTmpl" class="dropdown-item" href="#">Show</a>
-							</div>
-						</div>
-						<div class="btn-group">
-							<button type="button" class="btn btn-default dropdown-toggle"
-									data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Track Items
-							</button>
-							<div class="dropdown-menu">
-								<a id="tiListTmpl" class="dropdown-item" href="#">List</a>
-								<a id="tiShowTmpl" class="dropdown-item" href="#">Show</a>
-							</div>
-						</div>
-						<div class="btn-group">
-							<button type="button" class="btn btn-default dropdown-toggle"
-									data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Places
-							</button>
-							<div class="dropdown-menu">
-								<a id="plListTmpl" class="dropdown-item" href="#">List</a>
-								<a id="plShowTmpl" class="dropdown-item" href="#">Show</a>
-							</div>
-						</div>
-						<div class="btn-group">
-							<button type="button" class="btn btn-default dropdown-toggle"
-									data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Train Types
-							</button>
-							<div class="dropdown-menu">
-								<a id="ttListTmpl" class="dropdown-item" href="#">List</a>
-								<a id="ttShowTmpl" class="dropdown-item" href="#">Show</a>
-							</div>
-						</div>
-						<div class="btn-group">
-							<button type="button" class="btn btn-default dropdown-toggle"
-									data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Services
-							</button>
-							<div class="dropdown-menu">
-								<a id="serviceListTmpl" class="dropdown-item" href="#">List</a>
-								<a id="serviceShowTmpl" class="dropdown-item" href="#">Show</a>
-							</div>
-						</div>
-					</div>
-				</div>
-				<div class="form-group form-row">
-					<input type="text" id="input" style="width:500px" placeHolder="Message">
-					<button id="btnClearInput" type="button" class="btn btn-outline-dark">X</button>
-					<button id="btnSend" type="button" class="btn btn-success">Send</button>
-					<button id="btnClear" type="button" class="btn btn-default">Clear</button>
-				</div>
-			</form>
-
-
-			<div class="container">
-				<form>
-                    <textarea id="output" style="margin-top: 10px; width:100%; height:300px; overflow: auto;"
-							  placeHolder="Log"></textarea>
-				</form>
-			</div>
-		</div>
-	</div>
+<div id="gantry"></div>
+<div id="clock_holder">
+        <div id="clock_poles"></div>
+        <div id="ts2_clock" class="clock-paused">--:--:-</div>
 </div>
+
+<div id="ts2_signal"></div>
+
+
+<!--
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-2"></div>
+        <div class="col-md-8"></div>
+        <div class="col-md-2">
+            <nav class="navbar navbar-expand-sm navbar-dark sbg-dark">
+                      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+                            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+
+                    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                        <ul class="navbar-nav mr-auto">
+         
+                            <li class="nav-item">
+                                <a class="nav-link" href="https://godoc.org/github.com/ts2/ts2-sim-server" target="_godoc">Godoc</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="https://github.com/ts2/ts2-sim-server" target="_github">github</a>
+                            </li>
+                        </ul>
+                    </div>
+                
+            </nav>
+        </div>
+</div>
+-->
+<!-- Top panels-->
+<form>
+<div class="container">
+    <div class="row xtop">
+
+        <div class="col-md-1"></div>
+
+        <!-- WebSocket -->
+        <div class="col-md-5">
+            <div class="xpoles"></div>
+            <div class="card">
+                            
+                <div class="card-body">
+                    <div class="badge xstatus not-connected mx-3" id="lblConnectedStatus">Disconnected</div>
+                    <h3 class="card-title">WebSocket</h3>
+                             
+                    <div class="form-row">
+                        <div class="col">
+                            <button id="btnOpen" type="button" class="btn btn-success"><i class="fa fa-play-circle" aria-hidden="true"></i>&nbsp;Connect</button>
+                            <button id="btnClose" type="button" class="btn btn-default"><i class="fa fa-toggle-off" aria-hidden="true"></i>&nbsp;Close</button>
+                        </div>
+                        <!-- <div class="col">
+                            
+                            <div class="ts2_host">{{ .Host }}</div>
+                            
+                        </div>  -->
+                    </div>
+                    <table class="ts2_stats_table">
+                        <thead><tr>
+                            <td>Sent</td><td>Rcv OK</td><td>Rcv Fail</td><td>Notices</td><td>Total</td>
+                        </tr></thead>
+                        <tbody>
+                            <tr>
+                                <td><span id="lblSentCount">0</span></div>
+                                <td><span id="lblRecvOkCount">0</span></div>
+                                <td><span id="lblRecvFailCount">0</span></div>
+                                <td><span id="lblNoticesCount">0</span></div>
+                                <td><span id="lblTotalCount">0</span></div>
+                            </tr>
+                        </tbody>
+                    </table>
+                                  
+                </div>
+            </div>
+                           
+        </div>
+
+        <!---- Simulation panel -->
+        <div class="col-md-5">
+            <div class="xpoles"></div>
+            <div class="card">
+                    
+                <div class="card-body">
+                    <div class="badge xstatus not-running mx-3" id="lblRunningStatus">Disconnected</div>
+                    <h3 class="card-title">Simulation</h3>
+                    <div class="form-row">
+                        <div class="col">
+                            <button id="btnLogin" type="button" class="btn btn-warning"><i class="fa fa-key" aria-hidden="true"></i>&nbsp;Login</button>
+                            <button id="btnSimStart" type="button" class="btn btn-success"><i class="fa fa-play" aria-hidden="true"></i>&nbsp;Start</button>
+                            <button id="btnSimPause" type="button" class="btn btn-default"><i class="fa fa-pause" aria-hidden="true"></i>&nbsp;Pause</button>     
+                        </div>            
+                    </div>
+                    <div class="ts2_sim_info">
+                        <p><b>{{ .Title }}</b><br>{{ .Description }}<br><span class="ts2_host">{{ .Host }}</span></p>
+                    </div>
+                    </div>
+                        
+                </div>
+            </div>
+        </div>
+
+    </div> <!-- row -->
+</div>
+
+<!-- main content-->
+<div class="container xcontent">
+		
+
+	<!-- Actions-->
+    <div class="form-row" id="action_buttons_div">
+        
+        <div class="form-group">
+
+            <!-- Server -->
+            <div class="btn-group">
+                <button type="button" class="btn btn-primary dropdown-toggle"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Server
+                </button>
+                <div class="dropdown-menu">
+                    <a id="loginTmpl" class="dropdown-item" href="#">Login</a></li>
+                    <div class="dropdown-divider"></div>
+                    <a id="addListenerTmpl" class="dropdown-item" href="#">Add Listener</a></li>
+                    <a id="removeListenerTmpl" class="dropdown-item" href="#">Remove Listener</a></li>
+                    <div class="dropdown-divider"></div>
+                    <a id="renotifyTmpl" class="dropdown-item" href="#">Renotify</a></li>
+                </div>
+            </div>
+
+            <!-- Sim -->
+            <div class="btn-group">
+                <button type="button" class="btn btn-primary dropdown-toggle"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Simulation
+                </button>
+                <div class="dropdown-menu">
+                    <a id="simStartTmpl" class="dropdown-item" href="#">Start</a>
+                    <a id="simPauseTmpl" class="dropdown-item" href="#">Pause</a>
+                    <div class="dropdown-divider"></div>
+                    <a id="simDumpTmpl" class="dropdown-item" href="#">Dump</a>
+                    <div class="dropdown-divider"></div>
+                    <a id="optionsListTmpl" class="dropdown-item" href="#">List Options</a>
+                    <a id="optionsSetTmpl" class="dropdown-item" href="#">Set Option</a>
+                </div>
+            </div>
+
+            <!-- Routes -->
+            <div class="btn-group">
+                <button type="button" class="btn btn-secondary dropdown-toggle"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Routes
+                </button>
+                <div class="dropdown-menu">
+                    <a id="routeListTmpl" class="dropdown-item" href="#">List</a>
+                    <a id="routeShowTmpl" class="dropdown-item" href="#">Show</a>
+                    <div class="dropdown-divider"></div>
+                    <a id="routeActivateTmpl" class="dropdown-item" href="#">Activate</a>
+                    <a id="routeDeactivateTmpl" class="dropdown-item" href="#">Deactivate</a>
+                </div>
+            </div>
+
+            <!-- Trains -->
+            <div class="btn-group">
+                <button type="button" class="btn btn-secondary dropdown-toggle"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Trains
+                </button>
+                <div class="dropdown-menu">
+                    <a id="trainListTmpl" class="dropdown-item" href="#">List</a>
+                    <a id="trainShowTmpl" class="dropdown-item" href="#">Show</a>
+                </div>
+            </div>
+
+            <!-- TrackItems -->
+            <div class="btn-group">
+                <button type="button" class="btn btn-secondary dropdown-toggle"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Track Items
+                </button>
+                <div class="dropdown-menu">
+                    <a id="tiListTmpl" class="dropdown-item" href="#">List</a>
+                    <a id="tiShowTmpl" class="dropdown-item" href="#">Show</a>
+                </div>
+            </div>
+
+            <!-- Places -->
+            <div class="btn-group">
+                <button type="button" class="btn btn-secondary dropdown-toggle"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Places
+                </button>
+                <div class="dropdown-menu">
+                    <a id="plListTmpl" class="dropdown-item" href="#">List</a>
+                    <a id="plShowTmpl" class="dropdown-item" href="#">Show</a>
+                </div>
+            </div>
+
+            <!-- Train Types -->
+            <div class="btn-group">
+                <button type="button" class="btn btn-secondary dropdown-toggle"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Train Types
+                </button>
+                <div class="dropdown-menu">
+                    <a id="ttListTmpl" class="dropdown-item" href="#">List</a>
+                    <a id="ttShowTmpl" class="dropdown-item" href="#">Show</a>
+                </div>
+            </div>
+
+            <!-- Services -->
+            <div class="btn-group">
+                <button type="button" class="btn btn-secondary dropdown-toggle"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Services
+                </button>
+                <div class="dropdown-menu">
+                    <a id="serviceListTmpl" class="dropdown-item" href="#">List</a>
+                    <a id="serviceShowTmpl" class="dropdown-item" href="#">Show</a>
+                </div>
+            </div>
+        </div>
+    </div>
+                
+    <!-- Send message-->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="input-group">
+                <input type="text" id="input" class="form-control " placeHolder="Message">
+                <span class="input-group-append">
+                    <button id="btnClearInput" class="btn btn-sm btn-secondary" type="button">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </span>
+               
+            </div>
+        </div>
+        <div class="col-md-4">
+            <!-- <button id="btnClearInput" type="button" class="btn btn-outline"><i class="fa fa-times"></i></button> -->
+            <button id="btnSend" type="button" class="btn btn-success"><i class="fa fa-arrow-circle-right" aria-hidden="true"></i>&nbsp;Send</button>
+            <button id="btnSendClear" type="button" class="btn btn-success"><i class="fa fa-arrow-circle-right" aria-hidden="true"></i>&nbsp;Clear &amp; Send</button>
+            <button id="btnClearLog" type="button" class="btn btn-default"><i class="fa fa-times" aria-hidden="true"></i>&nbsp;Clear</button>
+        </div>
+    </div>
+        
+    <!-- Tabs -->
+    <ul class="nav nav-tabs" id="mTabBar" role="tablist">
+        <li class="nav-item">
+          <a class="nav-link active" id="response-tab" data-toggle="tab" href="#response-view" role="tab" aria-controls="home" aria-selected="true">Responses</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" id="notice-tab" data-toggle="tab" href="#notice-view" role="tab" aria-controls="profile" aria-selected="false">Notifications</a>
+        </li>
+        <!-- Datatable
+        <li class="nav-item">
+          <a class="nav-link" id="data-tab" data-toggle="tab" href="#data-view" role="tab" aria-controls="contact" aria-selected="false">Data</a>
+        </li>
+        -->
+    </ul>
+
+  
+		
+</div>
+
+  <!-- Tab Content-->
+  <div class="tab-content" id="mTabPanes">
+        <div class="tab-pane active" id="response-view" role="tabpanel" aria-labelledby="response-tab">
+            <textarea id="output" class="consoleTxt" placeHolder="Log"></textarea>
+        </div>
+        <div class="tab-pane" id="notice-view" role="tabpanel" aria-labelledby="notice-tab">
+            <textarea id="outputNotifications" class="consoleTxt" placeHolder="Notifications"></textarea>
+        </div>
+        <div class="tab-pane" id="data-view" role="tabpanel" aria-labelledby="data-tab">
+            <div id="data_table_container">
+                <table id="data_table"></table>
+            </div>
+        </div>
+    </div>	
+
 </body>
 </html>

@@ -1,0 +1,273 @@
+
+body {
+    background: rgb(5,4,24);
+    background: radial-gradient(circle, rgba(5,4,24,0.700717787114846) 0%, rgba(24,26,31,1) 35%, rgba(0,0,0,1) 100%);
+}
+
+$gantry_color: #555555;
+
+#gantry {
+    background-color: $gantry_color;
+    margin-top: 5px;
+    width: 100%;
+    height: 15px;
+}
+
+#ts2_signal {
+    position: absolute; 
+    z-index: 99999;
+    top: 0;
+    left: 15px;
+}
+
+#ts2_brand {
+    font-size: 14pt;
+    float: left;
+    color: #cccccc;
+    font-family: monospace;
+    margin: 20px 0 0 100px;
+}
+
+#clock_holder {
+    float: right;
+    background-color: transparent;
+   // position: absolute; 
+    //z-index: 99999;
+    //top: 0;
+    //right: 15px;
+    margin-right: 10px;
+    #clock_poles {
+        height: 15px;
+        border-left: 10px solid $gantry_color;
+        border-right: 10px solid $gantry_color;
+        margin-right: 15px;
+        margin-left: 50px;
+    }
+    #ts2_clock{
+        text-align: center;
+        font-family: monospace;
+        background-color: #333333;
+        //color: #eeeeee;
+        font-size: 24pt;
+        
+        padding: 5px;
+        //margin: 10px;
+        //border: 2px solid #444444;
+        border-radius: 5px;
+        width: 200px;   
+    }
+
+    .clock-running {
+        border: 2px solid green;
+        color: #eeeeee;
+    }
+    .clock-paused {
+        border: 2px solid #666666;
+        color: #cccccc;
+    }
+    
+}
+
+
+.ts2_host {
+    font-size: 9pt;
+    font-family: monospace;
+    padding: 5px;
+}
+.ts2_sim_info{
+    margin-left: 10px;
+    p {
+        font-size: 10pt;
+        padding: 2px;
+        margin: 0;
+    }
+}
+
+.card {
+    //background-color: red;
+    margin-top: 0;
+}
+
+.xtop {
+    //background-color: yellow;
+    margin: 0;
+    padding: 0;
+
+    .xpoles {
+        height: 15px;
+        border-left: 10px solid $gantry_color;
+        border-right: 10px solid $gantry_color;
+        margin-right: 15px;
+        margin-left: 50px;
+    }
+}
+
+//==================================
+.xstatus {
+    float: right;
+    margin: 2px;
+    width: 120px;
+    font-size: 10pt;
+
+}
+
+// #lblConnectedStatus, #lblRunningStatus {
+//     font-size: 12pt;
+//     width: 120px;
+// }
+.connected {
+    background-color: #E3FFCE;
+    color: green;
+}
+.not-connected {
+    background-color: #FFE4E2;
+    color: #990000;
+}
+.running {
+    background-color: #E3FFCE;
+    color: green;
+}
+.not-running {
+    background-color: yellow;
+    color: #333333;
+}
+
+.card {
+    //background-color: #444444;
+    box-shadow: 3px 3px #888888;
+    .card-body {
+        
+        padding: 0;
+
+        h3.card-title {
+            padding: 5px 10px;
+            font-size: 10pt;
+            font-family: monospace;
+            border-bottom: 1px solid #999999;
+            //background-color: #eeeeee !important;
+            color: #444444;
+            background: linear-gradient(to left, #999999, #777777 20%,transparent 75%);
+        }
+
+        
+
+        .form-row {
+            margin: 10px;
+        }
+
+        .stats {
+            font-size: 10pt;
+
+            .badge {
+                font-size: 13pt;
+                min-width: 40px;
+            }
+        }
+    }
+
+}
+
+.table {
+    //margin: 10px;
+    font-size: 10pt;
+
+    th {
+        text-align: right;
+        font-weight: normal;
+        border-right: 1px solid #dddddd; 
+        //background-color: #eeeeee;
+        //
+    }
+    td {
+        font-weight: bold;
+    }
+
+    th, td {
+       border: none;
+       border-bottom: 1px solid #dddddd;
+       padding: 5px;
+    }
+    
+}
+
+// Inputs, outputs stuff =================================
+.xcontent {
+    margin-top: 20px;
+    //margin-left: 20px;
+    padding-left: 30px;
+}
+// applies to txt elements
+.consoleTxt {
+    width: 100%; 
+    font-size: 9pt;
+    font-family: monospace;
+    background-color: #ffffdd;
+}
+
+#input {
+    //margin-top: 10px; 
+    background-color: #DAFBE2;
+    height: 30px;
+    
+}
+#btnClearInput {
+    //margin-top: 10px; 
+    height: 30px;
+    vertical-align: middle;
+}
+#output, #outputNotifications {
+    min-height: 300px; 
+    overflow: auto;
+}
+#outputNotifications {
+    background-color: #F8E3FF;
+}
+
+#mTabBar {
+    margin-top: 10px;
+
+    a.nav-link {
+        color: #999999;
+        background-color: #333333;
+    }
+    a.active {
+        background-color: #666666;
+        color: white;
+    }
+}
+
+
+.ts2_stats_table {
+    margin: 10px;
+    //background-color: pink;
+    width: 80%;
+    font-size: 8pt;
+
+    thead {
+        background-color: #efefef;
+        font-size: 9pt;
+    }
+    tbody td {
+        
+        font-size: 10pt;
+    }
+    td {
+        text-align: center;
+        padding: 2px;
+        border-right: 1px solid #cccccc;
+    }
+
+}
+
+#data_table_container {
+    background-color: white;
+}
+#data_table {
+    width: 100%;
+    background-color: white;
+    overflow:auto;  
+    .align-left {
+        text-align: left;
+    }
+}
+
