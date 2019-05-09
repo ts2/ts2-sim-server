@@ -141,8 +141,8 @@ func (pos Position) Equals(pos2 Position) bool {
 // Add returns the Position that is length ahead of this position.
 // If length is negative, find the position backwards.
 func (pos Position) Add(length float64) Position {
-	if length > 0 && pos.PositionOnTI+length < pos.TrackItem().RealLength() ||
-		length < 0 && pos.PositionOnTI+length > 0 {
+	if length > 0 && pos.PositionOnTI+length <= pos.TrackItem().RealLength() ||
+		length < 0 && pos.PositionOnTI+length >= 0 {
 		return Position{
 			simulation:     pos.simulation,
 			TrackItemID:    pos.TrackItemID,

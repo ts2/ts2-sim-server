@@ -267,6 +267,7 @@ func (si *SignalItem) initialize() error {
 		return err
 	}
 	si.activeAspect = si.SignalType().getDefaultAspect()
+	si.updateSignalState()
 	for _, st := range si.SignalType().States {
 		for ct := range st.Conditions {
 			var params []string

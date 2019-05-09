@@ -20,6 +20,7 @@ package server
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/ts2/ts2-sim-server/simulation"
 )
@@ -34,6 +35,9 @@ type Hub struct {
 
 	// lastEvents holds the last event sent for each registryEntry
 	lastEvents map[registryEntry]*simulation.Event
+
+	// lastEventsMutex protects the lastEvents map
+	lastEventsMutex sync.RWMutex
 
 	// Register requests from the connection
 	registerChan chan *connection
@@ -104,7 +108,7 @@ func (h *Hub) unregister(c *connection) {
 // notifyClients sends the given event to all registered clients.
 func (h *Hub) notifyClients(e *simulation.Event) {
 	logger.Debug("Notifying clients", "submodule", "hub", "event", e)
-	h.lastEvents[registryEntry{eventName: e.Name, id: e.Object.ID()}] = e
+	h.updateLastEvents(e)
 	// Notify clients that subscribed to all objects
 	for conn := range h.registry[registryEntry{eventName: e.Name, id: ""}] {
 		conn.pushChan <- NewNotificationResponse(e)
@@ -117,6 +121,13 @@ func (h *Hub) notifyClients(e *simulation.Event) {
 	for conn := range h.registry[registryEntry{eventName: e.Name, id: e.Object.ID()}] {
 		conn.pushChan <- NewNotificationResponse(e)
 	}
+}
+
+// updateLastEvents updates the lastEvents map in a concurrently safe way
+func (h *Hub) updateLastEvents(e *simulation.Event) {
+	h.lastEventsMutex.Lock()
+	defer h.lastEventsMutex.Unlock()
+	h.lastEvents[registryEntry{eventName: e.Name, id: e.Object.ID()}] = e
 }
 
 // dispatchObject process a request.
