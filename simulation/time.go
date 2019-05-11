@@ -96,13 +96,13 @@ func (dg DelayGenerator) Yield() time.Duration {
 	// First determine our segment
 	r0 := rand.Intn(100)
 	seg := 0
-	for i := range probas {
-		if probas[i] <= r0 && r0 < probas[i+1] {
+	for i := 0; i < len(probas)-1; i++ {
+		if probas[i] <= r0 && r0 <= probas[i+1] {
 			break
 		}
 		seg += 1
 	}
-	if seg >= len(probas) {
+	if seg >= len(dg.data) {
 		// Overflow, we return the max value
 		return time.Duration(dg.data[len(dg.data)-1].high) * time.Second
 	}
@@ -110,6 +110,20 @@ func (dg DelayGenerator) Yield() time.Duration {
 	// Then pick up a number inside our segment
 	r1 := rand.Float64()
 	return time.Duration(r1*float64(dg.data[seg].high-dg.data[seg].low)+float64(dg.data[seg].low)) * time.Second
+}
+
+// IsNull returns true if this is a [[0, 0, 100]] generator
+func (dg DelayGenerator) IsNull() bool {
+	if len(dg.data) == 0 {
+		return true
+	}
+	if len(dg.data) == 1 {
+		p := dg.data[0]
+		if p.low == 0 && p.high == 0 && p.prob == 100 {
+			return true
+		}
+	}
+	return false
 }
 
 // Time type for the simulation (HH:MM:SS).
