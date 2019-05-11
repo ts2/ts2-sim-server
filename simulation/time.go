@@ -96,13 +96,13 @@ func (dg DelayGenerator) Yield() time.Duration {
 	// First determine our segment
 	r0 := rand.Intn(100)
 	seg := 0
-	for i := range probas {
-		if probas[i] <= r0 && r0 < probas[i+1] {
+	for i := 0; i < len(probas)-1; i++ {
+		if probas[i] <= r0 && r0 <= probas[i+1] {
 			break
 		}
 		seg += 1
 	}
-	if seg >= len(probas) {
+	if seg >= len(dg.data) {
 		// Overflow, we return the max value
 		return time.Duration(dg.data[len(dg.data)-1].high) * time.Second
 	}
