@@ -26,6 +26,17 @@ func TestDelayGenerator(t *testing.T) {
 			err := json.Unmarshal(dgData, &newDG)
 			So(err, ShouldBeNil)
 			So(newDG, ShouldResemble, dg)
+			dgData = []byte(`0`)
+			err = json.Unmarshal(dgData, &newDG)
+			So(err, ShouldBeNil)
+			So(newDG, ShouldResemble, DelayGenerator{data: []delayTuplet{{0, 0, 100}}})
+		})
+		Convey("Invalid JSON should return an error", func() {
+			dgData := []byte(`"invalid"`)
+			var newDG DelayGenerator
+			err := json.Unmarshal(dgData, &newDG)
+			So(err, ShouldNotBeNil)
+			So(err.Error(), ShouldEqual, `DelayGenerator.UnmarshalJSON(): Unparsable JSON: "invalid"`)
 		})
 		Convey("DelayGenerator should marshal to JSON", func() {
 			res, err := json.Marshal(dg)
@@ -55,6 +66,11 @@ func TestDelayGenerator(t *testing.T) {
 			}}
 			rand.Seed(1)
 			So(dg3.Yield(), ShouldEqual, 9464*time.Second)
+		})
+		Convey("Checking null generators", func() {
+			So(dg.IsNull(), ShouldBeFalse)
+			So(DelayGenerator{}.IsNull(), ShouldBeTrue)
+			So(DelayGenerator{data: []delayTuplet{{0, 0, 100}}}.IsNull(), ShouldBeTrue)
 		})
 	})
 }
