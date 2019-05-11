@@ -112,6 +112,20 @@ func (dg DelayGenerator) Yield() time.Duration {
 	return time.Duration(r1*float64(dg.data[seg].high-dg.data[seg].low)+float64(dg.data[seg].low)) * time.Second
 }
 
+// IsNull returns true if this is a [[0, 0, 100]] generator
+func (dg DelayGenerator) IsNull() bool {
+	if len(dg.data) == 0 {
+		return true
+	}
+	if len(dg.data) == 1 {
+		p := dg.data[0]
+		if p.low == 0 && p.high == 0 && p.prob == 100 {
+			return true
+		}
+	}
+	return false
+}
+
 // Time type for the simulation (HH:MM:SS).
 //
 // Valid Time objects start on 0000-01-02.

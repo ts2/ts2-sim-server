@@ -103,6 +103,9 @@ func (t *Train) setSimulation(sim *Simulation) {
 func (t *Train) initialize(id string) {
 	t.trainID = id
 	t.effInitialDelay = t.InitialDelay.Yield()
+	if t.InitialDelay.IsNull() {
+		t.effInitialDelay = t.simulation.Options.DefaultDelayAtEntry.Yield()
+	}
 	t.minStopTime = t.simulation.Options.DefaultMinimumStopTime.Yield()
 	if t.trainManager == nil {
 		t.trainManager = defaultTrainManager
