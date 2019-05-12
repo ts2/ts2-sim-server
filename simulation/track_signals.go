@@ -267,7 +267,6 @@ func (si *SignalItem) initialize() error {
 		return err
 	}
 	si.activeAspect = si.SignalType().getDefaultAspect()
-	si.updateSignalState()
 	for _, st := range si.SignalType().States {
 		for ct := range st.Conditions {
 			var params []string
@@ -350,7 +349,7 @@ func (si *SignalItem) getNextSignal() *SignalItem {
 	if si.nextActiveRoute != nil {
 		return si.nextActiveRoute.EndSignal()
 	}
-	for pos := si.Position(); !pos.IsOut(); pos = pos.Next(DirectionCurrent) {
+	for pos := si.Position().Next(DirectionCurrent); !pos.IsOut(); pos = pos.Next(DirectionCurrent) {
 		if pos.TrackItem().Type() == TypeSignal && pos.TrackItem().IsOnPosition(pos) {
 			return pos.TrackItem().(*SignalItem)
 		}
@@ -437,8 +436,8 @@ func (si *SignalItem) updateSignalState() {
 			Object: si,
 		})
 	}
-	if si.previousActiveRoute != nil {
-		si.previousActiveRoute.BeginSignal().updateSignalState()
+	for _, trigger := range si.triggers {
+		trigger(si)
 	}
 	si.simulation.sendEvent(&Event{
 		Name:   TrackItemChanged,

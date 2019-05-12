@@ -256,7 +256,14 @@ func (nsa NextSignalAspects) Solve(item *SignalItem, values []string, params []s
 
 // SetupTriggers installs needed triggers for the given SignalItem, with the
 // given Condition.
-func (nsa NextSignalAspects) SetupTriggers(item *SignalItem, params []string) {}
+func (nsa NextSignalAspects) SetupTriggers(item *SignalItem, params []string) {
+	nextSignal := item.getNextSignal()
+	if nextSignal != nil {
+		nextSignal.addTrigger(func(t TrackItem) {
+			item.updateSignalState()
+		})
+	}
+}
 
 // ---------------------------------------------------------------------------------------------------------------
 
