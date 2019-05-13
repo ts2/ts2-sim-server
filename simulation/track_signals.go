@@ -435,9 +435,9 @@ func (si *SignalItem) updateSignalState() {
 			Name:   SignalaspectChanged,
 			Object: si,
 		})
-	}
-	for _, trigger := range si.triggers {
-		trigger(si)
+		for _, trigger := range si.triggers {
+			trigger(si)
+		}
 	}
 	si.simulation.sendEvent(&Event{
 		Name:   TrackItemChanged,

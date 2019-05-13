@@ -107,7 +107,7 @@ func (tnpnr TrainNotPresentOnNextRoute) Solve(item *SignalItem, values []string,
 		}
 		return true
 	}
-	for cur := item.Position(); !cur.IsOut(); cur = cur.Next(DirectionCurrent) {
+	for cur := item.Position().Next(DirectionCurrent); !cur.IsOut(); cur = cur.Next(DirectionCurrent) {
 		if cur.TrackItem().TrainPresent() {
 			return false
 		}
@@ -257,9 +257,19 @@ func (nsa NextSignalAspects) Solve(item *SignalItem, values []string, params []s
 // SetupTriggers installs needed triggers for the given SignalItem, with the
 // given Condition.
 func (nsa NextSignalAspects) SetupTriggers(item *SignalItem, params []string) {
-	nextSignal := item.getNextSignal()
-	if nextSignal != nil {
-		nextSignal.addTrigger(func(t TrackItem) {
+	nextSignals := make(map[*SignalItem]bool)
+	ns := item.getNextSignal()
+	if ns != nil {
+		nextSignals[ns] = true
+	}
+	for _, rte := range item.simulation.Routes {
+		if !rte.BeginSignal().Equals(item) {
+			continue
+		}
+		nextSignals[rte.EndSignal()] = true
+	}
+	for s := range nextSignals {
+		s.addTrigger(func(t TrackItem) {
 			item.updateSignalState()
 		})
 	}
