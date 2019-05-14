@@ -357,15 +357,48 @@ func (si *SignalItem) getNextSignal() *SignalItem {
 	return nil
 }
 
+// getPreviousSignal is a helper function that returns the previous signal before this one.
+//
+// If a route ends at this signal, the previous signal is the begin signal
+// of this route. Otherwise, it is the previous signal found on the line.
+func (si *SignalItem) getPreviousSignal() *SignalItem {
+	if si.previousActiveRoute != nil {
+		return si.previousActiveRoute.BeginSignal()
+	}
+	for pos := si.Position().Previous(); pos.TrackItem().Type() != TypeEnd; pos = pos.Previous() {
+		if pos.TrackItem().Type() == TypeSignal && pos.TrackItem().IsOnPosition(pos) {
+			return pos.TrackItem().(*SignalItem)
+		}
+	}
+	return nil
+}
+
+// getNextOppositeSignal is a helper function that returns the signal ahead of this one in
+// opposite direction.
+func (si *SignalItem) getNextOppositeSignal() *SignalItem {
+	for pos := si.Position().Next(DirectionCurrent); !pos.IsOut(); pos = pos.Next(DirectionCurrent) {
+		if pos.TrackItem().Type() == TypeSignal {
+			if pos.TrackItem().IsOnPosition(pos) {
+				// We have found the next signal on the same direction
+				// No need to go further
+				return nil
+			}
+			return pos.TrackItem().(*SignalItem)
+		}
+	}
+	return nil
+}
+
 // trainHeadActions performs the actions to be done when a train head reaches this signal item.
 //
 // In particular, pushes the train code to the next signal.
 func (si *SignalItem) trainHeadActions(train *Train) {
+	si.trackStruct.trainHeadActions(train)
+	si.updateSignalState()
 	// Check that signal is in same direction as trainHead to push the train
 	// descriptor only in this case. For this, we move backwards from the train
 	// head to this signal.
 	// We do not use isOut, because we are backwards
-	si.trackStruct.trainHeadActions(train)
 	for pos := train.TrainHead; pos.TrackItem().Type() != TypeEnd; pos = pos.Previous() {
 		if !pos.TrackItem().Equals(si) {
 			continue
@@ -383,7 +416,6 @@ func (si *SignalItem) trainHeadActions(train *Train) {
 			si.setTrain(nil)
 		}
 	}
-	si.updateSignalState()
 }
 
 // trainTailActions performs the actions to be done when a train tail reaches this signal item.
@@ -396,11 +428,12 @@ func (si *SignalItem) trainTailActions(train *Train) {
 		!si.activeRoute.EndSignal().Equals(si) {
 		// The line is highlighted by an opposite direction route or this
 		// signal is not the starting/ending signal of this route.
-		// => nothing particular to do for this signal
+		// => nothing particular to do for this signal, except check state
 		si.trackStruct.trainTailActions(train)
 		return
 	}
 	si.releaseRouteBehind()
+	si.updateSignalState()
 }
 
 // releaseRouteBehind automatically releases the route after train passed if applicable
@@ -418,11 +451,14 @@ func (si *SignalItem) releaseRouteBehind() {
 	if si.nextActiveRoute != nil && si.nextActiveRoute.State() != Persistent {
 		si.resetNextActiveRoute(nil)
 	}
-	si.updateSignalState()
 }
 
 // updateSignalState updates the current signal aspect.
-func (si *SignalItem) updateSignalState() {
+func (si *SignalItem) updateSignalState(previous ...bool) {
+	if len(previous) > 5 {
+		// We don't go further than 5 signals to prevent recursion
+		return
+	}
 	oldAspect := si.activeAspect
 	switch signalItemManager {
 	case nil:
@@ -435,9 +471,11 @@ func (si *SignalItem) updateSignalState() {
 			Name:   SignalaspectChanged,
 			Object: si,
 		})
-		for _, trigger := range si.triggers {
-			trigger(si)
-		}
+	}
+	// Update signals behind
+	previousSignal := si.getPreviousSignal()
+	if previousSignal != nil {
+		previousSignal.updateSignalState(append(previous, true)...)
 	}
 	si.simulation.sendEvent(&Event{
 		Name:   TrackItemChanged,
