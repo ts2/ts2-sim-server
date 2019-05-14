@@ -30,7 +30,7 @@ import (
 func TestSimulationLoading(t *testing.T) {
 	Convey("Loading a simulation should not create an error", t, func() {
 		var sim Simulation
-		err := json.Unmarshal(loadSim(), &sim)
+		err := json.Unmarshal(loadSim("testdata/demo.json"), &sim)
 		So(err, ShouldBeNil)
 		Convey("Options should be all loaded", func() {
 			So(sim.Options.CurrentScore, ShouldEqual, 0)
@@ -209,10 +209,10 @@ func TestSimulationLoading(t *testing.T) {
 			So(s1.Lines[0].ScheduledDepartureTime, ShouldResemble, ParseTime("06:00:30"))
 			So(s1.Lines[0].TrackCode, ShouldBeEmpty)
 			So(s1.PostActions, ShouldHaveLength, 2)
-			So(s1.PostActions[0].ActionCode, ShouldEqual, actionReverse)
-			So(s1.PostActions[0].ActionParam, ShouldBeEmpty)
-			So(s1.PostActions[1].ActionCode, ShouldEqual, actionSetService)
-			So(s1.PostActions[1].ActionParam, ShouldEqual, "S002")
+			So(s1.PostActions[0].ActionCode, ShouldEqual, actionSetService)
+			So(s1.PostActions[0].ActionParam, ShouldEqual, "S002")
+			So(s1.PostActions[1].ActionCode, ShouldEqual, actionReverse)
+			So(s1.PostActions[1].ActionParam, ShouldBeEmpty)
 			So(s2.Description, ShouldEqual, "STATION->LEFT")
 			So(s2.PostActions, ShouldHaveLength, 0)
 		})
@@ -223,9 +223,9 @@ func TestSimulationLoading(t *testing.T) {
 			So(tr.TrainType(), ShouldEqual, sim.TrainTypes["UT"])
 			So(tr.TrainHead.Equals(Position{&sim, sim.TrackItems["2"].ID(), sim.TrackItems["1"].ID(), 3.0}), ShouldBeTrue)
 			So(tr.AppearTime, ShouldResemble, ParseTime("06:00:00"))
-			So(tr.InitialDelay.Equals(DelayGenerator{[]delayTuplet{{-60, 60, 60}, {60, 180, 40}}}), ShouldBeTrue)
+			So(tr.InitialDelay.Equals(DelayGenerator{[]delayTuplet{{0, 0, 100}}}), ShouldBeTrue)
 			So(tr.InitialSpeed, ShouldEqual, 5.0)
-			So(tr.Speed, ShouldEqual, 0)
+			So(tr.Speed, ShouldEqual, 5)
 			So(tr.NextPlaceIndex, ShouldEqual, 0)
 			So(tr.Status, ShouldEqual, Inactive)
 			So(tr.StoppedTime, ShouldEqual, 0)

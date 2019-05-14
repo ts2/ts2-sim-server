@@ -28,7 +28,7 @@ import (
 func TestFollowingItem(t *testing.T) {
 	Convey("Testing FollowingItem method", t, func() {
 		var sim Simulation
-		if err := json.Unmarshal(loadSim(), &sim); err != nil {
+		if err := json.Unmarshal(loadSim("testdata/demo.json"), &sim); err != nil {
 			t.Errorf("Options: error while loading JSON: %s", err)
 		}
 		ei1, _ := sim.TrackItems["1"]

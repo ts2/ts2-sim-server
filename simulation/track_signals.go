@@ -373,22 +373,6 @@ func (si *SignalItem) getPreviousSignal() *SignalItem {
 	return nil
 }
 
-// getNextOppositeSignal is a helper function that returns the signal ahead of this one in
-// opposite direction.
-func (si *SignalItem) getNextOppositeSignal() *SignalItem {
-	for pos := si.Position().Next(DirectionCurrent); !pos.IsOut(); pos = pos.Next(DirectionCurrent) {
-		if pos.TrackItem().Type() == TypeSignal {
-			if pos.TrackItem().IsOnPosition(pos) {
-				// We have found the next signal on the same direction
-				// No need to go further
-				return nil
-			}
-			return pos.TrackItem().(*SignalItem)
-		}
-	}
-	return nil
-}
-
 // trainHeadActions performs the actions to be done when a train head reaches this signal item.
 //
 // In particular, pushes the train code to the next signal.
