@@ -31,14 +31,16 @@ type trainObject struct{}
 func (t *trainObject) dispatch(h *Hub, req Request, conn *connection) {
 	ch := conn.pushChan
 	switch req.Action {
+
 	case "list":
 		logger.Debug("Request for train list received", "submodule", "hub", "object", req.Object, "action", req.Action)
 		sl, err := json.Marshal(sim.Trains)
 		if err != nil {
-			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
+			ch <- NewErrorResponse(req, fmt.Errorf("internal error: %s", err))
 			return
 		}
-		ch <- NewResponse(req.ID, sl)
+		ch <- NewResponse(req, sl)
+
 	case "show":
 		var idsParams = struct {
 			IDs []int `json:"ids"`
@@ -46,25 +48,26 @@ func (t *trainObject) dispatch(h *Hub, req Request, conn *connection) {
 		err := json.Unmarshal(req.Params, &idsParams)
 		logger.Debug("Request for train show received", "submodule", "hub", "object", req.Object, "action", req.Action, "params", idsParams)
 		if err != nil {
-			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
+			ch <- NewErrorResponse(req, fmt.Errorf("internal error: %s", err))
 			return
 		}
 		ts := make([]*simulation.Train, len(idsParams.IDs))
 		for i, id := range idsParams.IDs {
 			if id < 0 || id >= len(sim.Trains) {
-				ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown train: %d", id))
+				ch <- NewErrorResponse(req, fmt.Errorf("unknown train: %d", id))
 				return
 			}
 			ts[i] = sim.Trains[id]
 		}
 		tid, err := json.Marshal(ts)
 		if err != nil {
-			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
+			ch <- NewErrorResponse(req, fmt.Errorf("internal error: %s", err))
 			return
 		}
-		ch <- NewResponse(req.ID, tid)
+		ch <- NewResponse(req, tid)
+
 	default:
-		ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown action %s/%s", req.Object, req.Action))
+		ch <- NewErrorResponse(req, fmt.Errorf("unknown action %s/%s", req.Object, req.Action))
 		logger.Debug("Request for unknown action received", "submodule", "hub", "object", req.Object, "action", req.Action)
 	}
 }

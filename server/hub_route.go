@@ -35,10 +35,10 @@ func (r *routeObject) dispatch(h *Hub, req Request, conn *connection) {
 		logger.Debug("Request for route list received", "submodule", "hub", "object", req.Object, "action", req.Action)
 		rtes, err := json.Marshal(sim.Routes)
 		if err != nil {
-			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
+			ch <- NewErrorResponse(req, fmt.Errorf("internal error: %s", err))
 			return
 		}
-		ch <- NewResponse(req.ID, rtes)
+		ch <- NewResponse(req, rtes)
 	case "show":
 		var idsParams = struct {
 			IDs []string `json:"ids"`
@@ -46,24 +46,24 @@ func (r *routeObject) dispatch(h *Hub, req Request, conn *connection) {
 		err := json.Unmarshal(req.Params, &idsParams)
 		logger.Debug("Request for route show received", "submodule", "hub", "object", req.Object, "action", req.Action, "params", idsParams)
 		if err != nil {
-			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
+			ch <- NewErrorResponse(req, fmt.Errorf("internal error: %s", err))
 			return
 		}
 		rtes := make(map[string]*simulation.Route)
 		for _, id := range idsParams.IDs {
 			rte, ok := sim.Routes[id]
 			if !ok {
-				ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown route: %s", id))
+				ch <- NewErrorResponse(req, fmt.Errorf("unknown route: %s", id))
 				return
 			}
 			rtes[id] = rte
 		}
 		rte, err := json.Marshal(rtes)
 		if err != nil {
-			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
+			ch <- NewErrorResponse(req, fmt.Errorf("internal error: %s", err))
 			return
 		}
-		ch <- NewResponse(req.ID, rte)
+		ch <- NewResponse(req, rte)
 	case "activate":
 		var actParams = struct {
 			ID         string `json:"id"`
@@ -72,20 +72,20 @@ func (r *routeObject) dispatch(h *Hub, req Request, conn *connection) {
 		err := json.Unmarshal(req.Params, &actParams)
 		logger.Debug("Request for route activate received", "submodule", "hub", "object", req.Object, "action", req.Action, "params", actParams)
 		if err != nil {
-			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
+			ch <- NewErrorResponse(req, fmt.Errorf("internal error: %s", err))
 			return
 		}
 		rte, ok := sim.Routes[actParams.ID]
 		if !ok {
-			ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown route: %s", actParams.ID))
+			ch <- NewErrorResponse(req, fmt.Errorf("unknown route: %s", actParams.ID))
 			return
 		}
 		err = rte.Activate(actParams.Persistent)
 		if err != nil {
-			ch <- NewErrorResponse(req.ID, fmt.Errorf("cannot activate route %s: %s", actParams.ID, err))
+			ch <- NewErrorResponse(req, fmt.Errorf("cannot activate route %s: %s", actParams.ID, err))
 			return
 		}
-		ch <- NewOkResponse(req.ID, fmt.Sprintf("Route %s activated successfully", actParams.ID))
+		ch <- NewOkResponse(req, fmt.Sprintf("Route %s activated successfully", actParams.ID))
 	case "deactivate":
 		var idParams = struct {
 			ID string `json:"id"`
@@ -93,22 +93,22 @@ func (r *routeObject) dispatch(h *Hub, req Request, conn *connection) {
 		err := json.Unmarshal(req.Params, &idParams)
 		logger.Debug("Request for route deactivate received", "submodule", "hub", "object", req.Object, "action", req.Action, "params", idParams)
 		if err != nil {
-			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
+			ch <- NewErrorResponse(req, fmt.Errorf("internal error: %s", err))
 			return
 		}
 		rte, ok := sim.Routes[idParams.ID]
 		if !ok {
-			ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown route: %s", idParams.ID))
+			ch <- NewErrorResponse(req, fmt.Errorf("unknown route: %s", idParams.ID))
 			return
 		}
 		err = rte.Deactivate()
 		if err != nil {
-			ch <- NewErrorResponse(req.ID, fmt.Errorf("cannot deactivate route %s: %s", idParams.ID, err))
+			ch <- NewErrorResponse(req, fmt.Errorf("cannot deactivate route %s: %s", idParams.ID, err))
 			return
 		}
-		ch <- NewOkResponse(req.ID, fmt.Sprintf("Route %s deactivated successfully", idParams.ID))
+		ch <- NewOkResponse(req, fmt.Sprintf("Route %s deactivated successfully", idParams.ID))
 	default:
-		ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown action %s/%s", req.Object, req.Action))
+		ch <- NewErrorResponse(req, fmt.Errorf("unknown action %s/%s", req.Object, req.Action))
 		logger.Debug("Request for unknown action received", "submodule", "hub", "object", req.Object, "action", req.Action)
 	}
 }

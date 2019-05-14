@@ -28,17 +28,17 @@ import (
 type trainTypeObject struct{}
 
 // dispatch processes requests made on the TrainType object
-func (s *trainTypeObject) dispatch(h *Hub, req Request, conn *connection) {
+func (tt *trainTypeObject) dispatch(h *Hub, req Request, conn *connection) {
 	ch := conn.pushChan
 	switch req.Action {
 	case "list":
 		logger.Debug("Request for trainType list received", "submodule", "hub", "object", req.Object, "action", req.Action)
 		tts, err := json.Marshal(sim.TrainTypes)
 		if err != nil {
-			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
+			ch <- NewErrorResponse(req, fmt.Errorf("internal error: %s", err))
 			return
 		}
-		ch <- NewResponse(req.ID, tts)
+		ch <- NewResponse(req, tts)
 	case "show":
 		var idsParams = struct {
 			IDs []string `json:"ids"`
@@ -46,26 +46,26 @@ func (s *trainTypeObject) dispatch(h *Hub, req Request, conn *connection) {
 		err := json.Unmarshal(req.Params, &idsParams)
 		logger.Debug("Request for trainType show received", "submodule", "hub", "object", req.Object, "action", req.Action, "params", idsParams)
 		if err != nil {
-			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
+			ch <- NewErrorResponse(req, fmt.Errorf("internal error: %s", err))
 			return
 		}
 		tts := make(map[string]*simulation.TrainType)
 		for _, id := range idsParams.IDs {
 			ttID, ok := sim.TrainTypes[id]
 			if !ok {
-				ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown trainType: %s", id))
+				ch <- NewErrorResponse(req, fmt.Errorf("unknown trainType: %s", id))
 				return
 			}
 			tts[id] = ttID
 		}
 		tid, err := json.Marshal(tts)
 		if err != nil {
-			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
+			ch <- NewErrorResponse(req, fmt.Errorf("internal error: %s", err))
 			return
 		}
-		ch <- NewResponse(req.ID, tid)
+		ch <- NewResponse(req, tid)
 	default:
-		ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown action %s/%s", req.Object, req.Action))
+		ch <- NewErrorResponse(req, fmt.Errorf("unknown action %s/%s", req.Object, req.Action))
 		logger.Debug("Request for unknown action received", "submodule", "hub", "object", req.Object, "action", req.Action)
 	}
 }

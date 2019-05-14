@@ -31,14 +31,16 @@ type serviceObject struct{}
 func (s *serviceObject) dispatch(h *Hub, req Request, conn *connection) {
 	ch := conn.pushChan
 	switch req.Action {
+
 	case "list":
 		logger.Debug("Request for service list received", "submodule", "hub", "object", req.Object, "action", req.Action)
 		sl, err := json.Marshal(sim.Services)
 		if err != nil {
-			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
+			ch <- NewErrorResponse(req, fmt.Errorf("internal error: %s", err))
 			return
 		}
-		ch <- NewResponse(req.ID, sl)
+		ch <- NewResponse(req, sl)
+
 	case "show":
 		var idsParams = struct {
 			IDs []string `json:"ids"`
@@ -46,26 +48,27 @@ func (s *serviceObject) dispatch(h *Hub, req Request, conn *connection) {
 		err := json.Unmarshal(req.Params, &idsParams)
 		logger.Debug("Request for service show received", "submodule", "hub", "object", req.Object, "action", req.Action, "params", idsParams)
 		if err != nil {
-			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
+			ch <- NewErrorResponse(req, fmt.Errorf("internal error: %s", err))
 			return
 		}
 		sl := make(map[string]*simulation.Service)
 		for _, id := range idsParams.IDs {
 			sld, ok := sim.Services[id]
 			if !ok {
-				ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown service: %s", id))
+				ch <- NewErrorResponse(req, fmt.Errorf("unknown service: %s", id))
 				return
 			}
 			sl[id] = sld
 		}
 		tid, err := json.Marshal(sl)
 		if err != nil {
-			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
+			ch <- NewErrorResponse(req, fmt.Errorf("internal error: %s", err))
 			return
 		}
-		ch <- NewResponse(req.ID, tid)
+		ch <- NewResponse(req, tid)
+
 	default:
-		ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown action %s/%s", req.Object, req.Action))
+		ch <- NewErrorResponse(req, fmt.Errorf("unknown action %s/%s", req.Object, req.Action))
 		logger.Debug("Request for unknown action received", "submodule", "hub", "object", req.Object, "action", req.Action)
 	}
 }

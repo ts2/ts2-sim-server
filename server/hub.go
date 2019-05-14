@@ -170,7 +170,7 @@ func (h *Hub) dispatchObject(conn *connection) {
 	conn.Requests = conn.Requests[1:]
 	obj, ok := h.objects[req.Object]
 	if !ok {
-		conn.pushChan <- NewErrorResponse(req.ID, fmt.Errorf("unknown object %s", req.Object))
+		conn.pushChan <- NewErrorResponse(req, fmt.Errorf("unknown object %s", req.Object))
 		logger.Debug("Request for unknown object received", "submodule", "hub", "object", req.Object)
 		return
 	}

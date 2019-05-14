@@ -26,17 +26,17 @@ import (
 type optionObject struct{}
 
 // dispatch processes requests made on the Option object
-func (s *optionObject) dispatch(h *Hub, req Request, conn *connection) {
+func (oo *optionObject) dispatch(h *Hub, req Request, conn *connection) {
 	ch := conn.pushChan
 	switch req.Action {
 	case "list":
 		logger.Debug("Request for option list received", "submodule", "hub", "object", req.Object, "action", req.Action)
 		opts, err := json.Marshal(sim.Options)
 		if err != nil {
-			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
+			ch <- NewErrorResponse(req, fmt.Errorf("internal error: %s", err))
 			return
 		}
-		ch <- NewResponse(req.ID, opts)
+		ch <- NewResponse(req, opts)
 	case "set":
 		var setParams = struct {
 			Name  string      `json:"name"`
@@ -45,17 +45,17 @@ func (s *optionObject) dispatch(h *Hub, req Request, conn *connection) {
 		err := json.Unmarshal(req.Params, &setParams)
 		logger.Debug("Request for option set received", "submodule", "hub", "object", req.Object, "action", req.Action, "params", req.Params)
 		if err != nil {
-			ch <- NewErrorResponse(req.ID, fmt.Errorf("error on parameters: %s", err))
+			ch <- NewErrorResponse(req, fmt.Errorf("error on parameters: %s", err))
 			return
 		}
 		err = sim.Options.Set(setParams.Name, setParams.Value)
 		if err != nil {
-			ch <- NewErrorResponse(req.ID, fmt.Errorf("error while setting option: %s", err))
+			ch <- NewErrorResponse(req, fmt.Errorf("error while setting option: %s", err))
 			return
 		}
-		ch <- NewOkResponse(req.ID, fmt.Sprintf("option %s set successfully to %v", setParams.Name, setParams.Value))
+		ch <- NewOkResponse(req, fmt.Sprintf("option %s set successfully to %v", setParams.Name, setParams.Value))
 	default:
-		ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown action %s/%s", req.Object, req.Action))
+		ch <- NewErrorResponse(req, fmt.Errorf("unknown action %s/%s", req.Object, req.Action))
 		logger.Debug("Request for unknown action received", "submodule", "hub", "object", req.Object, "action", req.Action)
 	}
 }

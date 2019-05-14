@@ -43,20 +43,24 @@ const (
 type Response struct {
 	ID      int         `json:"id"`
 	MsgType MessageType `json:"msgType"`
+	Object  string      `json:"object"`
+	Action  string      `json:"action"`
 	Data    RawJSON     `json:"data"`
-}
-
-// DataStatus is the Data part of a ResponseStatus message
-type DataStatus struct {
-	Status  StatusCode `json:"status"`
-	Message string     `json:"message"`
 }
 
 // ResponseStatus is a status message sent to a websocket client
 type ResponseStatus struct {
 	ID      int         `json:"id"`
 	MsgType MessageType `json:"msgType"`
+	Object  string      `json:"object"`
+	Action  string      `json:"action"`
 	Data    DataStatus  `json:"data"`
+}
+
+// DataStatus is the Data part of a ResponseStatus message
+type DataStatus struct {
+	Status  StatusCode `json:"status"`
+	Message string     `json:"message"`
 }
 
 // DataEvent is the Data part of a ResponseNotification message
@@ -72,9 +76,11 @@ type ResponseNotification struct {
 }
 
 // NewResponse returns a Response with the given data
-func NewResponse(id int, data RawJSON) *Response {
+func NewResponse(req Request, data RawJSON) *Response {
 	r := Response{
-		ID:      id,
+		ID:      req.ID,
+		Object:  req.Object,
+		Action:  req.Action,
 		MsgType: TypeResponse,
 		Data:    data,
 	}
@@ -82,9 +88,11 @@ func NewResponse(id int, data RawJSON) *Response {
 }
 
 // NewErrorResponse returns a ResponseStatus object corresponding to the given error.
-func NewErrorResponse(id int, e error) *ResponseStatus {
+func NewErrorResponse(req Request, e error) *ResponseStatus {
 	sr := ResponseStatus{
-		ID:      id,
+		ID:      req.ID,
+		Object:  req.Object,
+		Action:  req.Action,
 		MsgType: TypeResponse,
 		Data: DataStatus{
 			Fail,
@@ -95,9 +103,11 @@ func NewErrorResponse(id int, e error) *ResponseStatus {
 }
 
 // NewOkResponse returns a new ResponseStatus object with OK status and empty message.
-func NewOkResponse(id int, msg string) *ResponseStatus {
+func NewOkResponse(req Request, msg string) *ResponseStatus {
 	sr := ResponseStatus{
-		ID:      id,
+		ID:      req.ID,
+		Object:  req.Object,
+		Action:  req.Action,
 		MsgType: TypeResponse,
 		Data: DataStatus{
 			Ok,
