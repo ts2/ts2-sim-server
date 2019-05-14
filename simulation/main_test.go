@@ -46,7 +46,7 @@ func (dg DelayGenerator) Equals(b DelayGenerator) bool {
 	return true
 }
 
-func loadSim() []byte {
-	data, _ := ioutil.ReadFile("testdata/demo.json")
+func loadSim(filename string) []byte {
+	data, _ := ioutil.ReadFile(filename)
 	return data
 }

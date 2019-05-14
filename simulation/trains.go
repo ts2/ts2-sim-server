@@ -248,6 +248,9 @@ func (t *Train) executeActions(advanceLength float64) {
 func (t *Train) updateItemWithTrainHead(ti TrackItem) {
 	ti.underlying().trainEndsFW[t] = ti.RealLength()
 	ti.underlying().trainEndsBK[t] = 0
+	if t.simulation.Options.TrackCircuitBased {
+		return
+	}
 	if ti.Equals(t.TrainHead.TrackItem()) {
 		if t.TrainHead.PreviousItemID == ti.PreviousItem().ID() {
 			ti.underlying().trainEndsFW[t] = t.TrainHead.PositionOnTI
@@ -265,6 +268,11 @@ func (t *Train) updateItemWithTrainTail(ti TrackItem) {
 		delete(ti.underlying().trainEndsFW, t)
 	}
 	if ti.Equals(t.TrainTail().TrackItem()) {
+		if t.simulation.Options.TrackCircuitBased {
+			ti.underlying().trainEndsFW[t] = ti.RealLength()
+			ti.underlying().trainEndsBK[t] = 0
+			return
+		}
 		if t.TrainTail().PreviousItemID == ti.PreviousItem().ID() {
 			ti.underlying().trainEndsBK[t] = t.TrainTail().PositionOnTI
 		} else {

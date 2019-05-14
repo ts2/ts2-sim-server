@@ -206,6 +206,14 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 		}
 	}
 
+	for _, ti := range sim.TrackItems {
+		si, ok := ti.(*SignalItem)
+		if !ok {
+			continue
+		}
+		si.updateSignalState()
+	}
+
 	sim.MessageLogger = rawSim.MessageLogger
 	sim.MessageLogger.setSimulation(sim)
 	return nil

@@ -111,7 +111,7 @@ func (tnpnr TrainNotPresentOnNextRoute) Solve(item *SignalItem, values []string,
 		if cur.TrackItem().TrainPresent() {
 			return false
 		}
-		if cur.TrackItem().Type() == TypeSignal && cur.TrackItem().IsOnPosition(cur) {
+		if !cur.Equals(item.Position()) && cur.TrackItem().Type() == TypeSignal && cur.TrackItem().IsOnPosition(cur) {
 			break
 		}
 	}

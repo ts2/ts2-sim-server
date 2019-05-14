@@ -11,9 +11,9 @@
     ]
   },
   "options": {
+    "clientToken": "client-secret",
     "currentScore": 0,
     "currentTime": "06:00:00",
-    "clientToken": "client-secret",
     "defaultDelayAtEntry": 0,
     "defaultMaxSpeed": 18.06,
     "defaultMinimumStopTime": [
@@ -30,14 +30,14 @@
     ],
     "defaultSignalVisibility": 100,
     "description": "This is a developers test/demo simulation!",
+    "latePenalty": 1,
     "timeFactor": 5,
     "title": "TS2 - Demo & Test Sim",
     "trackCircuitBased": false,
-    "warningSpeed": 8.34,
     "version": "0.7",
-    "wrongPlatformPenalty": 5,
+    "warningSpeed": 8.34,
     "wrongDestinationPenalty": 100,
-    "latePenalty": 1
+    "wrongPlatformPenalty": 5
   },
   "routes": {
     "1": {
@@ -47,6 +47,7 @@
         "7": 0
       },
       "endSignal": "101",
+      "id": "1",
       "initialState": 1
     },
     "11": {
@@ -54,6 +55,7 @@
       "beginSignal": "101",
       "directions": {},
       "endSignal": "11",
+      "id": "11",
       "initialState": 1
     },
     "2": {
@@ -63,46 +65,28 @@
         "7": 1
       },
       "endSignal": "17",
+      "id": "2",
       "initialState": 0
     },
     "3": {
       "__type__": "Route",
       "beginSignal": "9",
-      "directions": {},
+      "directions": {
+        "7": 0
+      },
       "endSignal": "3",
+      "id": "3",
       "initialState": 0
     },
     "4": {
       "__type__": "Route",
       "beginSignal": "15",
-      "directions": {},
+      "directions": {
+        "7": 1
+      },
       "endSignal": "3",
+      "id": "4",
       "initialState": 0
-    }
-  },
-  "trainTypes": {
-    "UT": {
-      "__type__": "TrainType",
-      "description": "Underground train",
-      "elements": [],
-      "emergBraking": 1.5,
-      "length": 70.0,
-      "maxSpeed": 25.0,
-      "stdAccel": 0.5,
-      "stdBraking": 0.5
-    },
-    "UT2": {
-      "__type__": "TrainType",
-      "description": "Underground double unit",
-      "elements": [
-        "UT",
-        "UT"
-      ],
-      "emergBraking": 1.5,
-      "length": 140.0,
-      "maxSpeed": 25.0,
-      "stdAccel": 0.5,
-      "stdBraking": 0.5
     }
   },
   "services": {
@@ -114,7 +98,7 @@
           "__type__": "ServiceLine",
           "mustStop": false,
           "placeCode": "LFT",
-          "scheduledArrivalTime": null,
+          "scheduledArrivalTime": "",
           "scheduledDepartureTime": "06:00:30",
           "trackCode": null
         },
@@ -130,14 +114,15 @@
       "plannedTrainType": "UT",
       "postActions": [
         {
-          "actionCode": "REVERSE",
-          "actionParam": null
-        },
-        {
           "actionCode": "SET_SERVICE",
           "actionParam": "S002"
+        },
+        {
+          "actionCode": "REVERSE",
+          "actionParam": null
         }
-      ]
+      ],
+      "serviceCode": "S001"
     },
     "S002": {
       "__type__": "Service",
@@ -147,7 +132,7 @@
           "__type__": "ServiceLine",
           "mustStop": true,
           "placeCode": "STN",
-          "scheduledArrivalTime": null,
+          "scheduledArrivalTime": "",
           "scheduledDepartureTime": "06:07:00",
           "trackCode": "2"
         },
@@ -155,13 +140,14 @@
           "__type__": "ServiceLine",
           "mustStop": false,
           "placeCode": "LFT",
-          "scheduledArrivalTime": null,
+          "scheduledArrivalTime": "",
           "scheduledDepartureTime": "06:07:30",
           "trackCode": null
         }
       ],
       "plannedTrainType": "UT",
-      "postActions": []
+      "postActions": [],
+      "serviceCode": "S002"
     },
     "S003": {
       "__type__": "Service",
@@ -171,7 +157,7 @@
           "__type__": "ServiceLine",
           "mustStop": false,
           "placeCode": "LFT",
-          "scheduledArrivalTime": null,
+          "scheduledArrivalTime": "",
           "scheduledDepartureTime": "06:03:00",
           "trackCode": null
         },
@@ -187,501 +173,28 @@
           "__type__": "ServiceLine",
           "mustStop": false,
           "placeCode": "RGT",
-          "scheduledArrivalTime": null,
+          "scheduledArrivalTime": "",
           "scheduledDepartureTime": "06:07:00",
           "trackCode": "1"
         }
       ],
       "plannedTrainType": "UT2",
-      "postActions": []
+      "postActions": [],
+      "serviceCode": "S003"
     }
   },
-  "trackItems": {
-    "1": {
-      "__type__": "EndItem",
-      "conflictTiId": null,
-      "maxSpeed": 27.77,
-      "name": null,
-      "nextTiId": null,
-      "previousTiId": "2",
-      "x": 0.0,
-      "y": 0.0
-    },
-    "2": {
-      "__type__": "LineItem",
-      "conflictTiId": null,
-      "maxSpeed": 27.77,
-      "name": null,
-      "nextTiId": "3",
-      "placeCode": "LFT",
-      "previousTiId": "1",
-      "realLength": 400.0,
-      "trackCode": null,
-      "x": 0.0,
-      "xf": 90.0,
-      "y": 0.0,
-      "yf": 0.0
-    },
-    "3": {
-      "__type__": "SignalItem",
-      "conflictTiId": null,
-      "maxSpeed": 0.0,
-      "name": "31",
-      "nextTiId": "2",
-      "previousTiId": "4",
-      "reverse": true,
-      "signalType": "UK_2_AUTOMATIC",
-      "customProperties": {
-        "TRAIN_PRESENT_ON_ITEMS": {
-          "UK_DANGER": [
-            "2"
-          ]
-        }
-      },
-      "x": 100.0,
-      "xn": 105.0,
-      "y": 0.0,
-      "yn": 5.0
-    },
-    "4": {
-      "__type__": "LineItem",
-      "conflictTiId": null,
-      "maxSpeed": 0.0,
-      "name": "Sample Name",
-      "nextTiId": "5",
-      "placeCode": null,
-      "previousTiId": "3",
-      "realLength": 400.0,
-      "trackCode": null,
-      "x": 100.0,
-      "xf": 190.0,
-      "y": 0.0,
-      "yf": 0.0
-    },
-    "5": {
-      "__type__": "SignalItem",
-      "conflictTiId": null,
-      "customProperties": {
-        "ROUTES_SET": {
-          "UK_DANGER": [
-            "2"
-          ]
-        },
-        "TRAIN_NOT_PRESENT_ON_ITEMS": {
-          "UK_DANGER": [
-            "4",
-            "3"
-          ]
-        }
-      },
-      "maxSpeed": 0.0,
-      "name": "32",
-      "nextTiId": "6",
-      "previousTiId": "4",
-      "reverse": false,
-      "signalType": "UK_3_ASPECTS",
-      "x": 190.0,
-      "xn": 210.0,
-      "y": 0.0,
-      "yn": 5.0
-    },
-    "6": {
-      "__type__": "LineItem",
-      "conflictTiId": null,
-      "maxSpeed": 10.0,
-      "name": null,
-      "nextTiId": "7",
-      "placeCode": null,
-      "previousTiId": "5",
-      "realLength": 200.0,
-      "trackCode": null,
-      "x": 200.0,
-      "xf": 245.0,
-      "y": 0.0,
-      "yf": 0.0
-    },
-    "7": {
-      "__type__": "PointsItem",
-      "conflictTiId": null,
-      "maxSpeed": 10.0,
-      "name": null,
-      "nextTiId": "8",
-      "previousTiId": "6",
-      "reverseTiId": "14",
-      "x": 250.0,
-      "xf": -5.0,
-      "xn": 5.0,
-      "xr": 5.0,
-      "y": 0.0,
-      "yf": 0.0,
-      "yn": 0.0,
-      "yr": 5.0
-    },
-    "8": {
-      "__type__": "LineItem",
-      "conflictTiId": null,
-      "maxSpeed": 10.0,
-      "name": null,
-      "nextTiId": "9",
-      "placeCode": null,
-      "previousTiId": "7",
-      "realLength": 200.0,
-      "trackCode": null,
-      "x": 255.0,
-      "xf": 290.0,
-      "y": 0.0,
-      "yf": 0.0
-    },
-    "9": {
-      "__type__": "SignalItem",
-      "conflictTiId": null,
-      "maxSpeed": 0.0,
-      "name": "33",
-      "nextTiId": "8",
-      "previousTiId": "10",
-      "reverse": true,
-      "signalType": "UK_3_ASPECTS",
-      "x": 300.0,
-      "xn": 305.0,
-      "y": 0.0,
-      "yn": 5.0
-    },
-    "10": {
-      "__type__": "LineItem",
-      "conflictTiId": null,
-      "maxSpeed": 0.0,
-      "name": null,
-      "nextTiId": "101",
-      "placeCode": "STN",
-      "previousTiId": "9",
-      "realLength": 400.0,
-      "trackCode": "1",
-      "x": 300.0,
-      "xf": 390.0,
-      "y": 0.0,
-      "yf": 0.0
-    },
-    "101": {
-      "__type__": "SignalItem",
-      "conflictTiId": null,
-      "maxSpeed": 0.0,
-      "name": "34",
-      "nextTiId": "102",
-      "previousTiId": "10",
-      "reverse": false,
-      "signalType": "UK_3_ASPECTS",
-      "x": 390.0,
-      "xn": 410.0,
-      "y": 0.0,
-      "yn": 5.0
-    },
-    "102": {
-      "__type__": "LineItem",
-      "conflictTiId": null,
-      "maxSpeed": 0.0,
-      "name": null,
-      "nextTiId": "103",
-      "previousTiId": "101",
-      "realLength": 400.0,
-      "x": 400.0,
-      "xf": 470.0,
-      "y": 0.0,
-      "yf": 0.0
-    },
-    "103": {
-      "__type__": "InvisibleLinkItem",
-      "conflictTiId": null,
-      "maxSpeed": 0.0,
-      "name": null,
-      "nextTiId": "104",
-      "previousTiId": "102",
-      "realLength": 400.0,
-      "x": 470.0,
-      "xf": 490.0,
-      "y": 0.0,
-      "yf": 0.0
-    },
-    "104": {
-      "__type__": "LineItem",
-      "conflictTiId": null,
-      "maxSpeed": 0.0,
-      "name": null,
-      "nextTiId": "11",
-      "previousTiId": "103",
-      "realLength": 400.0,
-      "x": 490.0,
-      "xf": 540.0,
-      "y": 0.0,
-      "yf": 0.0
-    },
-    "11": {
-      "__type__": "SignalItem",
-      "conflictTiId": null,
-      "maxSpeed": 0.0,
-      "name": "35",
-      "nextTiId": "12",
-      "previousTiId": "104",
-      "reverse": false,
-      "signalType": "UK_2_AUTOMATIC",
-      "customProperties": {
-        "TRAIN_PRESENT_ON_ITEMS": {
-          "UK_DANGER": [
-            "12"
-          ]
-        }
-      },
-      "x": 540.0,
-      "xn": 560.0,
-      "y": 0.0,
-      "yn": 5.0
-    },
-    "12": {
-      "__type__": "LineItem",
-      "conflictTiId": null,
-      "maxSpeed": 0.0,
-      "name": null,
-      "nextTiId": "13",
-      "placeCode": "RGT",
-      "previousTiId": "11",
-      "realLength": 400.0,
-      "trackCode": null,
-      "x": 550.0,
-      "xf": 600.0,
-      "y": 0.0,
-      "yf": 0.0
-    },
-    "13": {
-      "__type__": "EndItem",
-      "conflictTiId": null,
-      "maxSpeed": 0.0,
-      "name": null,
-      "nextTiId": null,
-      "previousTiId": "12",
-      "x": 600.0,
-      "y": 0.0
-    },
-    "14": {
-      "__type__": "LineItem",
-      "conflictTiId": null,
-      "maxSpeed": 10.0,
-      "name": null,
-      "nextTiId": "15",
-      "placeCode": null,
-      "previousTiId": "7",
-      "realLength": 200.0,
-      "trackCode": null,
-      "x": 255.0,
-      "xf": 280.0,
-      "y": 5.0,
-      "yf": 25.0
-    },
-    "15": {
-      "__type__": "SignalItem",
-      "conflictTiId": null,
-      "maxSpeed": 0.0,
-      "name": "36",
-      "nextTiId": "14",
-      "previousTiId": "16",
-      "reverse": true,
-      "signalType": "UK_3_ASPECTS",
-      "x": 290.0,
-      "xn": 295.0,
-      "y": 25.0,
-      "yn": 30.0
-    },
-    "16": {
-      "__type__": "LineItem",
-      "conflictTiId": null,
-      "maxSpeed": 0.0,
-      "name": null,
-      "nextTiId": "17",
-      "placeCode": "STN",
-      "previousTiId": "15",
-      "realLength": 400.0,
-      "trackCode": "2",
-      "x": 290.0,
-      "xf": 390.0,
-      "y": 25.0,
-      "yf": 25.0
-    },
-    "17": {
-      "__type__": "SignalItem",
-      "conflictTiId": null,
-      "maxSpeed": 0.0,
-      "name": "37",
-      "nextTiId": "18",
-      "previousTiId": "16",
-      "reverse": false,
-      "signalType": "BUFFER",
-      "x": 390.0,
-      "xn": 410.0,
-      "y": 25.0,
-      "yn": 30.0
-    },
-    "18": {
-      "__type__": "EndItem",
-      "conflictTiId": null,
-      "maxSpeed": 0.0,
-      "name": null,
-      "nextTiId": null,
-      "previousTiId": "17",
-      "x": 400.0,
-      "y": 25.0
-    },
-    "19": {
-      "__type__": "Place",
-      "conflictTiId": null,
-      "maxSpeed": 0,
-      "name": "LEFT",
-      "nextTiId": null,
-      "placeCode": "LFT",
-      "previousTiId": null,
-      "x": 20.0,
-      "y": 10.0
-    },
-    "20": {
-      "__type__": "Place",
-      "conflictTiId": null,
-      "maxSpeed": 0,
-      "name": "STATION",
-      "nextTiId": null,
-      "placeCode": "STN",
-      "previousTiId": null,
-      "x": 320.0,
-      "y": 0.0
-    },
-    "21": {
-      "__type__": "Place",
-      "conflictTiId": null,
-      "maxSpeed": 0,
-      "name": "RIGHT",
-      "nextTiId": null,
-      "placeCode": "RGT",
-      "previousTiId": null,
-      "x": 520.0,
-      "y": 10.0
-    },
-    "22": {
-      "__type__": "PlatformItem",
-      "conflictTiId": null,
-      "maxSpeed": 0.0,
-      "name": null,
-      "nextTiId": null,
-      "placeCode": "STN",
-      "previousTiId": null,
-      "trackCode": "2",
-      "x": 300.0,
-      "xf": 390.0,
-      "y": 35.0,
-      "yf": 50.0
-    },
-    "23": {
-      "__type__": "PlatformItem",
-      "conflictTiId": null,
-      "maxSpeed": 0.0,
-      "name": null,
-      "nextTiId": null,
-      "placeCode": "STN",
-      "previousTiId": null,
-      "trackCode": "1",
-      "x": 300.0,
-      "xf": 390.0,
-      "y": -10.0,
-      "yf": -25.0
-    },
-    "24": {
-      "__type__": "TextItem",
-      "conflictTiId": null,
-      "maxSpeed": 0.0,
-      "name": "2",
-      "nextTiId": null,
-      "previousTiId": null,
-      "x": 345,
-      "y": 50.0
-    },
-    "25": {
-      "__type__": "TextItem",
-      "conflictTiId": null,
-      "maxSpeed": 0.0,
-      "name": "1",
-      "nextTiId": null,
-      "previousTiId": null,
-      "x": 345,
-      "y": -50.0
-    }
-  },
-  "trains": [
-    {
-      "__type__": "Train",
-      "appearTime": "06:00:00",
-      "initialDelay": [
-        [
-          -60,
-          60,
-          60
-        ],
-        [
-          60,
-          180,
-          40
-        ]
-      ],
-      "initialSpeed": 5.0,
-      "nextPlaceIndex": null,
-      "serviceCode": "S001",
-      "status": 0,
-      "stoppedTime": 0,
-      "trainHead": {
-        "__type__": "Position",
-        "positionOnTI": 3.0,
-        "previousTI": "1",
-        "trackItem": "2"
-      },
-      "trainTypeCode": "UT"
-    },
-    {
-      "__type__": "Train",
-      "appearTime": "06:03:00",
-      "initialDelay": [
-        [
-          -60,
-          60,
-          60
-        ],
-        [
-          60,
-          180,
-          40
-        ]
-      ],
-      "initialSpeed": 5.0,
-      "nextPlaceIndex": null,
-      "serviceCode": "S003",
-      "status": 0,
-      "stoppedTime": 0,
-      "trainHead": {
-        "__type__": "Position",
-        "positionOnTI": 3.0,
-        "previousTI": "1",
-        "trackItem": "2"
-      },
-      "trainTypeCode": "UT2"
-    }
-  ],
   "signalLibrary": {
     "__type__": "SignalLibrary",
     "signalAspects": {
       "BUFFER": {
         "__type__": "SignalAspect",
+        "actions": [
+          [
+            1,
+            0
+          ]
+        ],
         "lineStyle": 1,
-        "outerShapes": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
-        ],
         "outerColors": [
           "#000000",
           "#000000",
@@ -689,6 +202,14 @@
           "#000000",
           "#000000",
           "#000000"
+        ],
+        "outerShapes": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
         ],
         "shapes": [
           0,
@@ -705,67 +226,17 @@
           "#000000",
           "#000000",
           "#000000"
-        ],
-        "actions": [
-          [
-            1,
-            0
-          ]
-        ]
-      },
-      "UK_DANGER": {
-        "__type__": "SignalAspect",
-        "lineStyle": 0,
-        "outerShapes": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
-        ],
-        "outerColors": [
-          "#000000",
-          "#000000",
-          "#000000",
-          "#000000",
-          "#000000",
-          "#000000"
-        ],
-        "shapes": [
-          1,
-          0,
-          0,
-          0,
-          0,
-          0
-        ],
-        "shapesColors": [
-          "#FF0000",
-          "#000000",
-          "#000000",
-          "#000000",
-          "#000000",
-          "#000000"
-        ],
-        "actions": [
-          [
-            1,
-            0
-          ]
         ]
       },
       "UK_CAUTION": {
         "__type__": "SignalAspect",
-        "lineStyle": 0,
-        "outerShapes": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
+        "actions": [
+          [
+            2,
+            0
+          ]
         ],
+        "lineStyle": 0,
         "outerColors": [
           "#000000",
           "#000000",
@@ -773,6 +244,14 @@
           "#000000",
           "#000000",
           "#000000"
+        ],
+        "outerShapes": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
         ],
         "shapes": [
           1,
@@ -789,25 +268,17 @@
           "#000000",
           "#000000",
           "#000000"
-        ],
-        "actions": [
-          [
-            2,
-            0
-          ]
         ]
       },
       "UK_CLEAR": {
         "__type__": "SignalAspect",
-        "lineStyle": 0,
-        "outerShapes": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0
+        "actions": [
+          [
+            0,
+            999
+          ]
         ],
+        "lineStyle": 0,
         "outerColors": [
           "#000000",
           "#000000",
@@ -815,6 +286,14 @@
           "#000000",
           "#000000",
           "#000000"
+        ],
+        "outerShapes": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
         ],
         "shapes": [
           1,
@@ -831,12 +310,48 @@
           "#000000",
           "#000000",
           "#000000"
-        ],
+        ]
+      },
+      "UK_DANGER": {
+        "__type__": "SignalAspect",
         "actions": [
           [
-            0,
-            999
+            1,
+            0
           ]
+        ],
+        "lineStyle": 0,
+        "outerColors": [
+          "#000000",
+          "#000000",
+          "#000000",
+          "#000000",
+          "#000000",
+          "#000000"
+        ],
+        "outerShapes": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "shapes": [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "shapesColors": [
+          "#FF0000",
+          "#000000",
+          "#000000",
+          "#000000",
+          "#000000",
+          "#000000"
         ]
       }
     },
@@ -847,48 +362,6 @@
           {
             "__type__": "SignalState",
             "aspectName": "BUFFER",
-            "conditions": {}
-          }
-        ]
-      },
-      "UK_3_ASPECTS": {
-        "__type__": "SignalType",
-        "states": [
-          {
-            "__type__": "SignalState",
-            "aspectName": "UK_DANGER",
-            "conditions": {
-              "TRAIN_NOT_PRESENT_ON_ITEMS": [],
-              "ROUTES_SET": []
-            }
-          },
-          {
-            "__type__": "SignalState",
-            "aspectName": "UK_CLEAR",
-            "conditions": {
-              "NEXT_ROUTE_ACTIVE": [],
-              "TRAIN_NOT_PRESENT_ON_NEXT_ROUTE": [],
-              "NEXT_SIGNAL_ASPECTS": [
-                "UK_CLEAR",
-                "UK_CAUTION"
-              ]
-            }
-          },
-          {
-            "__type__": "SignalState",
-            "aspectName": "UK_CAUTION",
-            "conditions": {
-              "NEXT_ROUTE_ACTIVE": [],
-              "TRAIN_NOT_PRESENT_ON_NEXT_ROUTE": [],
-              "NEXT_SIGNAL_ASPECTS": [
-                "UK_DANGER",
-                "BUFFER"
-              ]
-            }
-          },
-          {
-            "__type__": "SignalState",
-            "aspectName": "UK_DANGER",
             "conditions": {}
           }
         ]
@@ -909,7 +382,590 @@
             "conditions": {}
           }
         ]
+      },
+      "UK_3_ASPECTS": {
+        "__type__": "SignalType",
+        "states": [
+          {
+            "__type__": "SignalState",
+            "aspectName": "UK_DANGER",
+            "conditions": {
+              "ROUTES_SET": [],
+              "TRAIN_NOT_PRESENT_ON_ITEMS": []
+            }
+          },
+          {
+            "__type__": "SignalState",
+            "aspectName": "UK_CLEAR",
+            "conditions": {
+              "NEXT_ROUTE_ACTIVE": [],
+              "NEXT_SIGNAL_ASPECTS": [
+                "UK_CLEAR",
+                "UK_CAUTION"
+              ],
+              "TRAIN_NOT_PRESENT_ON_NEXT_ROUTE": []
+            }
+          },
+          {
+            "__type__": "SignalState",
+            "aspectName": "UK_CAUTION",
+            "conditions": {
+              "NEXT_ROUTE_ACTIVE": [],
+              "NEXT_SIGNAL_ASPECTS": [
+                "UK_DANGER",
+                "BUFFER"
+              ],
+              "TRAIN_NOT_PRESENT_ON_NEXT_ROUTE": []
+            }
+          },
+          {
+            "__type__": "SignalState",
+            "aspectName": "UK_DANGER",
+            "conditions": {}
+          }
+        ]
       }
     }
-  }
+  },
+  "trackItems": {
+    "1": {
+      "__type__": "EndItem",
+      "conflictTiId": null,
+      "maxSpeed": 27.77,
+      "name": null,
+      "nextTiId": null,
+      "previousTiId": "2",
+      "tiId": "1",
+      "x": 0.0,
+      "y": 0.0
+    },
+    "10": {
+      "__type__": "LineItem",
+      "conflictTiId": null,
+      "maxSpeed": 0.0,
+      "name": null,
+      "nextTiId": "101",
+      "placeCode": "STN",
+      "previousTiId": "9",
+      "realLength": 400.0,
+      "tiId": "10",
+      "trackCode": "1",
+      "x": 300.0,
+      "xf": 390.0,
+      "y": 0.0,
+      "yf": 0.0
+    },
+    "101": {
+      "__type__": "SignalItem",
+      "conflictTiId": null,
+      "customProperties": {
+        "ROUTES_SET": {},
+        "TRAIN_NOT_PRESENT_ON_ITEMS": {},
+        "TRAIN_PRESENT_ON_ITEMS": {}
+      },
+      "maxSpeed": 0.0,
+      "name": "34",
+      "nextTiId": "102",
+      "previousTiId": "10",
+      "reverse": false,
+      "signalType": "UK_3_ASPECTS",
+      "tiId": "101",
+      "x": 390.0,
+      "xn": 410.0,
+      "y": 0.0,
+      "yn": 5.0
+    },
+    "102": {
+      "__type__": "LineItem",
+      "conflictTiId": null,
+      "maxSpeed": 0.0,
+      "name": null,
+      "nextTiId": "103",
+      "placeCode": null,
+      "previousTiId": "101",
+      "realLength": 400.0,
+      "tiId": "102",
+      "trackCode": "",
+      "x": 400.0,
+      "xf": 470.0,
+      "y": 0.0,
+      "yf": 0.0
+    },
+    "103": {
+      "__type__": "InvisibleLinkItem",
+      "conflictTiId": null,
+      "maxSpeed": 0.0,
+      "name": null,
+      "nextTiId": "104",
+      "placeCode": null,
+      "previousTiId": "102",
+      "realLength": 400.0,
+      "tiId": "103",
+      "trackCode": "",
+      "x": 470.0,
+      "xf": 490.0,
+      "y": 0.0,
+      "yf": 0.0
+    },
+    "104": {
+      "__type__": "LineItem",
+      "conflictTiId": null,
+      "maxSpeed": 0.0,
+      "name": null,
+      "nextTiId": "11",
+      "placeCode": null,
+      "previousTiId": "103",
+      "realLength": 400.0,
+      "tiId": "104",
+      "trackCode": "",
+      "x": 490.0,
+      "xf": 540.0,
+      "y": 0.0,
+      "yf": 0.0
+    },
+    "11": {
+      "__type__": "SignalItem",
+      "conflictTiId": null,
+      "customProperties": {
+        "ROUTES_SET": {},
+        "TRAIN_NOT_PRESENT_ON_ITEMS": {},
+        "TRAIN_PRESENT_ON_ITEMS": {
+          "UK_DANGER": [
+            "12"
+          ]
+        }
+      },
+      "maxSpeed": 0.0,
+      "name": "35",
+      "nextTiId": "12",
+      "previousTiId": "104",
+      "reverse": false,
+      "signalType": "UK_2_AUTOMATIC",
+      "tiId": "11",
+      "x": 540.0,
+      "xn": 560.0,
+      "y": 0.0,
+      "yn": 5.0
+    },
+    "12": {
+      "__type__": "LineItem",
+      "conflictTiId": null,
+      "maxSpeed": 0.0,
+      "name": null,
+      "nextTiId": "13",
+      "placeCode": "RGT",
+      "previousTiId": "11",
+      "realLength": 400.0,
+      "tiId": "12",
+      "trackCode": null,
+      "x": 550.0,
+      "xf": 600.0,
+      "y": 0.0,
+      "yf": 0.0
+    },
+    "13": {
+      "__type__": "EndItem",
+      "conflictTiId": null,
+      "maxSpeed": 0.0,
+      "name": null,
+      "nextTiId": null,
+      "previousTiId": "12",
+      "tiId": "13",
+      "x": 600.0,
+      "y": 0.0
+    },
+    "14": {
+      "__type__": "LineItem",
+      "conflictTiId": null,
+      "maxSpeed": 10.0,
+      "name": null,
+      "nextTiId": "15",
+      "placeCode": null,
+      "previousTiId": "7",
+      "realLength": 200.0,
+      "tiId": "14",
+      "trackCode": "",
+      "x": 255.0,
+      "xf": 280.0,
+      "y": 5.0,
+      "yf": 25.0
+    },
+    "15": {
+      "__type__": "SignalItem",
+      "conflictTiId": null,
+      "customProperties": {
+        "ROUTES_SET": {},
+        "TRAIN_NOT_PRESENT_ON_ITEMS": {},
+        "TRAIN_PRESENT_ON_ITEMS": {}
+      },
+      "maxSpeed": 0.0,
+      "name": "36",
+      "nextTiId": "14",
+      "previousTiId": "16",
+      "reverse": true,
+      "signalType": "UK_3_ASPECTS",
+      "tiId": "15",
+      "x": 290.0,
+      "xn": 295.0,
+      "y": 25.0,
+      "yn": 30.0
+    },
+    "16": {
+      "__type__": "LineItem",
+      "conflictTiId": null,
+      "maxSpeed": 0.0,
+      "name": null,
+      "nextTiId": "17",
+      "placeCode": "STN",
+      "previousTiId": "15",
+      "realLength": 400.0,
+      "tiId": "16",
+      "trackCode": "2",
+      "x": 290.0,
+      "xf": 390.0,
+      "y": 25.0,
+      "yf": 25.0
+    },
+    "17": {
+      "__type__": "SignalItem",
+      "conflictTiId": null,
+      "customProperties": {
+        "ROUTES_SET": {},
+        "TRAIN_NOT_PRESENT_ON_ITEMS": {},
+        "TRAIN_PRESENT_ON_ITEMS": {}
+      },
+      "maxSpeed": 0.0,
+      "name": "37",
+      "nextTiId": "18",
+      "previousTiId": "16",
+      "reverse": false,
+      "signalType": "BUFFER",
+      "tiId": "17",
+      "x": 390.0,
+      "xn": 410.0,
+      "y": 25.0,
+      "yn": 30.0
+    },
+    "18": {
+      "__type__": "EndItem",
+      "conflictTiId": null,
+      "maxSpeed": 0.0,
+      "name": null,
+      "nextTiId": null,
+      "previousTiId": "17",
+      "tiId": "18",
+      "x": 400.0,
+      "y": 25.0
+    },
+    "19": {
+      "__type__": "Place",
+      "conflictTiId": null,
+      "maxSpeed": 0.0,
+      "name": "LEFT",
+      "nextTiId": null,
+      "placeCode": "LFT",
+      "previousTiId": null,
+      "tiId": "19",
+      "x": 20.0,
+      "y": 10.0
+    },
+    "2": {
+      "__type__": "LineItem",
+      "conflictTiId": null,
+      "maxSpeed": 27.77,
+      "name": null,
+      "nextTiId": "3",
+      "placeCode": "LFT",
+      "previousTiId": "1",
+      "realLength": 400.0,
+      "tiId": "2",
+      "trackCode": null,
+      "x": 0.0,
+      "xf": 90.0,
+      "y": 0.0,
+      "yf": 0.0
+    },
+    "20": {
+      "__type__": "Place",
+      "conflictTiId": null,
+      "maxSpeed": 0.0,
+      "name": "STATION",
+      "nextTiId": null,
+      "placeCode": "STN",
+      "previousTiId": null,
+      "tiId": "20",
+      "x": 320.0,
+      "y": 0.0
+    },
+    "21": {
+      "__type__": "Place",
+      "conflictTiId": null,
+      "maxSpeed": 0.0,
+      "name": "RIGHT",
+      "nextTiId": null,
+      "placeCode": "RGT",
+      "previousTiId": null,
+      "tiId": "21",
+      "x": 520.0,
+      "y": 10.0
+    },
+    "22": {
+      "__type__": "PlatformItem",
+      "conflictTiId": null,
+      "maxSpeed": 0.0,
+      "name": null,
+      "nextTiId": null,
+      "placeCode": "STN",
+      "previousTiId": null,
+      "tiId": "22",
+      "trackCode": "2",
+      "x": 300.0,
+      "xf": 390.0,
+      "y": 35.0,
+      "yf": 50.0
+    },
+    "23": {
+      "__type__": "PlatformItem",
+      "conflictTiId": null,
+      "maxSpeed": 0.0,
+      "name": null,
+      "nextTiId": null,
+      "placeCode": "STN",
+      "previousTiId": null,
+      "tiId": "23",
+      "trackCode": "1",
+      "x": 300.0,
+      "xf": 390.0,
+      "y": -10.0,
+      "yf": -25.0
+    },
+    "24": {
+      "__type__": "TextItem",
+      "conflictTiId": null,
+      "maxSpeed": 0.0,
+      "name": "2",
+      "nextTiId": null,
+      "previousTiId": null,
+      "tiId": "24",
+      "x": 345.0,
+      "y": 50.0
+    },
+    "25": {
+      "__type__": "TextItem",
+      "conflictTiId": null,
+      "maxSpeed": 0.0,
+      "name": "1",
+      "nextTiId": null,
+      "previousTiId": null,
+      "tiId": "25",
+      "x": 345.0,
+      "y": -50.0
+    },
+    "3": {
+      "__type__": "SignalItem",
+      "conflictTiId": null,
+      "customProperties": {
+        "ROUTES_SET": {},
+        "TRAIN_NOT_PRESENT_ON_ITEMS": {},
+        "TRAIN_PRESENT_ON_ITEMS": {
+          "UK_DANGER": [
+            "2"
+          ]
+        }
+      },
+      "maxSpeed": 0.0,
+      "name": "31",
+      "nextTiId": "2",
+      "previousTiId": "4",
+      "reverse": true,
+      "signalType": "UK_2_AUTOMATIC",
+      "tiId": "3",
+      "x": 100.0,
+      "xn": 105.0,
+      "y": 0.0,
+      "yn": 5.0
+    },
+    "4": {
+      "__type__": "LineItem",
+      "conflictTiId": null,
+      "maxSpeed": 0.0,
+      "name": "Sample Name",
+      "nextTiId": "5",
+      "placeCode": null,
+      "previousTiId": "3",
+      "realLength": 400.0,
+      "tiId": "4",
+      "trackCode": "",
+      "x": 100.0,
+      "xf": 190.0,
+      "y": 0.0,
+      "yf": 0.0
+    },
+    "5": {
+      "__type__": "SignalItem",
+      "conflictTiId": null,
+      "customProperties": {
+        "ROUTES_SET": {
+          "UK_DANGER": [
+            "2"
+          ]
+        },
+        "TRAIN_NOT_PRESENT_ON_ITEMS": {
+          "UK_DANGER": [
+            "4",
+            "3"
+          ]
+        },
+        "TRAIN_PRESENT_ON_ITEMS": {}
+      },
+      "maxSpeed": 0.0,
+      "name": "32",
+      "nextTiId": "6",
+      "previousTiId": "4",
+      "reverse": false,
+      "signalType": "UK_3_ASPECTS",
+      "tiId": "5",
+      "x": 190.0,
+      "xn": 210.0,
+      "y": 0.0,
+      "yn": 5.0
+    },
+    "6": {
+      "__type__": "LineItem",
+      "conflictTiId": null,
+      "maxSpeed": 10.0,
+      "name": null,
+      "nextTiId": "7",
+      "placeCode": null,
+      "previousTiId": "5",
+      "realLength": 200.0,
+      "tiId": "6",
+      "trackCode": "",
+      "x": 200.0,
+      "xf": 245.0,
+      "y": 0.0,
+      "yf": 0.0
+    },
+    "7": {
+      "__type__": "PointsItem",
+      "conflictTiId": null,
+      "maxSpeed": 10.0,
+      "name": null,
+      "nextTiId": "8",
+      "previousTiId": "6",
+      "reverseTiId": "14",
+      "tiId": "7",
+      "x": 250.0,
+      "xf": -5.0,
+      "xn": 5.0,
+      "xr": 5.0,
+      "y": 0.0,
+      "yf": 0.0,
+      "yn": 0.0,
+      "yr": 5.0
+    },
+    "8": {
+      "__type__": "LineItem",
+      "conflictTiId": null,
+      "maxSpeed": 10.0,
+      "name": null,
+      "nextTiId": "9",
+      "placeCode": null,
+      "previousTiId": "7",
+      "realLength": 200.0,
+      "tiId": "8",
+      "trackCode": "",
+      "x": 255.0,
+      "xf": 290.0,
+      "y": 0.0,
+      "yf": 0.0
+    },
+    "9": {
+      "__type__": "SignalItem",
+      "conflictTiId": null,
+      "customProperties": {
+        "ROUTES_SET": {},
+        "TRAIN_NOT_PRESENT_ON_ITEMS": {},
+        "TRAIN_PRESENT_ON_ITEMS": {}
+      },
+      "maxSpeed": 0.0,
+      "name": "33",
+      "nextTiId": "8",
+      "previousTiId": "10",
+      "reverse": true,
+      "signalType": "UK_3_ASPECTS",
+      "tiId": "9",
+      "x": 300.0,
+      "xn": 305.0,
+      "y": 0.0,
+      "yn": 5.0
+    }
+  },
+  "trainTypes": {
+    "UT": {
+      "__type__": "TrainType",
+      "code": "UT",
+      "description": "Underground train",
+      "elements": [],
+      "emergBraking": 1.5,
+      "length": 70.0,
+      "maxSpeed": 25.0,
+      "stdAccel": 0.5,
+      "stdBraking": 0.5
+    },
+    "UT2": {
+      "__type__": "TrainType",
+      "code": "UT2",
+      "description": "Underground double unit",
+      "elements": [
+        "UT",
+        "UT"
+      ],
+      "emergBraking": 1.5,
+      "length": 140.0,
+      "maxSpeed": 25.0,
+      "stdAccel": 0.5,
+      "stdBraking": 0.5
+    }
+  },
+  "trains": [
+    {
+      "__type__": "Train",
+      "appearTime": "06:00:00",
+      "initialDelay": 0,
+      "initialSpeed": 5.0,
+      "nextPlaceIndex": null,
+      "serviceCode": "S001",
+      "speed": 5.0,
+      "status": 0,
+      "stoppedTime": 0,
+      "trainHead": {
+        "__type__": "Position",
+        "positionOnTI": 3.0,
+        "previousTI": "1",
+        "trackItem": "2"
+      },
+      "trainId": "0",
+      "trainTypeCode": "UT"
+    },
+    {
+      "__type__": "Train",
+      "appearTime": "06:03:00",
+      "initialDelay": 0,
+      "initialSpeed": 5.0,
+      "nextPlaceIndex": null,
+      "serviceCode": "S003",
+      "speed": 5.0,
+      "status": 0,
+      "stoppedTime": 0,
+      "trainHead": {
+        "__type__": "Position",
+        "positionOnTI": 3.0,
+        "previousTI": "1",
+        "trackItem": "2"
+      },
+      "trainId": "1",
+      "trainTypeCode": "UT2"
+    }
+  ]
 }
