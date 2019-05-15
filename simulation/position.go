@@ -45,6 +45,9 @@ type Position struct {
 
 // TrackItem of this Position
 func (pos Position) TrackItem() TrackItem {
+	if pos.TrackItemID == "" {
+		return nil
+	}
 	return pos.simulation.TrackItems[pos.TrackItemID]
 }
 
@@ -197,4 +200,13 @@ func (pos Position) String() string {
 		return fmt.Sprintf("(%s, %s, %0.2f)", pos.TrackItemID, pos.PreviousItemID, pos.PositionOnTI)
 	}
 	return fmt.Sprintf("<Invalid Position: (%v) %s, %s, %0.2f>", pos.simulation != nil, pos.TrackItemID, pos.PreviousItemID, pos.PositionOnTI)
+}
+
+func NewPosition(sim *Simulation, trackItemID, previousTI string, positionOnTI float64) Position {
+	return Position{
+		simulation:     sim,
+		TrackItemID:    trackItemID,
+		PreviousItemID: previousTI,
+		PositionOnTI:   positionOnTI,
+	}
 }
