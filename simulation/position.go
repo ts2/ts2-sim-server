@@ -45,9 +45,6 @@ type Position struct {
 
 // TrackItem of this Position
 func (pos Position) TrackItem() TrackItem {
-	if pos.TrackItemID == "" {
-		return nil
-	}
 	return pos.simulation.TrackItems[pos.TrackItemID]
 }
 
