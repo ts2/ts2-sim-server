@@ -317,8 +317,11 @@ func NextSignalPosition(pos Position) Position {
 
 // findNextSignal returns the next signal in front of this Train
 func (t *Train) findNextSignal() *SignalItem {
-	nsi, _ := t.NextSignalPosition().TrackItem().(*SignalItem)
-	return nsi
+	nsp := t.NextSignalPosition()
+	if nsp.Equals(Position{}) {
+		return nil
+	}
+	return nsp.TrackItem().(*SignalItem)
 }
 
 // updateSignalActions updates the applicable signal actions list based on the position
