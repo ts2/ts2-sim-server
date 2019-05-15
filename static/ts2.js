@@ -481,6 +481,26 @@ window.addEventListener("load", function (evt) {
         input.focus();
         return false;
     };
+    document.getElementById("trainReverseTmpl").onclick = function (evt) {
+        input.value = '{"object": "train", "action": "reverse", "params": {"id": 0}}';
+        input.focus();
+        return false;
+    };
+    document.getElementById("trainProceedTmpl").onclick = function (evt) {
+        input.value = '{"object": "train", "action": "proceed", "params": {"id": 0}}';
+        input.focus();
+        return false;
+    };
+    document.getElementById("trainResetServiceTmpl").onclick = function (evt) {
+        input.value = '{"object": "train", "action": "resetService", "params": {"id": 0}}';
+        input.focus();
+        return false;
+    };
+    document.getElementById("trainSetServiceTmpl").onclick = function (evt) {
+        input.value = '{"object": "train", "action": "setService", "params": {"id": 0, "service": "S002"}}';
+        input.focus();
+        return false;
+    };
     updateWidgets();
     do_resize();
 

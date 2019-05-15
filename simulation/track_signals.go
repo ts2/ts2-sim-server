@@ -109,6 +109,7 @@ type SignalAspect struct {
 	OuterColors  [6]Color        `json:"outerColors"`
 	Shapes       [6]signalShape  `json:"shapes"`
 	ShapesColors [6]Color        `json:"shapesColors"`
+	Blink        [6]bool         `json:"blink"`
 	Actions      []SignalAction  `json:"actions"`
 }
 

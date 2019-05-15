@@ -20,6 +20,7 @@ package simulation
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"time"
@@ -86,6 +87,7 @@ type Train struct {
 	actionIndex     int
 	actionTime      Time
 	lastSignal      *SignalItem
+	ignoredSignal   *SignalItem
 }
 
 // ID returns the unique internal identifier of this Train
@@ -315,7 +317,8 @@ func NextSignalPosition(pos Position) Position {
 
 // findNextSignal returns the next signal in front of this Train
 func (t *Train) findNextSignal() *SignalItem {
-	return t.NextSignalPosition().TrackItem().(*SignalItem)
+	nsi, _ := t.NextSignalPosition().TrackItem().(*SignalItem)
+	return nsi
 }
 
 // updateSignalActions updates the applicable signal actions list based on the position
@@ -331,28 +334,30 @@ func (t *Train) updateSignalActions() {
 		t.actionIndex = 0
 		return
 	}
+	nextSignal := nsp.TrackItem().(*SignalItem)
 	nsd, err := nsp.Sub(t.TrainHead)
 	if err != nil {
 		Logger.Crit("unexpected error", "error", err)
 		return
 	}
-	if nsd < t.simulation.Options.DefaultSignalVisibility {
+	if nsd < t.simulation.Options.DefaultSignalVisibility && (t.ignoredSignal == nil || !nextSignal.Equals(t.ignoredSignal)) {
 		// We can see the next signal aspect
-		if len(nsp.TrackItem().(*SignalItem).activeAspect.Actions) > 0 {
+		if len(nextSignal.activeAspect.Actions) > 0 {
 			// It requires actions
 			// We check actions each time because the aspect of the signal
 			// might have changed
-			t.signalActions = nsp.TrackItem().(*SignalItem).activeAspect.Actions
+			t.ignoredSignal = nil
+			t.signalActions = nextSignal.activeAspect.Actions
 			if t.lastSignal == nil || !nsp.TrackItem().Equals(t.lastSignal) {
 				// We see this signal for the first time
-				t.lastSignal = nsp.TrackItem().(*SignalItem)
+				t.lastSignal = nextSignal
 				t.actionIndex = 0
 				t.actionTime = Time{}
 			}
 		} else {
 			// This signal does not require actions, so we only update our
 			// memory of the last signal
-			t.lastSignal = nsp.TrackItem().(*SignalItem)
+			t.lastSignal = nextSignal
 		}
 	}
 
@@ -404,16 +409,9 @@ func (t *Train) jumpToNextServiceLine() {
 		for _, action := range t.Service().PostActions {
 			switch action.ActionCode {
 			case actionReverse:
-				t.reverse()
+				_ = t.Reverse()
 			case actionSetService:
-				t.ServiceCode = action.ActionParam
-				t.NextPlaceIndex = 0
-				t.findNextSignal().setTrain(t)
-				if t.StoppedTime != 0 {
-					t.Status = Stopped
-				} else {
-					t.Status = Running
-				}
+				_ = t.AssignService(action.ActionParam)
 			}
 		}
 		return
@@ -421,10 +419,10 @@ func (t *Train) jumpToNextServiceLine() {
 	t.NextPlaceIndex += 1
 }
 
-// reverse the train direction
-func (t *Train) reverse() {
+// Reverse the train direction
+func (t *Train) Reverse() error {
 	if t.Speed != 0 {
-		return
+		return errors.New("train is not stopped")
 	}
 	if signalAhead := t.findNextSignal(); signalAhead != nil {
 		signalAhead.setTrain(nil)
@@ -444,6 +442,49 @@ func (t *Train) reverse() {
 	}}
 	t.actionIndex = 0
 	t.updateSignalActions()
+	return nil
+}
+
+// AssignService assigns the given service to the train, replacing the current one
+func (t *Train) AssignService(srv string) error {
+	_, ok := t.simulation.Services[srv]
+	if !ok {
+		return fmt.Errorf("unknown service: %s", srv)
+	}
+	t.ServiceCode = srv
+	t.NextPlaceIndex = 0
+	t.findNextSignal().setTrain(t)
+	if t.StoppedTime != 0 {
+		t.Status = Stopped
+	} else {
+		t.Status = Running
+	}
+	t.simulation.sendEvent(&Event{
+		Name:   TrainChanged,
+		Object: t,
+	})
+	return nil
+}
+
+// ResetService restarts the service for the current train, as if nothing had happened.
+func (t *Train) ResetService() error {
+	t.NextPlaceIndex = 0
+	return nil
+}
+
+// ProceedWithCaution tells the train driver to proceed through the closed signal at
+// WarningSpeed until the next signal.
+func (t *Train) ProceedWithCaution() error {
+	if t.Speed != 0 {
+		return errors.New("train is not stopped")
+	}
+	t.ignoredSignal = t.lastSignal
+	t.signalActions = []SignalAction{{
+		Target: ASAP,
+		Speed:  t.simulation.Options.WarningSpeed,
+	}}
+	t.actionIndex = 0
+	return nil
 }
 
 // IsShunting returns true if this train is currently shunting.

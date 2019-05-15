@@ -29,10 +29,10 @@ type trainObject struct{}
 
 // dispatch processes requests made on the Service object
 func (t *trainObject) dispatch(h *Hub, req Request, conn *connection) {
+	logger.Debug("Request for train received", "submodule", "hub", "object", req.Object, "action", req.Action)
 	ch := conn.pushChan
 	switch req.Action {
 	case "list":
-		logger.Debug("Request for train list received", "submodule", "hub", "object", req.Object, "action", req.Action)
 		sl, err := json.Marshal(sim.Trains)
 		if err != nil {
 			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
@@ -44,7 +44,6 @@ func (t *trainObject) dispatch(h *Hub, req Request, conn *connection) {
 			IDs []int `json:"ids"`
 		}{}
 		err := json.Unmarshal(req.Params, &idsParams)
-		logger.Debug("Request for train show received", "submodule", "hub", "object", req.Object, "action", req.Action, "params", idsParams)
 		if err != nil {
 			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
 			return
@@ -63,6 +62,79 @@ func (t *trainObject) dispatch(h *Hub, req Request, conn *connection) {
 			return
 		}
 		ch <- NewResponse(req.ID, tid)
+	case "reverse":
+		var idParams = struct {
+			ID int `json:"id"`
+		}{}
+		err := json.Unmarshal(req.Params, &idParams)
+		if err != nil {
+			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
+			return
+		}
+		if idParams.ID < 0 || idParams.ID >= len(sim.Trains) {
+			ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown train: %d", idParams.ID))
+			return
+		}
+		train := sim.Trains[idParams.ID]
+		if err = train.Reverse(); err != nil {
+			ch <- NewErrorResponse(req.ID, fmt.Errorf("unable to reverse train %d: %s", idParams.ID, err))
+			return
+		}
+		ch <- NewOkResponse(req.ID, "train reversed successfully")
+	case "setService":
+		var smParams = struct {
+			ID      int    `json:"id"`
+			Service string `json:"service"`
+		}{}
+		err := json.Unmarshal(req.Params, &smParams)
+		if err != nil {
+			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
+			return
+		}
+		if smParams.ID < 0 || smParams.ID >= len(sim.Trains) {
+			ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown train: %d", smParams.ID))
+			return
+		}
+		if err = sim.Trains[smParams.ID].AssignService(smParams.Service); err != nil {
+			ch <- NewErrorResponse(req.ID, fmt.Errorf("unable to assign service %s to train %d: %s", smParams.Service, smParams.ID, err))
+			return
+		}
+		ch <- NewOkResponse(req.ID, "service assigned successfully")
+	case "resetService":
+		var idParams = struct {
+			ID int `json:"id"`
+		}{}
+		err := json.Unmarshal(req.Params, &idParams)
+		if err != nil {
+			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
+			return
+		}
+		if idParams.ID < 0 || idParams.ID >= len(sim.Trains) {
+			ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown train: %d", idParams.ID))
+			return
+		}
+		train := sim.Trains[idParams.ID]
+		_ = train.ResetService()
+		ch <- NewOkResponse(req.ID, "service reset successfully")
+	case "proceed":
+		var idParams = struct {
+			ID int `json:"id"`
+		}{}
+		err := json.Unmarshal(req.Params, &idParams)
+		if err != nil {
+			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
+			return
+		}
+		if idParams.ID < 0 || idParams.ID >= len(sim.Trains) {
+			ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown train: %d", idParams.ID))
+			return
+		}
+		train := sim.Trains[idParams.ID]
+		if err = train.ProceedWithCaution(); err != nil {
+			ch <- NewErrorResponse(req.ID, fmt.Errorf("unable to proceed for train %d: %s", idParams.ID, err))
+			return
+		}
+		ch <- NewOkResponse(req.ID, "proceed order passed successfully")
 	default:
 		ch <- NewErrorResponse(req.ID, fmt.Errorf("unknown action %s/%s", req.Object, req.Action))
 		logger.Debug("Request for unknown action received", "submodule", "hub", "object", req.Object, "action", req.Action)

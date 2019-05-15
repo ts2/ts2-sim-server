@@ -267,6 +267,82 @@ func TestHub(t *testing.T) {
 				So(resp.Data.Status, ShouldEqual, Fail)
 				So(resp.Data.Message, ShouldEqual, "Error: unknown train: 3")
 			})
+			Convey("Reversing a train", func() {
+				resp := sendRequestStatus(c, "train", "reverse", `{"id": 0}`)
+				So(resp.MsgType, ShouldEqual, TypeResponse)
+				So(resp.Data.Status, ShouldEqual, Fail)
+				So(resp.Data.Message, ShouldEqual, "Error: unable to reverse train 0: train is not stopped")
+				pos := simulation.NewPosition(sim, "2", "1", 20)
+				sim.Trains[0].TrainHead = pos
+				sim.Trains[0].Speed = 0
+				resp = sendRequestStatus(c, "train", "reverse", `{"id": 0}`)
+				So(resp.MsgType, ShouldEqual, TypeResponse)
+				So(resp.Data.Status, ShouldEqual, Ok)
+				So(resp.Data.Message, ShouldEqual, "train reversed successfully")
+				resp = sendRequestStatus(c, "train", "reverse", `{"id": 0}`)
+				So(resp.Data.Status, ShouldEqual, Ok)
+			})
+			Convey("Reverse with a wrong train ID should fail", func() {
+				resp := sendRequestStatus(c, "train", "reverse", `{"id": 999}`)
+				So(resp.MsgType, ShouldEqual, TypeResponse)
+				So(resp.Data.Status, ShouldEqual, Fail)
+				So(resp.Data.Message, ShouldEqual, "Error: unknown train: 999")
+			})
+			Convey("Setting a service to a train", func() {
+				So(sim.Trains[0].ServiceCode, ShouldEqual, "S001")
+				resp := sendRequestStatus(c, "train", "setService", `{"id": 0, "service": "S002"}`)
+				So(resp.MsgType, ShouldEqual, TypeResponse)
+				So(resp.Data.Status, ShouldEqual, Ok)
+				So(resp.Data.Message, ShouldEqual, "service assigned successfully")
+				So(sim.Trains[0].ServiceCode, ShouldEqual, "S002")
+			})
+			Convey("SetService with a wrong train ID or ServiceID should fail", func() {
+				resp := sendRequestStatus(c, "train", "setService", `{"id": 999, "service": "S002"}`)
+				So(resp.MsgType, ShouldEqual, TypeResponse)
+				So(resp.Data.Status, ShouldEqual, Fail)
+				So(resp.Data.Message, ShouldEqual, "Error: unknown train: 999")
+				resp = sendRequestStatus(c, "train", "setService", `{"id": 0, "service": "S042"}`)
+				So(resp.MsgType, ShouldEqual, TypeResponse)
+				So(resp.Data.Status, ShouldEqual, Fail)
+				So(resp.Data.Message, ShouldEqual, "Error: unable to assign service S042 to train 0: unknown service: S042")
+			})
+			Convey("Resetting a service", func() {
+				sim.Trains[0].NextPlaceIndex = 1
+				resp := sendRequestStatus(c, "train", "resetService", `{"id": 0}`)
+				So(resp.MsgType, ShouldEqual, TypeResponse)
+				So(resp.Data.Status, ShouldEqual, Ok)
+				So(resp.Data.Message, ShouldEqual, "service reset successfully")
+				So(sim.Trains[0].NextPlaceIndex, ShouldEqual, 0)
+			})
+			Convey("Resetting a service with a wrong train ID should fail", func() {
+				resp := sendRequestStatus(c, "train", "resetService", `{"id": 999}`)
+				So(resp.MsgType, ShouldEqual, TypeResponse)
+				So(resp.Data.Status, ShouldEqual, Fail)
+				So(resp.Data.Message, ShouldEqual, "Error: unknown train: 999")
+			})
+			Convey("Ask a train to proceed", func() {
+				So(sim.Trains[0].ApplicableAction().Speed, ShouldEqual, simulation.VeryHighSpeed)
+				So(sim.Trains[0].ApplicableAction().Target, ShouldEqual, simulation.ASAP)
+				resp := sendRequestStatus(c, "train", "proceed", `{"id": 0}`)
+				So(resp.MsgType, ShouldEqual, TypeResponse)
+				So(resp.Data.Status, ShouldEqual, Ok)
+				So(resp.Data.Message, ShouldEqual, "proceed order passed successfully")
+				So(sim.Trains[0].ApplicableAction().Speed, ShouldEqual, 8.34)
+				So(sim.Trains[0].ApplicableAction().Target, ShouldEqual, simulation.ASAP)
+			})
+			Convey("Asking a wrong train ID to proceed should fail", func() {
+				resp := sendRequestStatus(c, "train", "proceed", `{"id": 999}`)
+				So(resp.MsgType, ShouldEqual, TypeResponse)
+				So(resp.Data.Status, ShouldEqual, Fail)
+				So(resp.Data.Message, ShouldEqual, "Error: unknown train: 999")
+			})
+			Convey("Asking a running train ID to proceed should fail", func() {
+				sim.Trains[0].Speed = 5
+				resp := sendRequestStatus(c, "train", "proceed", `{"id": 0}`)
+				So(resp.MsgType, ShouldEqual, TypeResponse)
+				So(resp.Data.Status, ShouldEqual, Fail)
+				So(resp.Data.Message, ShouldEqual, "Error: unable to proceed for train 0: train is not stopped")
+			})
 		})
 		Convey("TrackItems functions", func() {
 			Convey("Calling unknown action should fail", func() {
