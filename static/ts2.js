@@ -390,6 +390,11 @@ window.addEventListener("load", function (evt) {
         input.focus();
         return false;
     };
+    document.getElementById("simIsStartedTmpl").onclick = function (evt) {
+        input.value = '{"object": "simulation", "action": "isStarted"}';
+        input.focus();
+        return false;
+    };
     document.getElementById("simDumpTmpl").onclick = function (evt) {
         input.value = '{"object": "simulation", "action": "dump"}';
         input.focus();
