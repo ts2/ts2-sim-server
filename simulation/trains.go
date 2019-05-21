@@ -184,7 +184,7 @@ func (t *Train) activate(h Time) {
 		Target: ASAP,
 		Speed:  VeryHighSpeed,
 	}}
-	t.actionIndex = 0
+	t.setActionIndex(0)
 	// Log status change
 	t.logTrainEntersArea()
 }
@@ -334,7 +334,7 @@ func (t *Train) updateSignalActions() {
 			Target: ASAP,
 			Speed:  VeryHighSpeed,
 		}}
-		t.actionIndex = 0
+		t.setActionIndex(0)
 		return
 	}
 	nextSignal := nsp.TrackItem().(*SignalItem)
@@ -345,6 +345,7 @@ func (t *Train) updateSignalActions() {
 	}
 	if nsd < t.simulation.Options.DefaultSignalVisibility && (t.ignoredSignal == nil || !nextSignal.Equals(t.ignoredSignal)) {
 		// We can see the next signal aspect
+		t.lastSignal = nextSignal
 		if len(nextSignal.activeAspect.Actions) > 0 {
 			// It requires actions
 			// We check actions each time because the aspect of the signal
@@ -352,15 +353,8 @@ func (t *Train) updateSignalActions() {
 			t.ignoredSignal = nil
 			t.signalActions = nextSignal.activeAspect.Actions
 			if t.lastSignal == nil || !nsp.TrackItem().Equals(t.lastSignal) {
-				// We see this signal for the first time
-				t.lastSignal = nextSignal
-				t.actionIndex = 0
-				t.actionTime = Time{}
+				t.setActionIndex(0)
 			}
-		} else {
-			// This signal does not require actions, so we only update our
-			// memory of the last signal
-			t.lastSignal = nextSignal
 		}
 	}
 
@@ -374,10 +368,16 @@ func (t *Train) updateSignalActions() {
 		if currentTime.After(t.actionTime.Add(t.ApplicableAction().Duration)) {
 			// We have waited enough, so we go to next action if any
 			if len(t.signalActions) > t.actionIndex+1 {
-				t.actionIndex += 1
+				t.setActionIndex(t.actionIndex + 1)
 			}
 		}
 	}
+}
+
+// setActionIndex sets the action index to the given index and restart the counter
+func (t *Train) setActionIndex(index int) {
+	t.actionIndex = index
+	t.actionTime = Time{}
 }
 
 // checkPlace if the given ti belongs to a place which is a waypoiny on t's service (non stop).
@@ -443,7 +443,7 @@ func (t *Train) Reverse() error {
 		Target: ASAP,
 		Speed:  VeryHighSpeed,
 	}}
-	t.actionIndex = 0
+	t.setActionIndex(0)
 	t.updateSignalActions()
 	return nil
 }
@@ -486,7 +486,7 @@ func (t *Train) ProceedWithCaution() error {
 		Target: ASAP,
 		Speed:  t.simulation.Options.WarningSpeed,
 	}}
-	t.actionIndex = 0
+	t.setActionIndex(0)
 	return nil
 }
 

@@ -64,9 +64,8 @@ func (m StandardManager) Speed(t *simulation.Train, timeElapsed time.Duration) f
 	switch t.ApplicableAction().Target {
 	case simulation.ASAP:
 		// We emulate a distance to next signal to get a stdBraking
-		dtnSignal = math.Pow(t.Speed-t.TrainType().StdBraking*secs, 2) -
-			math.Pow(t.ApplicableAction().Speed, 2)/(2*t.TrainType().StdBraking) +
-			(t.Speed * secs / 2)
+		dtnSignal = (math.Pow(t.Speed-t.TrainType().StdBraking*secs, 2)-math.Pow(t.ApplicableAction().Speed, 2))/
+			(2*t.TrainType().StdBraking) + (t.Speed * secs / 2)
 	case simulation.BeforeNextSignal:
 		if nsp.TrackItemID == t.LastSeenSignal().ID() {
 			// The signal with the applicable action is still ahead
