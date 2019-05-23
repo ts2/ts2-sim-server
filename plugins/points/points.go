@@ -18,11 +18,15 @@
 
 package points
 
-import "github.com/ts2/ts2-sim-server/simulation"
+import (
+	"github.com/ts2/ts2-sim-server/simulation"
+	"sync"
+)
 
 // StandardManager is a points manager that performs points change
 // immediately and never fails.
 type StandardManager struct {
+	sync.RWMutex
 	directions map[string]simulation.PointDirection
 }
 
@@ -39,6 +43,8 @@ func (sm *StandardManager) SetDirection(p *simulation.PointsItem, dir simulation
 	if dir == simulation.DirectionCurrent {
 		return
 	}
+	sm.Lock()
+	defer sm.Unlock()
 	sm.directions[p.ID()] = dir
 }
 
