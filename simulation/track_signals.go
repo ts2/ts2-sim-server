@@ -309,10 +309,6 @@ func (si *SignalItem) ActiveAspect() *SignalAspect {
 // setActiveRoute sets the given route as active on this SignalItem.
 // previous gives the direction.
 func (si *SignalItem) setActiveRoute(r *Route, previous TrackItem) {
-	if previous != nil && !previous.Equals(si.NextItem()) {
-		Logger.Error("Trying to set signal active route the wrong way", "signal", si.ID(), "route", r.ID())
-		return
-	}
 	si.trackStruct.setActiveRoute(r, previous)
 	si.updateSignalState()
 }
