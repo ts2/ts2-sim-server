@@ -345,7 +345,6 @@ func (t *Train) updateSignalActions() {
 	}
 	if nsd < t.simulation.Options.DefaultSignalVisibility && (t.ignoredSignal == nil || !nextSignal.Equals(t.ignoredSignal)) {
 		// We can see the next signal aspect
-		t.lastSignal = nextSignal
 		if len(nextSignal.activeAspect.Actions) > 0 {
 			// It requires actions
 			// We check actions each time because the aspect of the signal
@@ -356,6 +355,7 @@ func (t *Train) updateSignalActions() {
 				t.setActionIndex(0)
 			}
 		}
+		t.lastSignal = nextSignal
 	}
 
 	currentTime := t.simulation.Options.CurrentTime
