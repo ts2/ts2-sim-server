@@ -21,6 +21,7 @@ package simulation
 import (
 	"encoding/json"
 	"fmt"
+	"sync"
 )
 
 // bigFloat is a large number used for the length of an EndItem. It must be bigger
@@ -236,6 +237,7 @@ type trackStruct struct {
 	selected       bool
 	trainEndsFW    map[*Train]float64
 	trainEndsBK    map[*Train]float64
+	trainEndMutex  sync.RWMutex
 	triggers       []func(TrackItem)
 }
 
@@ -415,6 +417,8 @@ func (t *trackStruct) releaseRouteBehind() {
 
 // TrainPresent returns true if at least one train is present on this TrackItem
 func (t *trackStruct) TrainPresent() bool {
+	t.trainEndMutex.RLock()
+	defer t.trainEndMutex.RUnlock()
 	return len(t.trainEndsFW)+len(t.trainEndsBK) > 0
 }
 
@@ -437,6 +441,8 @@ func (t *trackStruct) IsOnPosition(pos Position) bool {
 // train tail) of the closest train when on pos. If no train is on this item, the
 // distance will be 0, and the second argument will be false.
 func (t *trackStruct) DistanceToTrainEnd(pos Position) (float64, bool) {
+	t.trainEndMutex.RLock()
+	defer t.trainEndMutex.RUnlock()
 	var mdSet bool
 	minDist := bigFloat
 	if pos.PreviousItemID == t.PreviousTiID {
@@ -477,6 +483,8 @@ func (t *trackStruct) Equals(ti TrackItem) bool {
 
 // initialize this track item
 func (t *trackStruct) initialize() error {
+	t.trainEndMutex.Lock()
+	defer t.trainEndMutex.Unlock()
 	t.trainEndsFW = make(map[*Train]float64)
 	t.trainEndsBK = make(map[*Train]float64)
 	return nil
@@ -502,6 +510,8 @@ func (t *trackStruct) asJSONStruct() jsonTrackStruct {
 	if t.arPreviousItem != nil {
 		arpiID = t.arPreviousItem.ID()
 	}
+	t.trainEndMutex.RLock()
+	defer t.trainEndMutex.RUnlock()
 	tEndsFW := make(map[string]float64)
 	for t, p := range t.trainEndsFW {
 		tEndsFW[t.ID()] = p

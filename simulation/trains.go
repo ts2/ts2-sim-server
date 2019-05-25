@@ -248,6 +248,8 @@ func (t *Train) executeActions(advanceLength float64) {
 // updateItemWithTrainHead updates the knowledge of this trackItem about this train's Head,
 // knowing that this item is between the former head and the current head of the train.
 func (t *Train) updateItemWithTrainHead(ti TrackItem) {
+	ti.underlying().trainEndMutex.Lock()
+	defer ti.underlying().trainEndMutex.Unlock()
 	ti.underlying().trainEndsFW[t] = ti.RealLength()
 	ti.underlying().trainEndsBK[t] = 0
 	if t.simulation.Options.TrackCircuitBased {
@@ -265,6 +267,8 @@ func (t *Train) updateItemWithTrainHead(ti TrackItem) {
 // updateItemWithTrainTail updates the knowledge of this trackItem about this train's Tail,
 // knowing that this item is between the former tail and the current tail of the train.
 func (t *Train) updateItemWithTrainTail(ti TrackItem) {
+	ti.underlying().trainEndMutex.Lock()
+	defer ti.underlying().trainEndMutex.Unlock()
 	if !ti.Equals(t.TrainHead.TrackItem()) {
 		delete(ti.underlying().trainEndsBK, t)
 		delete(ti.underlying().trainEndsFW, t)
