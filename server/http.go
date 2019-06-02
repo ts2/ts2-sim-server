@@ -16,16 +16,20 @@
 // Free Software Foundation, Inc.,
 // 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
+//go:generate statik -src=../static
+
 package server
 
 import (
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"time"
 
-	rice "github.com/GeertJohan/go.rice"
+	"github.com/rakyll/statik/fs"
+	_ "github.com/ts2/ts2-sim-server/server/statik"
 	"github.com/ts2/ts2-sim-server/simulation"
 	log "gopkg.in/inconshreveable/log15.v2"
 )
@@ -37,15 +41,10 @@ const (
 )
 
 var (
-	sim       *simulation.Simulation
-	hub       *Hub
-	logger    log.Logger
-	staticBox *rice.Box
+	sim    *simulation.Simulation
+	hub    *Hub
+	logger log.Logger
 )
-
-func init() {
-	staticBox = rice.MustFindBox("../static")
-}
 
 // InitializeLogger creates the logger for the server module
 func InitializeLogger(parentLogger log.Logger) {
@@ -75,8 +74,19 @@ func Run(s *simulation.Simulation, addr, port string) {
 //
 //    /ws - WebSocket endpoint for all TS2 clients and managers.
 func HttpdStart(addr, port string) {
+	statikFS, err := fs.New()
+	if err != nil {
+		logger.Crit("Unable to read statik FS", "error", err)
+		return
+	}
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(statikFS)))
 
-	homeTemplData, err := staticBox.String("/index.html")
+	homeTemplFile, err := statikFS.Open("/index.html")
+	if err != nil {
+		logger.Crit("Unable to read index.html from statikFS", "error", err)
+		return
+	}
+	homeTemplData, err := ioutil.ReadAll(homeTemplFile)
 	if err != nil {
 		logger.Crit("Unable to open `index.html` ", "error", err)
 		return
@@ -85,9 +95,6 @@ func HttpdStart(addr, port string) {
 
 	http.HandleFunc("/", serveHome)
 	http.HandleFunc("/ws", serveWs)
-
-	staticFileServer := http.StripPrefix("/static/", http.FileServer(staticBox.HTTPBox()))
-	http.Handle("/static/", staticFileServer)
 
 	serverAddress := fmt.Sprintf("%s:%s", addr, port)
 	logger.Info("Starting HTTP", "submodule", "http", "address", serverAddress)

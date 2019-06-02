@@ -28,7 +28,7 @@ import (
 
 func TestConnection(t *testing.T) {
 	// Wait for server to come up
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(2 * time.Second)
 	Convey("Testing server connection", t, func() {
 		c := clientDial(t)
 		Convey("Login test", func() {
