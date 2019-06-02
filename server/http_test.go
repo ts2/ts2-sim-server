@@ -13,7 +13,7 @@ import (
 
 func TestHTTP(t *testing.T) {
 	// Wait for server to come up
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(500 * time.Millisecond)
 	Convey("Testing HTTP websocket client", t, func() {
 		Convey("Normal GET / ", func() {
 			res, err := http.Get("http://127.0.0.1:22222")
