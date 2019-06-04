@@ -68,6 +68,7 @@ The TS2 release ships two clients:
 
 - The standard Python client, which is the main "all-in-one" client that is also able to spawn simulation servers and give access to the editor.
 - A minimalist web client which is included with the simulation server and mainly used for API testing.
+This client can be accessed at http://localhost:22222 when the sim server is running.
 
 === The Editor
 
@@ -83,6 +84,7 @@ A simulation in TS2 is modelled by the following objects:
 - Train Types
 - Services
 - Trains
+- Signal Library
 
 === Options
 
@@ -302,6 +304,36 @@ For example, `{"2": 3}` means that train with ID "2" has one of its extremity (h
 
 |===
 
+.trainEndsFW and trainEndsBK
+====
+Consider the following figure with 2 trains, going from left to right.
+`Train 1` spans over 3 track items, while `Train 2` is over a single track item.
+
+image::trainEnds.png[align=center]
+
+In this situation, the `trainEndsBK` and `trainEndsFW` maps are as follow:
+
+[cols="1,3"]
+|===
+|Item 1
+| `trainsEndsBK = {"1": 420}`
+
+`trainsEndsFW = {"1": 560}`
+
+|Item 2
+|`trainsEndsBK = {"1": 0}`
+
+`trainsEndsFW = {"1": 120}`
+
+|Item 3
+|`trainsEndsBK = {"1": 511, "2": 23}`
+
+`trainsEndsFW = {"1": 519, "2": 243}`
+|===
+
+NOTE: When the `trackCircuitBased` option is true, the `trainEndsBK` and `trainEndsFW` are always with a value of 0 or
+ of the length of the item so that the latter is either completely covered by a train or not at all.
+====
 
 ==== Line Items
 
@@ -403,7 +435,7 @@ If there is a train on a single item of the list, the aspect does not show.
 |Train Present Params
 |Track Items
 |List of items IDs on which there must be a train for the aspect to show.
-If there a train is missing on a single item of the list, the aspect does not show.
+If a train is missing on a single item of the list, the aspect does not show.
 
 |ROUTES_SET
 |Route set params
@@ -447,7 +479,7 @@ WARNING: y-axis increases from top to bottom.
 Must be equal to -5, 0 or +5.
 
 |yn
-|Common End
+|Normal End
 a|Position of the normal extremity along the y-axis.
 Must be equal to -5, 0 or +5.
 
@@ -509,7 +541,7 @@ Common attributes `x` and `y` define the position of "Point 1".
 |Position of Point 2 along the x-axis.
 
 |yf
-|Common End
+|Point 2
 a|Position of Point 1 along the y-axis.
 
 WARNING: y-axis increases from top to bottom.
@@ -536,5 +568,50 @@ All extremities, including those after a buffer **MUST** be filled with an end i
 
 ==== Place Items
 
+Places represent  stations or waypoints. They are represented by a text label on the scenery.
 
-== Signal Aspect Resolution
+image::place.png[align=center]
+
+The common attribute `name` is the name of the place as displayed.
+
+[cols="2,3,8"]
+|===
+|Technical Name |Attribute Name in Editor |Description
+
+|placeCode
+|Place code
+|Code that will be used to reference this place in other items.
+
+|===
+
+==== InvisibleLink Items
+
+Invisible links work exactly the same way as line items, but are not represented at all on the scenery.
+
+image::invisiblelink.png[align=center]
+
+==== Text Items
+
+Text items are purely decorative.
+Use them to add labels which are not station or waypoint names, such as track or platform no.
+
+image::text.png[align=center]
+
+
+The caption is set through the `name` attribute.
+
+=== Routes
+
+=== Train Types
+
+=== Services
+
+=== Trains
+
+=== Signal Library
+
+==== Signal Aspect Resolution
+
+== Writing a simulation
+
+== Developing a Client

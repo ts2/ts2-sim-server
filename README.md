@@ -14,6 +14,17 @@ you should go to https://github.com/ts2/ts2 to grab the all-in-one simulator whi
 
 Install
 -------
+
+### Binary
+
+Download the binary for your platform from the [Release Page](https://github.com/ts2/ts2-sim-server/releases).
+This is a single binary with no dependencies.
+
+### Source
+You need to install the Go distribution (https://golang.org/dl/) for your platform first.
+
+Then use the go tool:
+
 ```bash
 go get github.com/ts2/ts2-sim-server
 ```
@@ -23,7 +34,11 @@ Starting the server
 ```bash
 ts2-sim-server /path/to/simulation-file.json
 ```
+
 The server is running and can be accessed at `ws://localhost:22222/ws`
+
+> Note that the server only accepts JSON simulation files. 
+> If you have a `.ts2` file, you must unzip it first, extract the `simulation.json` file inside and start the server on it.
 
 Web UI
 ------

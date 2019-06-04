@@ -39,6 +39,7 @@ docker/ts2-sim-server
 coverage.txt
 build/
 public/
+dist/
 
 # embeded files during build
 rice-box.go
