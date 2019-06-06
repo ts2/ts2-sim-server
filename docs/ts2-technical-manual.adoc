@@ -98,55 +98,55 @@ The simulation server itself has no default and expect all options to be set.
 |===
 | Key ^| Default Value | Description
 
-|title
+|`title`
 |
 |Title of the simulation
 
-|description
+|`description`
 |
 |Detailed description of the simulation targeted at the user.
 
-|clientToken
+|`clientToken`
 |client-secret
 |Client token to connect to the simulation.
 Unless you want to run a public instance of TS2 you can leave it to the default value.
 
-|version
+|`version`
 |0.7
 |Defines the version of the file format. Do not change this value.
 
-|timeFactor
+|`timeFactor`
 |5
 |The number of seconds elapsed in the simulation for each real seconds.
 This value can be set between 1 and 10.
 
-|currentTime
+|`currentTime`
 |06:00:00
 |Current time inside the simulation.
 When writing a simulation this will be the time when the simulation starts.
 During the simulation run, this value is updated every 500ms.
 
-|warningSpeed
+|`warningSpeed`
 |8.33
 |Speed (in metres per second) a train driver will observe when given a "Proceed with caution" manual order from the dispatcher.
 Default value is 30 km/h.
 
-|currentScore
+|`currentScore`
 |0
 |This value is the current penalty score of the simulation.
 Obviously, it should be set to 0 when writing a simulation.
 
-|defaultMaxSpeed
+|`defaultMaxSpeed`
 |44.44
 |This speed (in metres per second) will be used by the simulation whenever a track item has a maximum speed of 0.
 Default value is 160 km/h.
 
-|defaultMinimumStopTime
+|`defaultMinimumStopTime`
 |[(45, 75, 70), (75, 90, 30)]
 |The time in seconds a train will normally stop at a station.
 It can be a single value in seconds, or a <<DelayGenerators,delay generator>>.
 
-|defaultDelayAtEntry
+|`defaultDelayAtEntry`
 |[(-60, 0, 50), (0, 60, 50)]
 |The delay in seconds a train will have by default when entering the area.
 It can be a single value in seconds, or a <<DelayGenerators,delay generator>>.
@@ -154,7 +154,7 @@ If the value is negative, the train will be early.
 
 This value can be overridden train by train.
 
-|trackCircuitBased
+|`trackCircuitBased`
 |false
 |This value defines the way the trains will be represented on the layout.
 If it is true, each track item will be considered as a track circuit and will be either marked free or occupied.
@@ -162,19 +162,19 @@ If it is false, the occupied area will show the real position of the train.
 
 This option should be set to true if you care about realism.
 
-|defaultSignalVisibility
+|`defaultSignalVisibility`
 |100
 |Distance in metres at which a driver can see a signal and will start taking it into account.
 
-|wrongPlatformPenalty
+|`wrongPlatformPenalty`
 |5
 |Penalty points that will be added to the score each time a train stops at a wrong platform.
 
-|wrongDestinationPenalty
+|`wrongDestinationPenalty`
 |100
 |Penalty points that will be added to the score each time a train is not routed out of the area at the correct exit point.
 
-|latePenalty
+|`latePenalty`
 |1
 |Penalty points that will be added to the score per minute lost in the area.
 Delay at entry is subtracted from the actual delay to define it.
@@ -232,38 +232,38 @@ All items share the following attributes.
 |===
 |Technical Name |Attribute Name in Editor |Description
 
-|id
+|`id`
 |ID
 |Unique ID of the item. The editor sets it automatically and it cannot be modified by the user.
 
 
-|\\__type__
+|`\\__type__`
 |Type
 |Type of the item. The type of an item cannot be changed.
 
-|name
+|`name`
 |Name (or Text)
 |Name of the item as known in the real world (e.g. signal number).
 
-|x
+|`x`
 |Position (or Point1)
 |Position of the item on the x-axis.
 
-|y
+|`y`
 |Position (or Point1)
 a|Position of the item on the y-axis.
 
 WARNING: y-axis increases from top to bottom.
 
-|maxSpeed
+|`maxSpeed`
 |Maximum speed (m/s)
 |Maximum speed allowed on this item in metres per second.
 
-|realLength
+|`realLength`
 |Real Length (m)
 |Length of this item in real life (in metres).
 
-|conflictTiId
+|`conflictTiId`
 |Conflict item ID
 |Set to the ID of another item to prevent route setting on both items at the same time.
 This feature is typically used to interlock track crossovers without points.
@@ -276,28 +276,28 @@ This feature is typically used to interlock track crossovers without points.
 |===
 |Technical Name  |Description
 
-|previousTiId
+|`previousTiId`
 |ID of the track item connected to this item at its "origin" (see each item description).
 
 This is computed automatically by the editor.
 
-|nextTiId
+|`nextTiId`
 |ID of the track item connected to this item at its "end" (see each item description)
 
 This is computed automatically by the editor.
 
-|activeRoute
+|`activeRoute`
 |If a route is set on this item, this value is the ID of that route, otherwise it is null.
 
-|activeRoutePreviousItem
+|`activeRoutePreviousItem`
 |If a route is set on this item, this value is the ID of the item before this one in the direction of the route, otherwise it is null.
 
-|trainEndsFW
+|`trainEndsFW`
 a|Map of train extremities that are on the "end" side of this item (see each item description).
 
 For example, `{"2": 79}` means that train with ID "2" has one of its extremity (head or tail) at 79 metres from this items "origin".
 
-|trainEndsBK
+|`trainEndsBK`
 a|Map of train extremities that are on the "origin" side of this item (see each item description).
 
 For example, `{"2": 3}` means that train with ID "2" has one of its extremity (head or tail) at 3 metres from this items "origin".
@@ -348,22 +348,22 @@ Common attributes `x` and `y` define the position of the "origin", known as "Poi
 |===
 |Technical Name |Attribute Name in Editor |Description
 
-|xf
+|`xf`
 |Point 2
 |Position of "end" on the x-axis.
 
-|yf
+|`yf`
 |Point 2
 a|Position of "end" on the y-axis.
 
 WARNING: y-axis increases from top to bottom.
 
-|placeCode
+|`placeCode`
 |Place code
 |Code of the place item this line item belongs to.
 The place being a station or a waypoint.
 
-|trackCode
+|`trackCode`
 |Track code
 |The code of this track as known in the place defined by `placeCode`.
 Typically a line or platform number.
@@ -385,20 +385,20 @@ Note that when the signal is reversed, then it is the point of the signal on the
 |===
 |Technical Name |Attribute Name in Editor |Description
 
-|signalType
+|`signalType`
 |Signal Type
 |The code of the type of signal as defined in the signal library (e.g. `UK_3_ASPECTS`)
 
-|reversed
+|`reversed`
 |Reverse
 |If true, then the signal is for train coming from the right of the layout.
 
-|xn
+|`xn`
 |Berth Origin
 |Position of the berth on the x-axis.
 The position is the bottom left corner of the berth.
 
-|yn
+|`yn`
 |Berth Origin
 a|Position of the berth on the y-axis.
 The position is the bottom left corner of the berth.
@@ -425,19 +425,19 @@ NOTE: See also <<Signal Aspect Resolution>>
 |===
 |Condition |Property Name in Editor |Related Objects |Description
 
-|TRAIN_NOT_PRESENT_ON_ITEMS
+|`TRAIN_NOT_PRESENT_ON_ITEMS`
 |No Trains params
 |Track Items
 |List of items IDs on which there must not be a train for the aspect to show.
 If there is a train on a single item of the list, the aspect does not show.
 
-|TRAIN_PRESENT_ON_ITEMS
+|`TRAIN_PRESENT_ON_ITEMS`
 |Train Present Params
 |Track Items
 |List of items IDs on which there must be a train for the aspect to show.
 If a train is missing on a single item of the list, the aspect does not show.
 
-|ROUTES_SET
+|`ROUTES_SET`
 |Route set params
 |Routes
 |List of route IDs which can be activated for the aspect to show.
@@ -461,36 +461,36 @@ Each extremity is at -5 or +5 along x and y axis.
 |===
 |Technical Name |Attribute Name in Editor |Description
 
-|xf
+|`xf`
 |Common End
 |Position of the common extremity along the x-axis.
 Must be equal to -5, 0 or +5.
 
-|yf
+|`yf`
 |Common End
 a|Position of the common extremity along the y-axis.
 Must be equal to -5, 0 or +5.
 
 WARNING: y-axis increases from top to bottom.
 
-|xn
+|`xn`
 |Normal End
 |Position of the normal extremity along the x-axis.
 Must be equal to -5, 0 or +5.
 
-|yn
+|`yn`
 |Normal End
 a|Position of the normal extremity along the y-axis.
 Must be equal to -5, 0 or +5.
 
 WARNING: y-axis increases from top to bottom.
 
-|xr
+|`xr`
 |Reverse End
 |Position of the reverse extremity along the x-axis.
 Must be equal to -5, 0 or +5.
 
-|yr
+|`yr`
 |Reverse End
 a|Position of the reverse extremity along the y-axis.
 Must be equal to -5, 0 or +5.
@@ -513,12 +513,12 @@ In the editor, these attributes are defined by setting the cardinal point of the
 |===
 |Technical Name  |Description
 
-|reverseTiId
+|`reverseTiId`
 |ID of the track item connected to this item at its "reverse" end.
 
 This is computed automatically by the editor.
 
-|reverse
+|`reverse`
 |true if the points are set to the reverse end, and false if they are set to the normal end.
 
 |===
@@ -536,22 +536,22 @@ Common attributes `x` and `y` define the position of "Point 1".
 |===
 |Technical Name |Attribute Name in Editor |Description
 
-|xf
+|`xf`
 |Point 2
 |Position of Point 2 along the x-axis.
 
-|yf
+|`yf`
 |Point 2
 a|Position of Point 1 along the y-axis.
 
 WARNING: y-axis increases from top to bottom.
 
-|placeCode
+|`placeCode`
 |Place code
 |Code of the place item this platform item belongs to.
 The place being a station or a waypoint.
 
-|trackCode
+|`trackCode`
 |Track code
 |The code of this platform as known in the place defined by `placeCode`.
 Typically a platform number.
@@ -578,7 +578,7 @@ The common attribute `name` is the name of the place as displayed.
 |===
 |Technical Name |Attribute Name in Editor |Description
 
-|placeCode
+|`placeCode`
 |Place code
 |Code that will be used to reference this place in other items.
 
@@ -601,6 +601,108 @@ image::text.png[align=center]
 The caption is set through the `name` attribute.
 
 === Routes
+
+A route is a locked path from one signal to another signal.
+It will lock all the points in the correct position and open the entry signal.
+The route is locked until either a train passes over, or the signaller cancels the route manually.
+
+image::route.png[align=center]
+
+A route can be set as "persistent".
+In this case, it cannot be released by a train and must be cancelled manually.
+
+==== Definition Attributes
+
+[cols="2,3,8"]
+|===
+|Technical Name |Attribute Name in Editor |Description
+
+|`id`
+|Route no.
+|Route ID used to reference this Route.
+It is set automatically by the editor and cannot be changed.
+
+|`beginSignal`
+|Begin Signal
+|ID of the entry signal item on the scenery.
+
+|`endSignal`
+|End Signal
+|ID of the exit signal item on the scenery.
+
+|`initialState`
+|Initial state
+|State of the route at the beginning of the simulation.
+Takes a <<RouteStates,Route State>> Value
+
+|===
+
+====
+[[RouteStates]]
+**Route States Values**
+
+[cols="1,2"]
+|===
+|Value| Description
+
+|0
+|Route is not set
+
+|1
+|Route is set, with automatic release when a train passes over
+
+|2
+|Route is set and persistent
+
+|===
+====
+
+==== Technical Attributes
+
+[cols="2,3,8"]
+|===
+|Technical Name |Attribute Name in Editor |Description
+
+|`state`
+|Current state
+|Current state of the route.
+Takes a <<RouteStates,Route State>> Value
+
+|`directions`
+|Points directions
+|Map of the points directions along this route.
+Each key is a points item ID and the value a <<PointsPositions,Points Position>> value such as `{"512":1,"521":1}`
+
+If a points does not appear in the map, either its position is obvious (i.e. route goes from the normal or reverse end to the common end)
+or it is assumed that it is in the "normal" position.
+|===
+
+====
+[[PointsPositions]]
+**Points Positions Values**
+
+[cols="1,2"]
+|===
+|Value| Description
+
+|0
+|Normal position
+
+|1
+|Reversed position (i.e. diverging)
+
+|2
+|Unknown position, usually because the points are moving
+
+(not implemented yet, reserved for future releases)
+
+|3
+|Points have a failure
+
+(not implemented yet, reserved for future releases)
+
+|===
+====
 
 === Train Types
 
