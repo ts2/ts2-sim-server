@@ -706,7 +706,150 @@ or it is assumed that it is in the "normal" position.
 
 === Train Types
 
+Train types are the different kinds of rolling stock available in the simulation.
+
+[cols="2,3,8"]
+|===
+|Technical Name |Attribute Name in Editor |Description
+
+|`id`
+|Code
+|Code used to reference this train type
+
+|`description`
+|Description
+|Human readable description of this train type (e.g. "Class 313/2 EMU")
+
+|`length`
+|Length (m)
+|Length in metres of this rolling stock
+
+|`maxSpeed`
+|Max speed (m/s)
+|Maximum speed in metres per second
+
+|`stdAccel`
+|Std acceleration (m/s2)
+|Standard acceleration in metres per square second.
+A train will always speed up on a constant ramp (over time) defined by this value.
+
+|`stdBraking`
+|Std braking (m/s2)
+|Standard braking in metres per square second.
+A train will slow down on a constant ramp (over time) defined by this value when it can foresee a speed limit ahead with sufficient prior notice.
+
+|`emergBraking`
+|Emerg. braking (m/s2)
+|Maximum braking capacity in metres per square second.
+When a speed limit arises without sufficient prior notice, the train will brake as much as it can with a constant ramp (over time), not exceeding this value.
+
+|`elements`
+|Elements (codes list)
+|List of other train type codes this rolling stock is composed of, such as `["C313-2", "C313-2"]`
+
+This information will be used in future version for splitting/joining trains.
+|===
+
 === Services
+
+Services are train schedules.
+A service is composed of several lines, defined by a place and a time.
+
+==== Service Attributes
+
+[cols="2,3,8"]
+|===
+|Technical Name |Attribute Name in Editor |Description
+
+|`id`
+|Code
+|Code used to reference this service.
+It the code that will be used as the train descriptor on the layout.
+
+|`description`
+|Description
+|Free human readable description of the service.
+
+|`plannedTrainType`
+|Planned Train Type
+|The train type code that is expected for this service.
+
+|`postActions`
+|Next service code / Auto reverse
+|Actions to be performed automatically by a train when it terminates this service.
+It must be a list of <<TrainActions,train actions>>.
+
+e.g. `"postActions":[{"actionCode":"SET_SERVICE","actionParam":"WB02"},{"actionCode":"REVERSE","actionParam":""}]`
+
+|`lines`
+|
+|Lines of this service. It is a list of <<Service Line Attributes, service lines>> as defined below.
+
+|===
+
+====
+[[TrainActions]]
+**Train Actions**
+
+A train action is a map with two keys:
+
+[cols="1,2"]
+|===
+|`actionCode`|The code of the action to perform (see below).
+|`actionParam`|The parameters for the action (if applicable for the given action).
+|===
+
+Currently two actions are implemented
+
+[cols="1,1,2"]
+|===
+|Action Code|Action Parameters|Description
+
+|`SET_SERVICE`
+|service code
+|Assign the service with the given service code to this train.
+
+In the editor, this action is set by filling in the "Next service code".
+
+|`REVERSE`
+|None
+|Reverse the train direction.
+
+In the editor, this action is set by the "Auto reverse" field.
+
+|===
+
+====
+
+==== Service Line Attributes
+
+[cols="2,3,8"]
+|===
+|Technical Name |Attribute Name in Editor |Description
+
+|`placeCode`
+|Place code
+|Code of the place (station or waypoint)
+
+|`scheduledArrivalTime`
+|Arrival Time
+|Time at which the train is expected to arrive at the place of this line.
+
+Should be left empty (i.e. "00:00:00") when the train does not stop at this place.
+
+|`scheduledDepartureTime`
+|Departure Time
+|Time at which the train is expected to depart (or pass) at the place of this line.
+
+|`mustStop`
+|Stop
+|Set to `true` if the train must stop at this station.
+
+|`trackCode`
+|Track code
+|Track or platform no. at which this train is expected to stop (or pass) at this place.
+
+|===
 
 === Trains
 
@@ -715,5 +858,7 @@ or it is assumed that it is in the "normal" position.
 ==== Signal Aspect Resolution
 
 == Writing a simulation
+
+== Websocket API
 
 == Developing a Client
