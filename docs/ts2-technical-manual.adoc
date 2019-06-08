@@ -853,7 +853,332 @@ Should be left empty (i.e. "00:00:00") when the train does not stop at this plac
 
 === Trains
 
+Trains are the rolling stock instances that run in the Simulation.
+Most of the time a service is assigned to a train.
+
+==== Definition Attributes
+
+[cols="2,3,8"]
+|===
+|Technical Name |Attribute Name in Editor |Description
+
+|`id`
+|id
+a|Internal ID of the train, automatically assigned.
+
+NOTE: This ID is an integer and can be different in the editor and in the simulation.
+
+|`serviceCode`
+|Service code
+|ID of the service assigned to this train
+
+|`trainTypeCode`
+|Train type
+|ID of the rolling stock type of this train
+
+|`appearTime`
+|Entry time
+|Time at which this train appears on the layout
+
+|`trainHead`
+|Entry position
+|Position of the train head. This is a <<Positions,position>> object.
+
+|`initialSpeed`
+|Entry speed
+|Speed of this train when it appears on the scenery
+
+|`initialDelay`
+|Initial delay
+|Delay from `appearTime` that this train will have when entering the area.
+This field is either an integer (in seconds) or a <<DelayGenerators,delay generator>>.
+
+Set this field to 0 tu user the `defaultDelayAtEntry` value from the <<Options,options>>
+
+|===
+
+====
+[[Positions]]
+**Positions**
+
+A position object uniquely defines a position and a direction on the scenery.
+
+[cols="1,3"]
+|===
+|Attribute Name |Description
+
+|`trackItem`
+|ID of the item this position is on.
+
+|`previousTI`
+|ID of one of the connected item defined as "Previous Item" to give the direction.
+
+|`positionOnTI`
+|Number of metres between this position and the extremity of `trackItem` that is connected to `previousTI`.
+
+|===
+
+
+On the image below, positions `P1` and `P2` are defined as follow:
+
+`P1 = {"trackItem":"2","previousTI":"1","positionOnTI":73}`
+
+`p2 = {"trackItem":"2","previousTI":"3","positionOnTI":98}`
+
+.Positions
+image::position.png[align=center]
+
+====
+
+==== Technical Attributes
+
+[cols="2,8"]
+|===
+|Technical Name |Description
+
+|`status`
+|Current status of the train. See available <<TrainStatus,train status values>>.
+
+|`speed`
+|Current speed of the train in metres per second
+
+|`nextPlaceIndex`
+|Index of the next service line, i.e. the index to the next station or waypoint. Counted from 0.
+
+|`stoppedTime`
+|The number of seconds the train has stopped at the station.
+If the train status is not "Stopped", this value has no meaning.
+
+|===
+
+====
+[[TrainStatus]]
+**Train Status Values**
+
+[cols="1,1,3"]
+|===
+|Code |Status | Description
+
+|0  |Inactive    |The train has not entered the area yet
+|10 |Running     |The train is running with a non zero speed
+|20 |Stopped     |The train is stopped at a station
+|30 |Waiting     |The train is waiting at a red signal or other unscheduled stop
+|40 |Out         |The train exited the area
+|50 |EndOfService|The train has finished its service and has not been assigned a new one
+|===
+====
+
+==== Standard Train Behaviour
+
+Train behaviours are defined in compile-time plugins called train managers.
+TS2 ships by default with a "Standard Manager" which makes the trains behave as described in this section.
+
+The train driver will always try to reach the maximum possible speed limited by :
+
+- The train type's maximum speed
+- The speed limit of the line, both the current limit and reduced speed limits ahead
+- The distance to the next station the train should stop
+- The speed limit imposed by signals
+
+For speed limits ahead (such as reduced line speed or next station or signal aspect),
+ the maximum speed allowed is defined by a constant speed ramp (over time) of `stdBraking` (or `stdAccel`)
+ in order to be at the target speed at the target point.
+
 === Signal Library
+
+The Signal Library holds the information about each signal available in the simulation.
+It is composed of a list of "Signal Aspects" and "Signal Types".
+
+Signal Aspect::
+A signal aspect is the colour of a signal lamp or combination of lamps on one signal.
+The signal aspect provides an unambiguous message to the driver of a train.
+In TS2, this message is a list of actions to perform.
+
+Signal Type::
+A signal type defines a kind of signal capable of displaying a set of aspects depending on conditions.
+
+NOTE: The signal type usually differs between the simulation and reality, as a signal type in the simulation can be configured to simulate several real types.
+
+==== Signal Aspects
+
+===== General Attributes
+[cols="2,8"]
+|===
+|Technical Name |Description
+
+|`name`
+a|Code of the signal aspect. This code must be unique and is used to reference this aspect in the simulation.
+
+|`lineStyle`
+a|Defines how the line along the signal must be displayed.
+Possible values are:
+
+[cols="1,1,3"]
+,===
+Code,Style,Description
+
+`0`,`lineStyle`,Normal signal placed on the side of the line
+`1`,`bufferStyle`,Buffer
+,===
+
+|`actions`
+a|List of actions to be done by the train driver when seeing this signal. See <<SignalActions,signal actions>>
+
+Examples
+[cols="1,3"]
+:===
+`[[2, 0]]`: Prepare to stop before the next signal.
+`[[1, 0, 60], [0, 8.33]]`: Stop before this signal, wait 60 seconds and proceed at 8.33 m/s (30 km/h).
+:===
+|===
+
+====
+[[SignalActions]]
+**Signal Actions**
+
+A signal action is a triplet with, in order:
+
+- A <<Targets,target>>
+- A speed limit (in m/s) to respect at target
+- A delay in seconds before executing the next action (optional if there is no next action)
+
+
+[[Targets]]
+.Signal Action Targets
+[cols="1,1,3"]
+|===
+|Code |Target |Description
+
+|0 |ASAP |The target speed should be applied as soon as possible
+|1 |BeforeThisSignal |The target speed should be applied before the train reaches this signal
+|2 |BeforeNextSignal |The target speed should be applied before the train reaches the signal after this one.
+
+|===
+====
+
+===== Display Attributes
+
+Signal aspects in TS2 can show up to 6 lamps at the same time (numbered 0 to 5) that are arranged like this:
+
+image::signalaspect.png[align=center]
+
+Attributes in the table below that are lists, the items of which refer to each lamp based on its index (counted from 0).
+Clients are expected to render signals as explained below.
+
+[cols="2,8"]
+|===
+|Technical Name |Description
+
+|`outerShapes`
+|List of outer shapes.
+Outer shapes should be drawn first.
+Each item of the list must be <<ShapeCode,shape code>>.
+
+|`outerColors`
+|List of colors to fill the outer shapes.
+Each item of the list must be a #RRGGBB color string.
+
+|`shapes`
+|List of shapes.
+Shapes should be drawn in front of outerShapes without transparency.
+Each item of the list must be <<ShapeCode,shape code>>.
+
+|`shapesColors`
+|List of colors to fill the shapes.
+Each item of the list must be a #RRGGBB color string.
+
+|`blink`
+|List of boolean values.
+If the value is true, the corresponding lamp should be displayed as flashing.
+
+|===
+
+====
+[[ShapeCode]]
+**Shape Codes**
+
+[cols="1,1,3"]
+|===
+|Code |Shape |Image
+
+|0  |`none`   |Nothing should be drawn at the position of the corresponding lamp.
+|1  |`circle` a|image::circleShape.png[]
+|2  |`square` a|image::squareShape.png[]
+|10  |`quarterSW` a|image::quarterSWShape.png[]
+|11  |`quarterNW` a|image::quarterNWShape.png[]
+|12  |`quarterNE` a|image::quarterNEShape.png[]
+|13  |`quarterSE` a|image::quarterSEShape.png[]
+|20  |`barNS` a|image::barNSShape.png[]
+|21  |`barEW` a|image::barEWShape.png[]
+|22  |`barSWNE` a|image::barSWNEShape.png[]
+|23  |`barNWSE` a|image::barNWSEShape.png[]
+|31  |`poleNS` a|image::poleNSShape.png[]
+|32  |`poleNSW` a|image::poleNSWShape.png[]
+|33  |`poleSW` a|image::poleSWShape.png[]
+|34  |`poleNE` a|image::poleNEShape.png[]
+|35  |`poleNSE` a|image::poleNSEShape.png[]
+
+|===
+
+NOTE: Cardinal points in the Shape and images code should be understood **with the signal head up**
+(i.e. N to the right of the screen, or to the left is signal is reversed).
+====
+
+.Signal aspects rendering examples
+====
+[cols="1,3"]
+|===
+
+a|image::signalAspectExample2.png[align=center]
+a|
+----
+{
+    "__type__": "SignalAspect",
+    "actions": [[1, 0]],
+    "blink": [false, false, false, false, false, false],
+    "lineStyle": 0,
+    "outerColors": ["#000000", "#000000", "#000000", "#000000", "#000000", "#000000"],
+    "outerShapes": [0, 0, 0, 0, 0, 0],
+    "shapes": [1, 0, 0, 0, 0, 0],
+    "shapesColors": ["#00FF00", "#000000", "#000000", "#000000", "#000000", "#000000"]
+}
+----
+
+a|image::signalAspectExample3.png[align=center]
+a|
+----
+{
+    "__type__": "SignalAspect",
+    "actions": [[0, 999]],
+    "blink": [false, false, false, false, false, false],
+    "lineStyle": 0,
+    "outerColors": ["#FFFFFF", "#000000", "#000000", "#000000", "#000000", "#000000"],
+    "outerShapes": [2, 0, 0, 0, 0, 0],
+    "shapes": [1, 0, 0, 0, 0, 0],
+    "shapesColors": ["#FF0000", "#000000", "#000000", "#000000", "#000000", "#000000"]
+}
+----
+
+a|image::signalAspectExample1.png[align=center]
+a|
+----
+{
+    "__type__": "SignalAspect",
+    "actions": [[1, 0]],
+    "blink": [false, false, false, false, false, false],
+    "lineStyle": 0,
+    "outerColors": ["#000000", "#000000", "#000000", "#FFFF00", "#000000", "#000000"],
+    "outerShapes": [0, 0, 0, 1, 0, 0],
+    "shapes": [1, 0, 32, 22, 12, 0],
+    "shapesColors": ["#FF0000", "#000000", "#000000", "#FFFFFF", "#FF00FF", "#000000"]
+}
+----
+
+|===
+====
+
+==== Signal Types
+
 
 ==== Signal Aspect Resolution
 
