@@ -1062,7 +1062,8 @@ Signal aspects in TS2 can show up to 6 lamps at the same time (numbered 0 to 5) 
 
 image::signalaspect.png[align=center]
 
-Attributes in the table below that are lists, the items of which refer to each lamp based on its index (counted from 0).
+Attributes in the table below are lists.
+Each item refer to a lamp based on its index (counted from 0).
 Clients are expected to render signals as explained below.
 
 [cols="2,8"]
@@ -1076,7 +1077,7 @@ Each item of the list must be <<ShapeCode,shape code>>.
 
 |`outerColors`
 |List of colors to fill the outer shapes.
-Each item of the list must be a #RRGGBB color string.
+Each item of the list must be a `#RRGGBB` color string.
 
 |`shapes`
 |List of shapes.
@@ -1173,14 +1174,239 @@ a|
     "shapesColors": ["#FF0000", "#000000", "#000000", "#FFFFFF", "#FF00FF", "#000000"]
 }
 ----
+NOTE: `quarterNE` (12) is rendered on the image as a triangle instead of a quarter.
 
 |===
 ====
 
 ==== Signal Types
 
+A signal type defines a signal that can display several aspects depending on conditions.
+
+[cols="2,8"]
+|===
+|Technical Name |Description
+
+|`states`
+a|Ordered list of signal states.
+|===
+
+===== Signal States
+
+A Signal state is the combination of a signal aspect and conditions to have it displayed.
+
+[cols="2,8"]
+|===
+|Technical Name |Description
+
+|`aspectName`
+a|Name of the signal aspect attached to this state
+
+|`conditions`
+a|Map of conditions to be met for this signal aspect to be displayed.
+Keys are condition names and values are lists of parameters (depending on the condition).
+
+See also <<Conditions,available conditions>>.
+
+|===
+
+===== Conditions
+
+The table below describes the different conditions that exist to define a signal type.
+
+[cols="1,1,3"]
+|===
+|Condition Name |Parameters |Description
+
+|`NEXT_ROUTE_ACTIVE`
+|`[]`
+|Met if a route is set starting from this signal.
+
+|`PREVIOUS_ROUTE_ACTIVE`
+|`[]`
+|Met if a route is set ending at this signal.
+
+|`ROUTE_SET_ACROSS`
+|`[]`
+|Met if a route is active across this signal, in the same direction but neither starting nor ending at this signal
+(e.g. an intermediate shunting signal).
+
+|`TRAIN_NOT_PRESENT_ON_NEXT_ROUTE`
+|`[]`
+|Met if a route is active starting from this signal and no trains are present on this route.
+
+If no route is active from this signal, the condition is met if no trains are found until the next signal on the line.
+
+|`TRAIN_NOT_PRESENT_ON_ITEMS`
+|`[]`^*^
+|Met if none of the items defined in the signal's `customProperties` for this signal type and aspect have a train on them.
+
+|`TRAIN_PRESENT_ON_ITEMS`
+|`[]`^*^
+|Met if all of the items defined in the signal's `customProperties` for this signal type and aspect have a train on them.
+
+|`ROUTES_SET`
+|`[]`^*^
+|Met if at least one of the route defined in the signal's `customProperties` for this signal type and aspect is active.
+
+|`NEXT_SIGNAL_ASPECTS`
+|List of signal aspect names
+|Met if the next signal shows one of given aspect.
+The next signal is the exit signal of the route starting at this signal if any.
+Otherwise it is the next signal on the line.
+
+|===
+
+^*^: These conditions parameters are empty in the signal library as they take their parameters from the signal's `customProperties`
 
 ==== Signal Aspect Resolution
+
+When a signal is given a signal type, signal aspect resolution can take place.
+The `states` list is taken in order and the conditions are checked for each state.
+The first state that have all its conditions met is taken into account: its signal aspect is displayed and any further state is discarded.
+
+Thus, the last state of a signal type should be the most restrictive aspect with no condition.
+
+===== Example
+
+.Signal Type Definition
+[source,json]
+----
+"US_INTERLOCK": {
+    "states": [
+        {
+            "aspectName": "US_DIVERGING_CLEAR",
+            "conditions": {
+                "ROUTES_SET": [],
+                "TRAIN_NOT_PRESENT_ON_NEXT_ROUTE": [],
+                "NEXT_SIGNAL_ASPECTS": [
+                    "US_CLEAR",
+                    "US_DIVERGING_CLEAR",
+                    "US_APPROACH",
+                    "US_DIVERGING_APPROACH"
+                ]
+            }
+        },
+        {
+            "__type__": "SignalState",
+            "aspectName": "US_CLEAR",
+            "conditions": {
+                "NEXT_ROUTE_ACTIVE": [],
+                "TRAIN_NOT_PRESENT_ON_NEXT_ROUTE": [],
+                "NEXT_SIGNAL_ASPECTS": [
+                    "US_CLEAR",
+                    "US_DIVERGING_CLEAR",
+                    "US_APPROACH",
+                    "US_DIVERGING_APPROACH"
+                ]
+            }
+        },
+        {
+            "__type__": "SignalState",
+            "aspectName": "US_DIVERGING_APPROACH",
+            "conditions": {
+                "ROUTES_SET": [],
+                "TRAIN_NOT_PRESENT_ON_NEXT_ROUTE": [],
+                "NEXT_SIGNAL_ASPECTS": [
+                    "US_STOP",
+                    "US_RESTRICTING",
+                    "BUFFER"
+                ]
+            }
+        },
+        {
+            "__type__": "SignalState",
+            "aspectName": "US_APPROACH",
+            "conditions": {
+                "NEXT_ROUTE_ACTIVE": [],
+                "TRAIN_NOT_PRESENT_ON_NEXT_ROUTE": [],
+                "NEXT_SIGNAL_ASPECTS": [
+                    "US_STOP",
+                    "US_RESTRICTING",
+                    "BUFFER"
+                ]
+            }
+        },
+        {
+            "__type__": "SignalState",
+            "aspectName": "US_STOP",
+            "conditions": {}
+        }
+    ]
+}
+----
+
+.Signal Definition
+[source,json]
+----
+"22": {
+    "conflictTiId": null,
+    "customProperties": {
+        "ROUTES_SET": {
+            "US_DIVERGING_APPROACH": [
+                "6"
+            ],
+            "US_DIVERGING_CLEAR": [
+                "6"
+            ]
+        },
+        "TRAIN_NOT_PRESENT_ON_ITEMS": {},
+        "TRAIN_PRESENT_ON_ITEMS": {}
+    },
+    "maxSpeed": 0.0,
+    "name": "22",
+    "nextTiId": "27",
+    "previousTiId": "21",
+    "reverse": false,
+    "signalType": "US_INTERLOCK",
+    "tiId": "22",
+    "x": 675.0,
+    "xn": 630.0,
+    "y": 270.0,
+    "yn": 275.0
+}
+----
+
+[cols="^1,4,4"]
+|===
+||Situation | Aspect Shown
+
+a|1
+a|- Route "6" is not set
+- There no train anywhere
+- Next signal shows `US_CLEAR`
+a|`US_CLEAR`
+
+a|2
+a|- Route "6" is set
+- There no train anywhere
+- Next signal shows `US_STOP`
+a|`US_DIVERGING_APPROACH`
+
+a|3
+a|- Route "6" is not set
+- There is a train just after this signal
+- Next signal shows `US_CLEAR`
+a|`US_STOP`
+|===
+
+Now let's explain each case:
+
+Case no. 1::
+- First state (for `US_DIVERGING_CLEAR` aspect) does not meet condition for `ROUTES_SET` because route "6" is not active.
++
+This is defined in the signal's `customProperties`: for `ROUTES_SET` and `US_DIVERGING_CLEAR` aspect, we should have route "6" active.
+
+- The second state (for `US_CLEAR` aspect) conditions are all met. This aspect is shown and any further states are discarded.
+
+Case no. 2::
+- First state (for `US_DIVERGING_CLEAR` aspect) fails for the `NEXT_SIGNAL_ASPECTS` condition as `US_STOP` is not in the list.
+- Second state (for `US_CLEAR`) also fails for the `NEXT_SIGNAL_ASPECTS` condition.
+- Third state (for `US_DIVERGING_APPROACH`) conditions are all met. This aspect is displayed.
+
+Case no. 3::
+- The first four states fail on the `TRAIN_NOT_PRESENT_ON_NEXT_ROUTE` condition
+- The last state (for `US_STOP`) has no condition and acts as a fallback
 
 == Writing a simulation
 
