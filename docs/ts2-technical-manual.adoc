@@ -989,15 +989,25 @@ For speed limits ahead (such as reduced line speed or next station or signal asp
 The Signal Library holds the information about each signal available in the simulation.
 It is composed of a list of "Signal Aspects" and "Signal Types".
 
-Signal Aspect::
+[cols="2,8"]
+|===
+|Technical Name |Description
+
+|`signalAspects`
+a|Map of signal aspects. The key is the name of the aspect, the value is a <<Signal Aspects,signal aspect object>>.
+
 A signal aspect is the colour of a signal lamp or combination of lamps on one signal.
 The signal aspect provides an unambiguous message to the driver of a train.
 In TS2, this message is a list of actions to perform.
 
-Signal Type::
+|`signalTypes`
+a|Map of signal types. The key is the name of the type, the value is a <<Signal Types,signal type object>>.
+
 A signal type defines a kind of signal capable of displaying a set of aspects depending on conditions.
 
 NOTE: The signal type usually differs between the simulation and reality, as a signal type in the simulation can be configured to simulate several real types.
+
+|===
 
 ==== Signal Aspects
 
@@ -1409,6 +1419,159 @@ Case no. 3::
 - The last state (for `US_STOP`) has no condition and acts as a fallback
 
 == Writing a simulation
+
+This section gives a few hints on how to create a simulation with the editor.
+
+=== Load the Signal Library
+
+Before starting your simulation, make sure that the signal library that you will need is loaded.
+You can check in the editor scenery tab: put a signal onto the layout and check in the `type` property
+that you can select signal type's of your signal library.
+
+TS2 ships by default signal libraries for UK, France and USA.
+These libraries can be downloaded in the "Open" dialog, by clicking the "Download" button.
+
+You can also add custom signal libraries by directly putting the `.tsl` file in the `~/.ts2/data` directory.
+`.tsl` files are JSON files with the definition a Signal Library as described <<Signal Library,here>>.
+
+NOTE: You need to restart ts2 for the new Signal Libraries to be taken into account.
+
+=== Setup the layout
+
+The first thing to do when writing a simulation is to create the layout in the scenery tab.
+
+The scenery has two states:
+
+Unlocked::
+You can modify the layout, so it might not be valid.
+A valid scenery is when all the items are linked.
+
+Validated::
+The layout is locked and the scenery is valid.
+It must be in this state before setting routes.
+
+==== Adding a new item
+
+To add a new item, first check that the scenery is unlocked.
+
+Click and drag an item from the `tools` pane onto the layout.
+
+==== Editing an item
+
+Click on the item to edit: it should turn pink.
+Edit the properties in the `properties` pane.
+
+The following properties can be edited directly from the layout:
+
+[cols="1,2"]
+|===
+
+|Position
+|Click and drag the item to change the value automatically.
+
+|Point 1
+
+Point 2
+|Click on the extremity of the item and drag it to change the value automatically.
+
+|Berth Origin
+|Click on the berth of the signal and drag it to change the value automatically.
+
+|Reverse
+|Right click on a signal to reverse its direction.
+
+|===
+
+==== Mass editing items
+
+You can set properties to several items at once.
+
+To select multiple items, you can:
+
+- Select an item by clicking on it, then hold `ctrl` key and click on other items
+- In the `Edit` menu select `Selection tool`.
+Then draw a rectangle on the layout to select all items inside it.
+
+When the items are selected, you can edit any properties that is common to all of them.
+In particular, you can move them at once by dragging them.
+
+==== Delete an item
+
+Select one or several items to delete.
+Press the `del` key on your keyboard.
+
+==== CSV Export / Import
+
+You can export all items as a CSV list, edit it and import it again.
+
+WARNING: When you import a CSV file, it will delete all existing items.
+Make sure that you have all the items in the imported file.
+
+==== Layout tips
+
+Connect ALL items::
+All items should be connected at each of its end for the simulation to validate.
++
+There is a special "End Item" that is used to connect free extremities of the layout.
+This includes buffers and tracks leading out of the area.
++
+For items and points, make sure you did not connect twice the same extremity, leaving the other one not connected,
+as this is not visible at first sight.
+
+Buffers are signals::
+Don't look for a buffer item, it does not exist. Buffers are actually "Always red" signals.
++
+Place a signal at the end of the line, and select the "BUFFER" type.
+Don't forget to add an "End item" on the other side to connect the free extremity.
+
+0, 45 or 90::
+Have line always horizontal, vertical or at 45° angle whenever possible.
++
+image::layout45.png[align=center]
++
+While having other angles is possible, it will make strange line breaks, especially with points.
++
+image::layout70.png[align=center]
+
+Last signal::
+The last signal on the extremity of the layout where the train will exit the area has no next signal to determine its state.
+To handle this situation, the standard signal libraries have special signal types ending with `_TP`, meaning "Train Presence".
+These signal types will typically show their "Clear" and "Caution" aspects when there are no trains on the following items.
++
+Typical construction is as follows:
++
+image::signalTP.png[align=center]
++
+For `UK_3_ASPECTS_TP` signal type, for instance, the "Not train params" would be set to
++
+ {'UK_CLEAR': ["12", "13"], 'UK_CAUTION': ["12"]}
++
+so that it shows :
++
+- "Clear" if there are no trains on item 12 and item 13,
+- "Caution" if there are no trains on item 12.
+
++
+NOTE: A variant of this construction is to have item 13 as an invisible link, giving the impression that the
+signal turns to "Caution" when the train leaves the area and to "Clear" after a while.
+
+Level crossover::
+This is a construction like in the "drain" demo simulation:
++
+image::levelCrossover.png[align=center]
++
+Both items of the cross have the other as a conflict item to prevent a route top-left/bottom-right to be set at the same
+time as a bottom-left/top-right route although they do not share any item.
+
+Bridge crossover::
+Use invisible links to nicely represent tracks going over or under another one:
++
+image::bridgeCrossoverConstr.png[align=center]
++
+This will render like this:
++
+image::bridgeCrossoverRender.png[align=center]
+
 
 == Websocket API
 
