@@ -1572,6 +1572,17 @@ This will render like this:
 +
 image::bridgeCrossoverRender.png[align=center]
 
+Use lines for decoration::
+Sometimes, you need to add decorative graphics.
+You can use line items for this purpose.
++
+This is the case in the "London Liverpool Street" simulation to represent "Bishopsgate tunnel".
++
+image::bishopsgateConstr.png[align=center]
++
+This will render like this:
++
+image::bishopsgateRender.png[align=center]
 
 == Websocket API
 
