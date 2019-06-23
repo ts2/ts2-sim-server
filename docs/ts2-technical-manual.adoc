@@ -1434,7 +1434,7 @@ These libraries can be downloaded in the "Open" dialog, by clicking the "Downloa
 You can also add custom signal libraries by directly putting the `.tsl` file in the `~/.ts2/data` directory.
 `.tsl` files are JSON files with the definition a Signal Library as described <<Signal Library,here>>.
 
-NOTE: You need to restart ts2 for the new Signal Libraries to be taken into account.
+NOTE: You need to restart TS2 for the new Signal Libraries to be taken into account.
 
 === Setup the layout
 
@@ -1495,7 +1495,7 @@ Then draw a rectangle on the layout to select all items inside it.
 When the items are selected, you can edit any properties that is common to all of them.
 In particular, you can move them at once by dragging them.
 
-==== Delete an item
+==== Deleting an item
 
 Select one or several items to delete.
 Press the `del` key on your keyboard.
@@ -1560,7 +1560,7 @@ This is a construction like in the "drain" demo simulation:
 +
 image::levelCrossover.png[align=center]
 +
-Both items of the cross have the other as a conflict item to prevent a route top-left/bottom-right to be set at the same
+Set the "Conflict Item" on each item of the cross to the other one to prevent a route top-left/bottom-right to be set at the same
 time as a bottom-left/top-right route although they do not share any item.
 
 Bridge crossover::
@@ -1583,6 +1583,86 @@ image::bishopsgateConstr.png[align=center]
 This will render like this:
 +
 image::bishopsgateRender.png[align=center]
+
+=== Define Routes
+
+Routes are defined in the "Routes" tab.
+
+==== Adding a route
+
+To define a route, follow these steps:
+
+1. Click on each point on the route to change their position and have all points correct.
+2. Click on the entry signal. Its line should turn blue.
+3. Click on the exit signal. The route should highlight. If it doesn't, it means that TS2 could not connect the entry
+signal to the exit signal with the points in their current position.
+4. Click on "Add route" to register the route.
+If the route already exists, nothing happens and a message is displayed in the status bar at the bottom of the screen.
+
+NOTE: Right click on the entry signal of a highlighted route to abort route definition.
+
+==== Deleting a route
+
+When you select a route in the route's table, it will be highlighted on the layout above.
+
+Find the route you want to delete in the route's table, then click on "Delete Route".
+
+==== CSV Export / Import
+
+You can export all the routes as a CSV list, edit it and import it again.
+
+WARNING: When you import a CSV file, it will delete all existing routes.
+Make sure that you have all the routes in the imported file.
+
+=== Define Train Types
+
+Managing train types is straightforward.
+Refer to <<Train Types,Train Types>> section for the explanation of each attribute.
+
+You can export all the train types as a CSV list, edit it and import it again.
+
+WARNING: When you import a CSV file, it will delete all existing train types.
+Make sure that you have all the train types in the imported file.
+
+=== Define Services
+
+Defining a service is also straightforward.
+A service is a train schedule, with its main attributes displayed in the top table.
+Each service contains several lines referring to a station or a waypoint.
+When you click on a service, you can see/edit its lines in the bottom table.
+
+You can export all the services as a CSV list, edit it and import it again.
+
+NOTE: The service lines are represented by the repetition of the last columns.
+We strongly advise you to create a service with three lines in the editor and export it to understand the schema.
+
+WARNING: When you import a CSV file, it will delete all existing services.
+Make sure that you have all the services in the imported file.
+
+=== Define trains
+
+==== Adding trains from services
+
+The usual and quickest way to add trains is to click on "Setup trains from services".
+This will create one train per service that is not following another one.
+
+WARNING: Clicking on "Setup trains from services" will remove all existing trains.
+
+Then you can modify each train manually.
+
+==== Adding a new train manually
+
+Click on "Add new" button to create a new train.
+The train will appear at the bottom of the list.
+You can now modify its attributes. See <<Trains,train attributes>> for more details.
+
+TIP: You can set the position of the train head by selecting a train and click on the layout above.
+A yellow arrow will show the train head position.
+You can reverse it by clicking on "Reverse direction".
+
+==== Deleting a train
+
+Select the train you want to delete and click the "Delete" button.
 
 == Websocket API
 
