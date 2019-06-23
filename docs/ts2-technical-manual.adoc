@@ -307,6 +307,7 @@ For example, `{"2": 3}` means that train with ID "2" has one of its extremity (h
 
 .trainEndsFW and trainEndsBK
 ====
+[[TrainEndsMaps]]
 Consider the following figure with 2 trains, going from left to right.
 `Train 1` spans over 3 track items, while `Train 2` is over a single track item.
 
@@ -405,6 +406,26 @@ a|Position of the berth on the y-axis.
 The position is the bottom left corner of the berth.
 
 WARNING: y-axis increases from top to bottom.
+
+|===
+
+===== Technical attributes
+
+[cols="2,8"]
+|===
+|Technical Name  |Description
+
+|`activeAspect`
+|Aspect name that this signal shows currently
+
+|`trainID`
+|ID of the train that has its descriptor on this signal's berth. 0 if the berth is empty.
+
+|`previousActiveRoute`
+|ID of the route that is set up to this signal. Empty string if none.
+
+|`nextActiveRoute`
+|ID of the route that is set starting from this signal. Empty string if none.
 
 |===
 
@@ -1914,6 +1935,7 @@ Returns a complete dump of the simulation at the current state.
 |===
 
 ==== `train` Object
+[[TrainObject]]
 
 [cols="1,2,2,3"]
 |===
@@ -2120,4 +2142,124 @@ Returns the new message.
 
 == Developing a Client
 
-This section presents the best practices when developing a client.
+This section presents the way the standard python client is developed as guidelines for other client developers.
+
+NOTE: In this section, calls to the websocket API are represented in the `object.action(params)` form, such as
+`train.proceed(id=10)`
+
+=== Getting the simulation dump
+
+When a clients connects to a simulation server, the first action after registering is getting a simulation dump to be
+able to render the layout, schedules and train tables.
+
+This is done by calling `simulation.dump()`.
+Collect all the needed information from the dump and build up your UI with it.
+
+A typical UI would include the following:
+
+- A layout
+- A train table, with train details when a train is clicked
+- A service table, with service details and service lines when a service is clicked
+- A message logger
+
+=== Register listeners
+
+Register your client to the following listeners (for all ids) and connect them to your client's internal actions as follow:
+
+[cols="1,4"]
+|===
+|Event |Client Internal Action
+
+|`trackItemChanged`
+|Redraw the given item.
+
+|`clock`
+|Change the clock display with the new time
+
+|`routeActivated`
+|In standard client, we use this only to check if the route is persistent or not, to display it on the layout.
+
+|`trainChanged`
+|Refresh train data in the train's table. Refresh of the layout is done by `trackItemChanged` event.
+
+|`messageReceived`
+|Notify the user of the new message, typically by adding it to the logger.
+
+|`optionsChanged`
+|Update display of options values when applicable (title, score, etc.).
+
+|`stateChanged`
+|Update the UI to show running or paused simulation.
+
+|===
+
+This way, after initial setup the UI updates will be done by notifications only.
+
+=== Get renotified to sync the UI
+
+As simulation time passed between the first call to dump, the UI rendering and the connection of the listeners, the UI
+is certainly out of sync with the simulation server by now.
+
+To solve this issue, you can call `server.renotify()` to get a new notification of the last event of every type for
+every item that you are listening to. Thanks to the connection of the events with the internal actions,
+this should bring the UI fully synced again.
+
+=== Drawing trains and activated routes
+
+The track item information, whether received from `simulation.dump()`, `trackItem.list()`, `trackItem.show(...)` or
+sent through a `trackItemChanged` notification includes:
+
+- Trains that are currently present on the item (See <<TrainEndsMaps,"trainEndsFW" and "trainEndsBK" maps>>).
+- If there is a route set on the item and which one
+(See `activeRoute` in <<Track Items>> and `nextActiveRoute` and `previousActiveRoute` on <<Signal Items>>.
+
+You should primarily use this information to display trains and routes on the scenery and not try to recompute the data
+from trains or route information.
+
+=== Interact with the simulation
+
+There are only a few ways to interact with the simulation:
+
+==== Change options
+
+Options can be changed at runtime with `option.set(...)`.
+
+You should not assume the option has been changed just because you received an OK response,
+since another client might have changed it at the same time.
+Instead add a listener to `optionsChanged` and wait for the notification.
+
+==== Start/Pause the simulation
+
+Start/Pause the simulation with `simulation.start()` and `simulation.pause()`.
+
+You should not assume that the simulation is started or paused just because you received an OK response,
+as the simulation status may have been changed by another client.
+Instead add a listener to `stateChanged` and wait for the notification.
+
+==== Set or unset a route
+
+Route can be set with `route.activate(...)` and unset with `route.deactivate()`.
+
+These actions take a route ID as parameter:
+it the responsibility of the client to provide the correct route ID from the user interaction on the UI.
+For example, in the standard client, a route is set by clicking on the entry signal, then on the exit signal.
+The standard client converts these clicks to a route ID which it sends to the server.
+The route ID is computed using the information returned by the `simulation.dump()` call.
+
+You should not assume that the route is set or unset just because you received an OK response,
+as the route may have been set/unset by another client.
+Instead add a listener to `routeActivated` and/or `routeDeactivated` and wait for the notification.
+
+==== Give instructions to the train driver
+
+The following instructions can be sent to the train driver:
+
+- `train.reverse(...)`
+- `train.proceed(...)`
+- `train.setService(...)`
+- `train.resetService(...)`
+
+See <<TrainObject,train object>> for the meaning of each instruction.
+
+You should not assume that the instruction has been applied since another client may have sent a different instruction
+in the meantime. Instead add a listener to `trainChanged` and wait for the notification.
