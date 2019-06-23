@@ -317,7 +317,7 @@ func (si *SignalItem) setActiveRoute(r *Route, previous TrackItem) {
 func (si *SignalItem) setTrain(t *Train) {
 	si.train = t
 	si.simulation.sendEvent(&Event{
-		Name:   TrackItemChanged,
+		Name:   TrackItemChangedEvent,
 		Object: si,
 	})
 }
@@ -449,7 +449,7 @@ func (si *SignalItem) updateSignalState(previous ...bool) {
 	}
 	if !oldAspect.Equals(si.activeAspect) {
 		si.simulation.sendEvent(&Event{
-			Name:   SignalaspectChanged,
+			Name:   SignalaspectChangedEvent,
 			Object: si,
 		})
 	}
@@ -459,7 +459,7 @@ func (si *SignalItem) updateSignalState(previous ...bool) {
 		previousSignal.updateSignalState(append(previous, true)...)
 	}
 	si.simulation.sendEvent(&Event{
-		Name:   TrackItemChanged,
+		Name:   TrackItemChangedEvent,
 		Object: si,
 	})
 }

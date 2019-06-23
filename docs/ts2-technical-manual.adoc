@@ -85,6 +85,7 @@ A simulation in TS2 is modelled by the following objects:
 - Services
 - Trains
 - Signal Library
+- Message Logger
 
 === Options
 
@@ -1383,13 +1384,13 @@ Thus, the last state of a signal type should be the most restrictive aspect with
 
 a|1
 a|- Route "6" is not set
-- There no train anywhere
+- There are no trains anywhere
 - Next signal shows `US_CLEAR`
 a|`US_CLEAR`
 
 a|2
 a|- Route "6" is set
-- There no train anywhere
+- There are no trains anywhere
 - Next signal shows `US_STOP`
 a|`US_DIVERGING_APPROACH`
 
@@ -1417,6 +1418,40 @@ Case no. 2::
 Case no. 3::
 - The first four states fail on the `TRAIN_NOT_PRESENT_ON_NEXT_ROUTE` condition
 - The last state (for `US_STOP`) has no condition and acts as a fallback
+
+=== Message Logger
+
+The message logger of the simulation has a single attribute `messages` which is a list of message objects.
+
+==== Messages
+
+[cols="2,8"]
+|===
+|Technical Name |Description
+
+|`msgType`
+|Code of the <<MessageTypes,type of message>>
+
+|`msgText`
+|Text of the message
+
+|===
+
+====
+[[MessageTypes]]
+**Message Types**
+
+[cols="1,1,3"]
+|===
+|Code |Type |Description
+
+|0 |`softwareMsg` |Message logged by the server (e.g. Simulation loading)
+|1 |`playerWarningMsg` |Message logged following a user manipulation error (e.g. route does not exist).
+Not used by the server.
+|2 |`simulationMsg` |Message logged by the simulation (e.g. Train XXXX entered the area)
+
+|===
+====
 
 == Writing a simulation
 
@@ -1639,7 +1674,7 @@ We strongly advise you to create a service with three lines in the editor and ex
 WARNING: When you import a CSV file, it will delete all existing services.
 Make sure that you have all the services in the imported file.
 
-=== Define trains
+=== Define Trains
 
 ==== Adding trains from services
 
@@ -1666,4 +1701,423 @@ Select the train you want to delete and click the "Delete" button.
 
 == Websocket API
 
+=== URI
+
+The TS2 Simulation Server exposes 2 endpoints:
+
+- Websocket endpoint at `ws://<SERVER>:22222/ws`
+- HTTP Web client endpoint at `http://<SERVER>:22222`
+
+Where `<SERRVER>` is the hostname or the IP of the server (e.g. `localhost` if you started the server on your computer).
+
+=== Initializing a websocket connection
+
+1. Open a connection to the websocket endpoint.
+2. The first request to the server MUST be a valid login request.
+Otherwise, the connection will be shut down by the server. A login request has the following format:
++
+  {
+    "object": "server",
+    "action": "register",
+    "params": {
+      "type": "client",
+      "token": "<TOKEN>"
+    }
+  }
++
+Where `<TOKEN>` is the simulation's `clientToken` defined in the <<Options,options>>.
+It defaults to `client-secret` if it has not been customized.
+3. The server will return a <<StatusMessage,status message>> with `OK` result if the login request succeeded.
+
+
+
+=== Requesting data from the server
+
+==== Request format
+
+You can retrieve data from the server at any time by sending a request message over the websocket connection.
+Request messages have the following syntax:
+
+  {
+    "id": <ID>,
+    "object": "<OBJECT>",
+    "action": "<ACTION>",
+    "params": <PARAMS>
+  }
+
+The `"id"` parameter is optional, but highly recommended in production.
+When set, `<ID>` is an optional integer that will be returned by the server in the response so that the
+client can match the response with the request.
+
+The `"params"` attribute format depends on the requested actions and is optional if the action has no parameters.
+
+
+The tables in the following sections shows all possible actions and their parameters that can be requested from the server.
+
+==== Response format
+
+All messages received from the server have the following format:
+
+  {
+    "msgType":"<MSG_TYPE>",
+    "id": <ID>,
+    "data": <PAYLOAD>
+  }
+
+`<MSG_TYPE>` is either:
+
+- `response` if it is a direct response to a client request.
+In this case `<ID>` is the ID sent in the request or `0` if there where none.
+- `notification` if it is a message sent by the server following a fired event.
+In this case, the `"id"` attribute is not sent.
+
+`<PAYLOAD>` is the actual data of the response. Its format depends on the request
+
+====
+[[StatusMessage]]
+**Status Message**
+
+A status message is returned by the server to acknowledge a request that does not require the server to send data.
+Its format is the following:
+
+  {
+    "msgType":"response",
+    "id": <ID>,
+    "data": {
+      "status": "<STATUS>",
+      "message": "<MSG>"
+    }
+  }
+
+- `<STATUS>` is either `OK` or `KO`
+- `<MSG>` is a human readable message explaining the situation.
+
+====
+
+
+==== `server` Object
+[[ServerObject]]
+
+[cols="1,2,2,3"]
+|===
+|Action|Params|Returned payload|Description
+
+|`register`
+|`{"type": "client", "token": "<TOKEN>"}`
+|<<StatusMessage,Status Message>>
+|Register this client in the simulation. See <<Initializing a websocket connection,websocket connection>>.
+
+`<TOKEN>` is the simulation's `clientToken` defined in the <<Options,options>>
+
+|`addListener`
+|`{"event": "<EVENT>", "ids": [<IDS>]}`
+|<<StatusMessage,Status Message>>
+|Add a listener to the given event, to get notified each time this event is fired.
+
+`<EVENT>` is the name of a simulation event.
+`<IDS>` is a list of object ids that we listen (strings except trains which have integer ids).
+If no ids are given, then the listener is added for all objects concerned by the event.
+
+|`removeListener`
+|`{"event": "<EVENT>"}`
+|<<StatusMessage,Status Message>>
+|Removes all listeners to the given event.
+
+`<EVENT>` is the name of a simulation event.
+
+|`renotify`
+|`{}`
+|<<StatusMessage,Status Message>>
+|Ask the simulation to be immediately notified of the last event of each kind that we listen to.
+
+The server will simply return an `OK` status message and the actual notifications will be pushed as normal notifications,
+independently from this request.
+
+|===
+
+==== `simulation` Object
+
+[cols="1,2,2,3"]
+|===
+|Action|Params|Returned payload|Description
+
+|`start`
+|`{}`
+|<<StatusMessage,Status Message>>
+|Start the simulation.
+
+|`pause`
+|`{}`
+|<<StatusMessage,Status Message>>
+|Pause the simulation.
+
+|`isStarted`
+|`{}`
+|`true` or `false`
+|Request the simulation state.
+
+Returns `true` if the simulation is started and `false` if it is paused.
+
+|`dump`
+|`{}`
+|<<Simulation model,Simulation object>>
+|Request the simulation data.
+
+Returns a complete dump of the simulation at the current state.
+
+|===
+
+==== `option` Object
+
+[cols="1,2,2,3"]
+|===
+|Action|Params|Returned payload|Description
+
+|`list`
+|`{}`
+|<<Options,Map of options>>
+|Returns the current options values
+
+|`set`
+|`{"name": <OPTION_KEY>, "value": <VALUE>}`
+|<<StatusMessage,Status Message>>
+|Set the option given by `<OPTION_KEY>` to the given `<VALUE>`.
+
+|===
+
+==== `route` Object
+
+[cols="1,2,2,3"]
+|===
+|Action|Params|Returned payload|Description
+
+|`list`
+|`{}`
+|Map of <<Routes,route objects>> indexed by their `id`.
+|Returns all the routes of the simulation.
+
+|`show`
+|`{"ids": [<IDs>]}`
+|Map of <<Routes,route objects>> indexed by their `id`.
+|Returns the routes of the simulation with the given string `<IDs>`.
+
+|`activate`
+|`{"id": "<ID>"}`
+|<<StatusMessage,Status Message>>
+|Request activation of the route with the given `<ID>`.
+
+|`deactivate`
+|`{"id": "<ID>"}`
+|<<StatusMessage,Status Message>>
+|Request deactivation of the route with the given `<ID>`.
+
+|===
+
+==== `train` Object
+
+[cols="1,2,2,3"]
+|===
+|Action|Params|Returned payload|Description
+
+|`list`
+|`{}`
+|List of <<Trains,train objects>>.
+|Returns all the trains of the simulation.
+
+|`show`
+|`{"ids": [<IDs>]}`
+|List of <<Train,route objects>>.
+|Returns the trains of the simulation with the given integer `<IDs>`.
+
+|`reverse`
+|`{"id": <ID>}`
+|<<StatusMessage,Status Message>>
+|Request that the train with the given integer `<ID>` reverses.
+The train will reverse only if it is stopped.
+
+|`proceed`
+|`{"id": <ID>}`
+|<<StatusMessage,Status Message>>
+|Request that the train with the given integer `<ID>` proceeds with caution.
+If the train is stopped in front of a red signal, this instructs it to pass the signal.
+
+|`setService`
+|`{"id": <ID>, "service": "<SERVICE_CODE>"}`
+|<<StatusMessage,Status Message>>
+|Assign the service with the given `<SERVICE_CODE>` to the train with the given integer `<ID>`.
+
+|`resetService`
+|`{"id": <ID>}`
+|<<StatusMessage,Status Message>>
+|Restart the current service on the train with the given integer `<ID>`.
+The train will now expect to stop at the station of the first line of the service.
+
+|===
+
+==== `trackItem` Object
+
+[cols="1,2,2,3"]
+|===
+|Action|Params|Returned payload|Description
+
+|`list`
+|`{}`
+|Map of <<Track Items,track items objects>> indexed by their `id`.
+|Returns all the items of the simulation.
+
+|`show`
+|`{"ids": [<IDs>]}`
+|Map of <<Track Items,track items objects>> indexed by their `id`.
+|Returns the items of the simulation with the given string `<IDs>`.
+
+|===
+
+==== `place` Object
+
+[cols="1,2,2,3"]
+|===
+|Action|Params|Returned payload|Description
+
+|`list`
+|`{}`
+|Map of <<Track Items,place objects>> indexed by their `placeCode`.
+|Returns all the places of the simulation.
+
+|`show`
+|`{"ids": [<PLACE_CODES>]}`
+|Map of <<Track Items,place objects>> indexed by their `placeCode`.
+|Returns the place of the simulation with the given string `<PLACE_CODES>`.
+
+|===
+
+==== `trainType` Object
+
+[cols="1,2,2,3"]
+|===
+|Action|Params|Returned payload|Description
+
+|`list`
+|`{}`
+|Map of <<Train Types,train type objects>> indexed by their `id`.
+|Returns all the items of the simulation.
+
+|`show`
+|`{"ids": [<IDs>]}`
+|Map of <<Train Types,train type objects>> indexed by their `id`.
+|Returns the train types of the simulation with the given string `<IDs>`.
+
+|===
+
+==== `service` Object
+
+[cols="1,2,2,3"]
+|===
+|Action|Params|Returned payload|Description
+
+|`list`
+|`{}`
+|Map of <<Services,service objects>> indexed by their `id`.
+|Returns all the services of the simulation.
+
+|`show`
+|`{"ids": [<IDs>]}`
+|Map of <<Services,service objects>> indexed by their `id`.
+|Returns the services of the simulation with the given string `<IDs>`.
+
+|===
+
+=== Server Event Notifications
+
+Clients can add a listener to a simulation event to be notified when this event is fired.
+
+See <<ServerObject,server Object>> for adding a listener.
+
+When an event is fired, the client receives a notification with the following format:
+
+  {
+    "msgType": "notification",
+    "data":{
+      "name": "<EVENT>",
+      "object": <PAYLOAD>
+    }
+  }
+
+- `<EVENT>` is the name of the event fired.
+- `<PAYLOAD>` depends on the event and is usually the modified object with its new attributes.
+
+The table below lists all available events with the payload it sends with its notification.
+
+[cols="1,2,4"]
+|===
+|Event|Returned Payload|Description
+
+|`Clock`
+|Current Time string
+|Fired each time the clock changes, i.e. every 500ms.
+
+|`StateChanged`
+|`{"value": true\|false}`
+|Fired when the simulation is started or paused.
+
+The returned value is `true` if the simulation is now running and `false` if it is now paused.
+
+|`OptionsChanged`
+|<<Options,Options map>>
+|Fired when an option is changed (except `currentTime`).
+The whole options map is sent with the notification.
+
+|`RouteActivated`
+|<<Routes,Route object>>
+|Fired when a route is activated.
+
+Returns the activated route.
+
+|`RouteDeactivated`
+|<<Routes,Route object>>
+|Fired when a route is deactivated.
+
+Returns the deactivated route.
+
+|`TrainStoppedAtStation`
+|<<Trains,Train object>>
+|Fired when a train stops at a scheduled station.
+
+Returns the train that stopped.
+
+|`TrainDepartedFromStation`
+|<<Trains,Train object>>
+|Fired when a train departs from a scheduled station.
+
+Returns the train that departed.
+
+|`TrainChanged`
+|<<Trains,Train object>>
+|Fired when a train sees one of its attribute changed.
+If the train is running, the event will be fired every 500ms as its position would have changed.
+
+Returns the modified train.
+
+|`SignalaspectChanged`
+|<<Signal Items,Signal Object>>
+|Fired when the aspect of a signal changes.
+
+Returns the signal which changed its aspect.
+
+|`TrackItemChanged`
+|<<Track Items,Track Item Object>>
+|Fired when a track item sees one of its attribute changed.
+This can be for any reasons, such as a route set, a train entering the item, an internal state changed, etc.
+
+Returns the modified item.
+
+|`MessageReceived`
+|<<Messages,Message Object>>
+|Fired when a message is added on the message logger.
+
+Returns the new message.
+
+|===
+
 == Developing a Client
+
+This section presents the best practices when developing a client.

@@ -30,10 +30,10 @@ const (
 	RouteDeactivatedEvent         EventName = "routeDeactivated"
 	TrainStoppedAtStationEvent    EventName = "trainStoppedAtStation"
 	TrainDepartedFromStationEvent EventName = "trainDepartedFromStation"
-	TrainChanged                  EventName = "trainChanged"
-	SignalaspectChanged           EventName = "signalAspectChanged"
-	TrackItemChanged              EventName = "trackItemChanged"
-	MessageReceived               EventName = "messageReceived"
+	TrainChangedEvent             EventName = "trainChanged"
+	SignalaspectChangedEvent      EventName = "signalAspectChanged"
+	TrackItemChangedEvent         EventName = "trackItemChanged"
+	MessageReceivedEvent          EventName = "messageReceived"
 )
 
 // A SimObject can be serialized in an event

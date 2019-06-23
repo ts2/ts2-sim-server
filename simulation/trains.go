@@ -202,7 +202,7 @@ func (t *Train) advance(timeElapsed time.Duration) {
 	t.updateStatus(timeElapsed)
 	t.executeActions(advanceLength)
 	t.simulation.sendEvent(&Event{
-		Name:   TrainChanged,
+		Name:   TrainChangedEvent,
 		Object: t,
 	})
 }
@@ -239,7 +239,7 @@ func (t *Train) executeActions(advanceLength float64) {
 	}
 	for ti := range toNotify {
 		t.simulation.sendEvent(&Event{
-			Name:   TrackItemChanged,
+			Name:   TrackItemChangedEvent,
 			Object: ti,
 		})
 	}
@@ -467,7 +467,7 @@ func (t *Train) AssignService(srv string) error {
 		t.Status = Running
 	}
 	t.simulation.sendEvent(&Event{
-		Name:   TrainChanged,
+		Name:   TrainChangedEvent,
 		Object: t,
 	})
 	return nil

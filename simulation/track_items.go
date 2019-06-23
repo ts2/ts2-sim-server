@@ -365,7 +365,7 @@ func (t *trackStruct) setActiveRoute(r *Route, previous TrackItem) {
 	t.activeRoute = r
 	t.arPreviousItem = previous
 	t.simulation.sendEvent(&Event{
-		Name:   TrackItemChanged,
+		Name:   TrackItemChangedEvent,
 		Object: t.full(),
 	})
 }
@@ -427,7 +427,7 @@ func (t *trackStruct) resetActiveRoute() {
 	t.activeRoute = nil
 	t.arPreviousItem = nil
 	t.simulation.sendEvent(&Event{
-		Name:   TrackItemChanged,
+		Name:   TrackItemChangedEvent,
 		Object: t.full(),
 	})
 }
