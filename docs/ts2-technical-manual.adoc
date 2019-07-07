@@ -45,18 +45,7 @@ The TS2 sim server tasks are
 The TS2 sim server communicates with clients through websocket.
 
 .TS2 overall architecture
-[plantuml, architecture_bdd, png]
-....
-usecase Client as "Client
-(User Interface)"
-:User: ..> (Client)
-(Client) --> (Simulation Server) : Websocket \ncommunication
-(Simulation Server) ---> (Client)
-rectangle "Simulation file" as file
-(Simulation Server) --> file : loads
-:Sim Writer: ..> (Editor)
-(Editor) --> file : creates
-....
+image::architecture.png[align=center]
 
 === Clients
 
