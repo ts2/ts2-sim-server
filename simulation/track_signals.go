@@ -403,10 +403,9 @@ func (si *SignalItem) trainHeadActions(train *Train) {
 //
 // In particular, deactivate route if auto-cancellable.
 func (si *SignalItem) trainTailActions(train *Train) {
-	if si.activeRoute != nil &&
-		!si.ActiveRoutePreviousItem().Equals(si.PreviousItem()) &&
-		!si.activeRoute.BeginSignal().Equals(si) &&
-		!si.activeRoute.EndSignal().Equals(si) {
+	if si.activeRoute != nil && (
+		!si.ActiveRoutePreviousItem().Equals(si.PreviousItem()) || (
+			!si.activeRoute.BeginSignal().Equals(si) && !si.activeRoute.EndSignal().Equals(si))) {
 		// The line is highlighted by an opposite direction route or this
 		// signal is not the starting/ending signal of this route.
 		// => nothing particular to do for this signal, except check state
@@ -419,8 +418,11 @@ func (si *SignalItem) trainTailActions(train *Train) {
 
 // releaseRouteBehind automatically releases the route after train passed if applicable
 func (si *SignalItem) releaseRouteBehind() {
-	// For cleaning purposes: activeRoute not used in this direction
-	si.resetActiveRoute()
+	// Signal with route across
+	if si.activeRoute != nil && si.activeRoute.State() != Persistent {
+		si.resetActiveRoute()
+	}
+	// End signal
 	if si.previousActiveRoute != nil && si.previousActiveRoute.State() != Persistent {
 		beginSignalNextRoute := si.previousActiveRoute.BeginSignal().nextActiveRoute
 		if beginSignalNextRoute == nil || !beginSignalNextRoute.Equals(si.previousActiveRoute) {
@@ -429,6 +431,7 @@ func (si *SignalItem) releaseRouteBehind() {
 			si.resetPreviousActiveRoute(nil)
 		}
 	}
+	// Begin signal
 	if si.nextActiveRoute != nil && si.nextActiveRoute.State() != Persistent {
 		si.resetNextActiveRoute(nil)
 	}

@@ -1,5 +1,7 @@
 module github.com/ts2/ts2-sim-server
 
+go 1.13
+
 require (
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/gorilla/websocket v1.4.0
