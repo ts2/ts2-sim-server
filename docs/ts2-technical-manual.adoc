@@ -665,6 +665,11 @@ Takes a <<RouteStates,Route State>> Value
 |2
 |Route is set and persistent
 
+|3
+|Route is being released.
+This is a route that was in state 1, but that is currently being released
+(i.e. the beginning of the route behind the train is not activated anymore but the end of the route in front of the train is still active.)
+
 |===
 ====
 
@@ -1912,9 +1917,10 @@ Returns a complete dump of the simulation at the current state.
 |Returns the routes of the simulation with the given string `<IDs>`.
 
 |`activate`
-|`{"id": "<ID>"}`
+|`{"id": "<ID>", "persistent": <bool>}`
 |<<StatusMessage,Status Message>>
 |Request activation of the route with the given `<ID>`.
+If persistent is true, then the route is activated as a persistent Route (state 2).
 
 |`deactivate`
 |`{"id": "<ID>"}`
