@@ -112,13 +112,13 @@ OPTIONS:
 		return
 	}
 
+	go server.Run(&sim, *addr, *port)
+
 	if err = sim.Initialize(); err != nil {
 		logger.Error("Invalid simulation", "file", simFile, "error", err)
 		return
 	}
 	logger.Info("Simulation loaded", "sim", sim.Options.Title)
-
-	go server.Run(&sim, *addr, *port)
 
 	select {
 	case <-killChan:

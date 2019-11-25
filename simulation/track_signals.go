@@ -338,14 +338,19 @@ func (si *SignalItem) Position() Position {
 	}
 }
 
-// getNextSignal is a helper function that returns the next signal after this one.
+// getNextRelevantSignal is a helper function that returns the next signal after this one.
 //
 // If a route starts from this signal, the next signal is the end signal
 // of this route. Otherwise, it is the next signal found on the line.
-func (si *SignalItem) getNextSignal() *SignalItem {
+func (si *SignalItem) getNextRelevantSignal() *SignalItem {
 	if si.nextActiveRoute != nil {
 		return si.nextActiveRoute.EndSignal()
 	}
+	return si.getNextSignal()
+}
+
+// getNextSignal returns the next signal after this one on the line or nil if there isn't any.
+func (si *SignalItem) getNextSignal() *SignalItem {
 	for pos := si.Position().Next(DirectionCurrent); !pos.IsOut(); pos = pos.Next(DirectionCurrent) {
 		if pos.TrackItem().Type() == TypeSignal && pos.TrackItem().IsOnPosition(pos) {
 			return pos.TrackItem().(*SignalItem)
@@ -388,7 +393,7 @@ func (si *SignalItem) trainHeadActions(train *Train) {
 			// Our signal is the wrong way, so we don't do anything
 			return
 		}
-		if nextSignal := si.getNextSignal(); nextSignal != nil {
+		if nextSignal := si.getNextRelevantSignal(); nextSignal != nil {
 			nextSignal.setTrain(train)
 		}
 		if si.train == train {

@@ -53,6 +53,7 @@ func InitializeLogger(parentLogger log.Logger) {
 
 // Run starts a http web server and websocket hub for the given simulation, on the given address and port.
 func Run(s *simulation.Simulation, addr, port string) {
+	logger.Info("Starting server")
 	sim = s
 	hubUp := make(chan bool)
 	timer := time.After(MaxHubStartupTime)

@@ -89,7 +89,7 @@ func (rsa RouteSetAcross) SetupTriggers(item *SignalItem, params []string) {}
 // ---------------------------------------------------------------------------------------------------------------
 
 // TrainNotPresentOnNextRoute is true if there is no train ahead of this signal and
-// before the end of the next active route or before the next signal if no route is set.
+// before the end of the next active route. If no route is set, the condition is always false.
 type TrainNotPresentOnNextRoute struct{}
 
 // Code of the ConditionType, uniquely defines this ConditionType
@@ -99,14 +99,34 @@ func (tnpnr TrainNotPresentOnNextRoute) Code() string {
 
 // Solve returns if the condition is met for the given SignalItem and parameters
 func (tnpnr TrainNotPresentOnNextRoute) Solve(item *SignalItem, values []string, params []string) bool {
-	if item.nextActiveRoute != nil {
-		for _, pos := range item.nextActiveRoute.Positions {
-			if pos.TrackItem().TrainPresent() {
-				return false
-			}
-		}
-		return true
+	if item.nextActiveRoute == nil {
+		return false
 	}
+	for _, pos := range item.nextActiveRoute.Positions {
+		if pos.TrackItem().TrainPresent() {
+			return false
+		}
+	}
+	return true
+}
+
+// SetupTriggers installs needed triggers for the given SignalItem, with the
+// given Condition.
+func (tnpnr TrainNotPresentOnNextRoute) SetupTriggers(item *SignalItem, params []string) {}
+
+// ---------------------------------------------------------------------------------------------------------------
+
+// TrainNotPresentBeforeNextSignal is true if there is no train ahead of this signal and
+// before the next signal on the line.
+type TrainNotPresentBeforeNextSignal struct{}
+
+// Code of the ConditionType, uniquely defines this ConditionType
+func (tnpbns TrainNotPresentBeforeNextSignal) Code() string {
+	return "TRAIN_NOT_PRESENT_BEFORE_NEXT_SIGNAL"
+}
+
+// Solve returns if the condition is met for the given SignalItem and parameters
+func (tnpbns TrainNotPresentBeforeNextSignal) Solve(item *SignalItem, values []string, params []string) bool {
 	for cur := item.Position(); !cur.IsOut(); cur = cur.Next(DirectionCurrent) {
 		if cur.TrackItem().TrainPresent() {
 			return false
@@ -120,7 +140,7 @@ func (tnpnr TrainNotPresentOnNextRoute) Solve(item *SignalItem, values []string,
 
 // SetupTriggers installs needed triggers for the given SignalItem, with the
 // given Condition.
-func (tnpnr TrainNotPresentOnNextRoute) SetupTriggers(item *SignalItem, params []string) {}
+func (tnpbns TrainNotPresentBeforeNextSignal) SetupTriggers(item *SignalItem, params []string) {}
 
 // ---------------------------------------------------------------------------------------------------------------
 
@@ -260,6 +280,38 @@ func (nsa NextSignalAspects) SetupTriggers(item *SignalItem, params []string) {}
 
 // ---------------------------------------------------------------------------------------------------------------
 
+// RouteExitSignalAspects is true if the exit signal of the route starting at this signal is
+// showing one of the aspects given.
+// If no route is set from this signal, the condition is always false.
+type RouteExitSignalAspects struct{}
+
+// Code of the ConditionType, uniquely defines this ConditionType
+func (resa RouteExitSignalAspects) Code() string {
+	return "ROUTE_EXIT_SIGNAL_ASPECTS"
+}
+
+// Solve returns if the condition is met for the given SignalItem and parameters
+func (resa RouteExitSignalAspects) Solve(item *SignalItem, values []string, params []string) bool {
+	if item.nextActiveRoute == nil {
+		return false
+	}
+	nextSignal := item.nextActiveRoute.EndSignal()
+	if nextSignal != nil {
+		for _, v := range values {
+			if v == nextSignal.ActiveAspect().Name {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// SetupTriggers installs needed triggers for the given SignalItem, with the
+// given Condition.
+func (resa RouteExitSignalAspects) SetupTriggers(item *SignalItem, params []string) {}
+
+// ---------------------------------------------------------------------------------------------------------------
+
 func init() {
 	signalConditionTypes = make(map[string]ConditionType)
 	nar := NextActiveRoute{}
@@ -270,6 +322,8 @@ func init() {
 	signalConditionTypes[rsa.Code()] = rsa
 	tnponr := TrainNotPresentOnNextRoute{}
 	signalConditionTypes[tnponr.Code()] = tnponr
+	tnpbns := TrainNotPresentBeforeNextSignal{}
+	signalConditionTypes[tnpbns.Code()] = tnpbns
 	tnponi := TrainNotPresentOnItems{}
 	signalConditionTypes[tnponi.Code()] = tnponi
 	tpoi := TrainPresentOnItems{}
@@ -278,4 +332,6 @@ func init() {
 	signalConditionTypes[rs.Code()] = rs
 	nsa := NextSignalAspects{}
 	signalConditionTypes[nsa.Code()] = nsa
+	resa := RouteExitSignalAspects{}
+	signalConditionTypes[resa.Code()] = resa
 }

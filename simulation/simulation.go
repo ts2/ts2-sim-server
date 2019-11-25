@@ -199,21 +199,6 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 			return err
 		}
 	}
-
-	for num, r := range sim.Routes {
-		if err := r.initialize(num); err != nil {
-			return fmt.Errorf("error initializing route %s: %s", r.routeID, err)
-		}
-	}
-
-	for _, ti := range sim.TrackItems {
-		si, ok := ti.(*SignalItem)
-		if !ok {
-			continue
-		}
-		si.updateSignalState()
-	}
-
 	sim.MessageLogger = rawSim.MessageLogger
 	sim.MessageLogger.setSimulation(sim)
 	return nil
@@ -272,6 +257,21 @@ func (sim Simulation) MarshalJSON() ([]byte, error) {
 // This method must be called before Start.
 func (sim *Simulation) Initialize() error {
 	sim.MessageLogger.addMessage("Simulation initializing", softwareMsg)
+
+	for num, r := range sim.Routes {
+		if err := r.initialize(num); err != nil {
+			return fmt.Errorf("error initializing route %s: %s", r.routeID, err)
+		}
+	}
+
+	for _, ti := range sim.TrackItems {
+		si, ok := ti.(*SignalItem)
+		if !ok {
+			continue
+		}
+		si.updateSignalState()
+	}
+
 	return nil
 }
 
@@ -322,7 +322,7 @@ func (sim *Simulation) IsStarted() bool {
 // sendEvent sends the given event on the event channel to notify clients.
 // Sending is done asynchronously so as not to block.
 func (sim *Simulation) sendEvent(evt *Event) {
-	go func() { sim.EventChan <- evt }()
+	sim.EventChan <- evt
 }
 
 // increaseTime adds the step to the simulation time.

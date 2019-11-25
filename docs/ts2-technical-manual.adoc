@@ -1261,7 +1261,11 @@ The table below describes the different conditions that exist to define a signal
 |`[]`
 |Met if a route is active starting from this signal and no trains are present on this route.
 
-If no route is active from this signal, the condition is met if no trains are found until the next signal on the line.
+If no route is active from this signal, the condition always false.
+
+|`TRAIN_NOT_PRESENT_BEFORE_NEXT_SIGNAL`
+|`[]`
+|Met if no trains are found between this signal and the next signal on the line.
 
 |`TRAIN_NOT_PRESENT_ON_ITEMS`
 |`[]`^*^
@@ -1278,8 +1282,11 @@ If no route is active from this signal, the condition is met if no trains are fo
 |`NEXT_SIGNAL_ASPECTS`
 |List of signal aspect names
 |Met if the next signal shows one of given aspect.
-The next signal is the exit signal of the route starting at this signal if any.
-Otherwise it is the next signal on the line.
+
+|`ROUTE_EXIT_SIGNAL_ASPECTS`
+|List of signal aspect names
+|Met if the exit signal of the route starting at this signal shows one of the given aspects.
+If there is no route starting from this signal, the condition is always false
 
 |===
 
