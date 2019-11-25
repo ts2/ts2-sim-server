@@ -44,8 +44,8 @@ func TestMain(m *testing.M) {
 		fmt.Println("Unable to load demo.json:", err)
 		os.Exit(1)
 	}
-	s.Initialize()
 	go Run(&s, "0.0.0.0", "22222")
+	s.Initialize()
 	os.Exit(m.Run())
 }
 

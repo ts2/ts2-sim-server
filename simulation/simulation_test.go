@@ -41,11 +41,22 @@ func TestMarshalling(t *testing.T) {
 }
 
 func TestSimulationRun(t *testing.T) {
+	endChan := make(chan struct{})
+	defer close(endChan)
 	Convey("Testing simulation runs", t, func() {
 		var sim simulation.Simulation
 		data, _ := ioutil.ReadFile("testdata/demo.json")
 		err := json.Unmarshal(data, &sim)
 		So(err, ShouldBeNil)
+		go func() {
+			for {
+				select {
+				case <-sim.EventChan:
+				case <-endChan:
+					return
+				}
+			}
+		}()
 		err = sim.Initialize()
 		sim.Trains[0].AppearTime = simulation.ParseTime("05:00:00")
 		So(err, ShouldBeNil)

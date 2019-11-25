@@ -28,9 +28,25 @@ import (
 )
 
 func TestSimulationLoading(t *testing.T) {
+	endChan := make(chan struct{})
+	defer close(endChan)
 	Convey("Loading a simulation should not create an error", t, func() {
-		var sim Simulation
+		var (
+			sim     Simulation
+			endChan chan struct{}
+		)
 		err := json.Unmarshal(loadSim("testdata/demo.json"), &sim)
+		So(err, ShouldBeNil)
+		go func() {
+			for {
+				select {
+				case <-sim.EventChan:
+				case <-endChan:
+					return
+				}
+			}
+		}()
+		err = sim.Initialize()
 		So(err, ShouldBeNil)
 		Convey("Options should be all loaded", func() {
 			So(sim.Options.CurrentScore, ShouldEqual, 0)
@@ -231,7 +247,8 @@ func TestSimulationLoading(t *testing.T) {
 			So(tr.StoppedTime, ShouldEqual, 0)
 		})
 		Convey("MessageLogger should be fully loaded", func() {
-			So(sim.MessageLogger.Messages, ShouldHaveLength, 1)
+			So(sim.MessageLogger.Messages, ShouldHaveLength, 2)
+			So(sim.MessageLogger.Messages[1], ShouldResemble, Message{softwareMsg, "Simulation initializing"})
 			So(sim.MessageLogger.Messages[0], ShouldResemble, Message{playerWarningMsg, "Test message"})
 		})
 		Convey("SignalLibrary should be correctly loaded", func() {
@@ -345,6 +362,17 @@ func TestSimulationLoading(t *testing.T) {
 		Convey("Simulation with wrong routes should fail loading", func() {
 			data, _ := ioutil.ReadFile("testdata/badroutes.json")
 			err := json.Unmarshal(data, &sim)
+			So(err, ShouldBeNil)
+			go func() {
+				for {
+					select {
+					case <-sim.EventChan:
+					case <-endChan:
+						return
+					}
+				}
+			}()
+			err = sim.Initialize()
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldEqual, "error initializing route 1: route Error: unable to link signal 11 to signal 5")
 		})
