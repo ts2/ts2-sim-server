@@ -360,13 +360,7 @@ func (si *SignalItem) getNextSignal() *SignalItem {
 }
 
 // getPreviousSignal is a helper function that returns the previous signal before this one.
-//
-// If a route ends at this signal, the previous signal is the begin signal
-// of this route. Otherwise, it is the previous signal found on the line.
 func (si *SignalItem) getPreviousSignal() *SignalItem {
-	if si.previousActiveRoute != nil {
-		return si.previousActiveRoute.BeginSignal()
-	}
 	for pos := si.Position().Previous(); pos.TrackItem().Type() != TypeEnd; pos = pos.Previous() {
 		if pos.TrackItem().Type() == TypeSignal && pos.TrackItem().IsOnPosition(pos) {
 			return pos.TrackItem().(*SignalItem)
@@ -444,8 +438,8 @@ func (si *SignalItem) releaseRouteBehind() {
 
 // updateSignalState updates the current signal aspect.
 func (si *SignalItem) updateSignalState(previous ...bool) {
-	if len(previous) > 5 {
-		// We don't go further than 5 signals to prevent recursion
+	if len(previous) > 10 {
+		// We don't go further than 10 signals to prevent recursion
 		return
 	}
 	oldAspect := si.activeAspect
