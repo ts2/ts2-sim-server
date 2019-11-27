@@ -1282,6 +1282,7 @@ If no route is active from this signal, the condition always false.
 |`NEXT_SIGNAL_ASPECTS`
 |List of signal aspect names
 |Met if the next signal shows one of given aspect.
+If a signal aspect name is suffixed with `!` then the aspect of this signal (if it matches) is discarded and the aspect of the next signal on the line is checked.
 
 |`ROUTE_EXIT_SIGNAL_ASPECTS`
 |List of signal aspect names

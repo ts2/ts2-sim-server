@@ -20,6 +20,7 @@ package simulation
 
 import (
 	"fmt"
+	"strings"
 )
 
 // nextActiveRoute is true if a route starting from this Signal is active
@@ -252,8 +253,9 @@ func (rs RouteSet) SetupTriggers(item *SignalItem, params []string) {
 // ---------------------------------------------------------------------------------------------------------------
 
 // NextSignalAspects is true if the next signal is showing one of the aspects given.
-// If a Route start from this Signal, then the end signal of the Route is taken into account.
-// Otherwise, the next Signal found on the line is used.
+//
+// If one of the aspect names finishes with a '!' and the next signal aspect matches this aspect,
+// then the next signal aspect is ignored and the aspect further on the line is checked with the same data.
 type NextSignalAspects struct{}
 
 // Code of the ConditionType, uniquely defines this ConditionType
@@ -261,17 +263,32 @@ func (nsa NextSignalAspects) Code() string {
 	return "NEXT_SIGNAL_ASPECTS"
 }
 
-// Solve returns if the condition is met for the given SignalItem and parameters
-func (nsa NextSignalAspects) Solve(item *SignalItem, values []string, params []string) bool {
-	nextSignal := item.getNextSignal()
-	if nextSignal != nil {
-		for _, v := range values {
-			if v == nextSignal.ActiveAspect().Name {
+// checkSignalAspect checks if the given signal has one of the given aspect name.
+func checkSignalAspect(signal *SignalItem, aspectNames []string, previous ...bool) bool {
+	if len(previous) > 100 {
+		// Prevent infinite recursion
+		return false
+	}
+	if signal != nil {
+		for _, v := range aspectNames {
+			if strings.HasSuffix(v, "!") {
+				aspectName := strings.TrimSuffix(v, "!")
+				if aspectName == signal.ActiveAspect().Name {
+					return checkSignalAspect(signal.getNextSignal(), aspectNames, append(previous, true)...)
+				}
+				continue
+			}
+			if v == signal.ActiveAspect().Name {
 				return true
 			}
 		}
 	}
 	return false
+}
+
+// Solve returns if the condition is met for the given SignalItem and parameters
+func (nsa NextSignalAspects) Solve(item *SignalItem, values []string, params []string) bool {
+	return checkSignalAspect(item.getNextSignal(), values)
 }
 
 // SetupTriggers installs needed triggers for the given SignalItem, with the
