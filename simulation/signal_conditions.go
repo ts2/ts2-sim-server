@@ -119,6 +119,8 @@ func (tnpnr TrainNotPresentOnNextRoute) SetupTriggers(item *SignalItem, params [
 
 // TrainNotPresentBeforeNextSignal is true if there is no train ahead of this signal and
 // before the next signal on the line.
+// Signal aspects ending with ! can be added in the list to discard the given signal and look
+// up to the next one.
 type TrainNotPresentBeforeNextSignal struct{}
 
 // Code of the ConditionType, uniquely defines this ConditionType
@@ -128,11 +130,22 @@ func (tnpbns TrainNotPresentBeforeNextSignal) Code() string {
 
 // Solve returns if the condition is met for the given SignalItem and parameters
 func (tnpbns TrainNotPresentBeforeNextSignal) Solve(item *SignalItem, values []string, params []string) bool {
+mainLoop:
 	for cur := item.Position(); !cur.IsOut(); cur = cur.Next(DirectionCurrent) {
 		if cur.TrackItem().TrainPresent() {
 			return false
 		}
 		if !cur.Equals(item.Position()) && cur.TrackItem().Type() == TypeSignal && cur.TrackItem().IsOnPosition(cur) {
+			for _, v := range values {
+				if !strings.HasSuffix(v, "!") {
+					// Ignore values not ending with !
+					continue
+				}
+				aspectName := strings.TrimSuffix(v, "!")
+				if cur.TrackItem().(*SignalItem).ActiveAspect().Name == aspectName {
+					continue mainLoop
+				}
+			}
 			break
 		}
 	}

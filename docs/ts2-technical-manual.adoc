@@ -1264,8 +1264,9 @@ The table below describes the different conditions that exist to define a signal
 If no route is active from this signal, the condition always false.
 
 |`TRAIN_NOT_PRESENT_BEFORE_NEXT_SIGNAL`
-|`[]`
+|`List of aspects names suffixed by !`
 |Met if no trains are found between this signal and the next signal on the line.
+|If aspect names are given (ending with `!`), signals showing these aspects are ignored.
 
 |`TRAIN_NOT_PRESENT_ON_ITEMS`
 |`[]`^*^
