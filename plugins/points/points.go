@@ -46,6 +46,9 @@ func (sm *StandardManager) SetDirection(p *simulation.PointsItem, dir simulation
 	sm.Lock()
 	defer sm.Unlock()
 	sm.directions[p.ID()] = dir
+	if p.PairedItem() != nil {
+		sm.directions[p.PairedItem().ID()] = dir
+	}
 }
 
 // Name returns a description of this manager that is used for the UI.

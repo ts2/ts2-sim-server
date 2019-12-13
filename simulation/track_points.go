@@ -81,6 +81,7 @@ type PointsItem struct {
 	Xr          float64 `json:"xr"`
 	Yr          float64 `json:"yr"`
 	ReverseTiId string  `json:"reverseTiId"`
+	PairedTiId  string  `json:"pairedTiId"`
 }
 
 // Type returns the name of the type of this item
@@ -126,6 +127,16 @@ func (pi *PointsItem) ReverseEnd() Point {
 // ReverseItem returns the item linked to the reverse end of these points
 func (pi *PointsItem) ReverseItem() TrackItem {
 	return pi.simulation.TrackItems[pi.ReverseTiId]
+}
+
+// PairedItem returns the points item that must change simultaneously with
+// this one. It return nil if there is no such item.
+func (pi *PointsItem) PairedItem() *PointsItem {
+	paired, ok := pi.simulation.TrackItems[pi.PairedTiId].(*PointsItem)
+	if ok {
+		return paired
+	}
+	return nil
 }
 
 // Reversed returns true if the points are in the reversed position, false
@@ -179,6 +190,13 @@ func (pi *PointsItem) setActiveRoute(r *Route, previous TrackItem) {
 	if r != nil {
 		pointsItemManager.SetDirection(pi, r.Directions[pi.ID()])
 	}
+	// Send event for pairedItem
+	if pi.PairedItem() != nil {
+		pi.simulation.sendEvent(&Event{
+			Name:   TrackItemChangedEvent,
+			Object: pi.PairedItem(),
+		})
+	}
 	// TODO We should check here whether the points have failed or not
 	// and delay route activation.
 	pi.trackStruct.setActiveRoute(r, previous)
@@ -195,6 +213,7 @@ func (pi *PointsItem) MarshalJSON() ([]byte, error) {
 		Xr          float64 `json:"xr"`
 		Yr          float64 `json:"yr"`
 		ReverseTiId string  `json:"reverseTiId"`
+		PairedTiId  string  `json:"pairedTiId"`
 		Reversed    bool    `json:"reversed"`
 	}
 	aPI := auxPI{
@@ -206,6 +225,7 @@ func (pi *PointsItem) MarshalJSON() ([]byte, error) {
 		Xr:              pi.Xr,
 		Yr:              pi.Yr,
 		ReverseTiId:     pi.ReverseTiId,
+		PairedTiId:      pi.PairedTiId,
 		Reversed:        pi.Reversed(),
 	}
 	return json.Marshal(aPI)
