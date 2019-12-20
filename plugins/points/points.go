@@ -20,7 +20,9 @@ package points
 
 import (
 	"github.com/ts2/ts2-sim-server/simulation"
+	"math/rand"
 	"sync"
+	"time"
 )
 
 // StandardManager is a points manager that performs points change
@@ -31,24 +33,57 @@ type StandardManager struct {
 }
 
 // Direction returns the direction of the points
-func (sm StandardManager) Direction(p *simulation.PointsItem) simulation.PointDirection {
+func (sm *StandardManager) Direction(p *simulation.PointsItem) simulation.PointDirection {
+	sm.RLock()
+	defer sm.RUnlock()
 	return sm.directions[p.ID()]
 }
 
-// SetDirection tries to set the given PointsItem to the given direction
+// SetDirection tries to set the given PointsItem to the given direction.
 //
-// You should not assume that the direction has been set, since this can be
-// delayed or failed. Call Direction to check.
-func (sm *StandardManager) SetDirection(p *simulation.PointsItem, dir simulation.PointDirection) {
+// Just after the function is called, the points will switch to DirectionUnknown.
+// When the points are in position, the notify channel is closed.
+func (sm *StandardManager) SetDirection(p *simulation.PointsItem, dir simulation.PointDirection, notify chan struct{}) {
 	if dir == simulation.DirectionCurrent {
 		return
 	}
+	startTime := p.Simulation().CurrentTime()
+	delay := time.Duration(3+rand.Intn(3)) * time.Second
+	if sm.directions[p.ID()] == dir {
+		// Points are in the correct direction already
+		if p.PairedItem() != nil {
+			if sm.directions[p.PairedTiId] != dir {
+				sm.SetDirection(p.PairedItem(), dir, notify)
+			} else {
+				close(notify)
+			}
+		}
+		return
+	}
+	// Check notify != nil to prevent infinite recursion
+	if p.PairedItem() != nil && notify != nil {
+		sm.SetDirection(p.PairedItem(), dir, nil)
+	}
+	go func() {
+		for {
+			<-time.After(simulation.TimeStep)
+			if p.Simulation().CurrentTime().Sub(startTime.Add(delay)) > 0 {
+				break
+			}
+		}
+		sm.Lock()
+		defer sm.Unlock()
+		sm.directions[p.ID()] = dir
+		if p.PairedItem() != nil {
+			sm.directions[p.PairedItem().ID()] = dir
+		}
+		if notify != nil {
+			close(notify)
+		}
+	}()
 	sm.Lock()
 	defer sm.Unlock()
-	sm.directions[p.ID()] = dir
-	if p.PairedItem() != nil {
-		sm.directions[p.PairedItem().ID()] = dir
-	}
+	sm.directions[p.ID()] = simulation.DirectionUnknown
 }
 
 // Name returns a description of this manager that is used for the UI.

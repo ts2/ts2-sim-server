@@ -21,6 +21,7 @@ package simulation
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 )
 
 // A RoutesManager checks if a route is activable or deactivable.
@@ -49,6 +50,9 @@ const (
 
 	// Destroying = The route is currently being destroyed by a train
 	Destroying RouteState = 3
+
+	// Activating - The route is currently being actived
+	Activating RouteState = 4
 )
 
 // A Route is a path between two signals.
@@ -67,6 +71,7 @@ type Route struct {
 	Positions     []Position                `json:"-"`
 
 	simulation *Simulation
+	activating bool
 	triggers   []func(*Route)
 }
 
@@ -93,6 +98,9 @@ func (r *Route) Equals(other *Route) bool {
 
 // State returns the current state of this route
 func (r *Route) State() RouteState {
+	if r.activating {
+		return Activating
+	}
 	if r.BeginSignal().nextActiveRoute == nil || !r.BeginSignal().nextActiveRoute.Equals(r) {
 		for _, p := range r.Positions {
 			if p.TrackItem().ActiveRoute() != nil && p.TrackItem().ActiveRoute().Equals(r) {
@@ -125,15 +133,41 @@ func (r *Route) Activate(persistent bool) error {
 			return fmt.Errorf("%s vetoed route activation: %s", rm.Name(), err)
 		}
 	}
+	r.activating = true
 	for _, pos := range r.Positions {
 		if pos.TrackItem().Equals(r.BeginSignal()) || pos.TrackItem().Equals(r.EndSignal()) {
 			continue
 		}
 		pos.TrackItem().setActiveRoute(r, pos.PreviousItem())
 	}
+	r.Persistent = persistent
+	r.simulation.sendEvent(&Event{
+		Name:   RouteActivatedEvent,
+		Object: r,
+	})
+	go func() {
+	waitLoop:
+		for {
+			<-time.After(TimeStep)
+			for _, pos := range r.Positions {
+				if points, ok := pos.TrackItem().(*PointsItem); ok {
+					if points.Moving() {
+						continue waitLoop
+					}
+				}
+			}
+			break
+		}
+		r.simulation.routesChan <- r
+	}()
+	return nil
+}
+
+// doActivate sets the route to activated state at the end of the activation process.
+func (r *Route) doActivate() {
+	r.activating = false
 	r.EndSignal().previousActiveRoute = r
 	r.BeginSignal().nextActiveRoute = r
-	r.Persistent = persistent
 	for _, t := range r.triggers {
 		t(r)
 	}
@@ -142,8 +176,8 @@ func (r *Route) Activate(persistent bool) error {
 		Object: r,
 	})
 	r.BeginSignal().updateSignalState()
-	return nil
 }
+
 
 // Deactivate the given route. If the route cannot be Deactivated, an error is returned.
 func (r *Route) Deactivate() error {

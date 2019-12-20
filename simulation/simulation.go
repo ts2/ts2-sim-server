@@ -28,7 +28,7 @@ import (
 	log "gopkg.in/inconshreveable/log15.v2"
 )
 
-const timeStep = 500 * time.Millisecond
+const TimeStep = 500 * time.Millisecond
 
 // Version of the software, mostly used for file format
 const Version = "0.7"
@@ -64,6 +64,7 @@ type Simulation struct {
 
 	clockTicker *time.Ticker
 	stopChan    chan bool
+	routesChan  chan *Route
 	started     bool
 }
 
@@ -84,6 +85,7 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 
 	sim.EventChan = make(chan *Event)
 	sim.stopChan = make(chan bool)
+	sim.routesChan = make(chan *Route)
 
 	var rawSim auxSim
 	if err := json.Unmarshal(data, &rawSim); err != nil {
@@ -292,7 +294,7 @@ func (sim *Simulation) Start() {
 
 // run enters the main loop of the simulation
 func (sim *Simulation) run() {
-	clockTicker := time.NewTicker(timeStep)
+	clockTicker := time.NewTicker(TimeStep)
 	for {
 		select {
 		case <-sim.stopChan:
@@ -301,9 +303,10 @@ func (sim *Simulation) run() {
 			Logger.Info("Simulation paused")
 			return
 		case <-clockTicker.C:
-			sim.increaseTime(timeStep)
-			sim.sendEvent(&Event{Name: ClockEvent, Object: sim.Options.CurrentTime})
+			sim.increaseTime(TimeStep)
+			sim.sendEvent(&Event{Name: ClockEvent, Object: sim.CurrentTime()})
 			sim.updateTrains()
+			sim.updateRoutes()
 		}
 	}
 }
@@ -330,6 +333,13 @@ func (sim *Simulation) increaseTime(step time.Duration) {
 	sim.Options.CurrentTime.Lock()
 	defer sim.Options.CurrentTime.Unlock()
 	sim.Options.CurrentTime = sim.Options.CurrentTime.Add(time.Duration(sim.Options.TimeFactor) * step)
+}
+
+// CurrentTime returns the current time in a concurrently safe manner
+func (sim *Simulation) CurrentTime() Time {
+	sim.Options.CurrentTime.RLock()
+	defer sim.Options.CurrentTime.RUnlock()
+	return sim.Options.CurrentTime
 }
 
 // checks that all TrackItems are linked together.
@@ -371,11 +381,11 @@ func (sim *Simulation) checkTrackItemsLinks() error {
 // updateTrains update all trains information such as status, position, speed, etc.
 func (sim *Simulation) updateTrains() {
 	for _, train := range sim.Trains {
-		train.activate(sim.Options.CurrentTime)
+		train.activate(sim.CurrentTime())
 		if !train.IsActive() {
 			continue
 		}
-		train.advance(timeStep * time.Duration(sim.Options.TimeFactor))
+		train.advance(TimeStep * time.Duration(sim.Options.TimeFactor))
 	}
 }
 
@@ -386,6 +396,19 @@ func (sim *Simulation) updateScore(penalty int) {
 		Name:   OptionsChangedEvent,
 		Object: sim.Options,
 	})
+}
+
+// updateRoutes updates the routes that have been activated and that are send over routesChan
+func (sim *Simulation) updateRoutes() {
+mainLoop:
+	for {
+		select {
+		case route := <-sim.routesChan:
+			route.doActivate()
+		default:
+			break mainLoop
+		}
+	}
 }
 
 // RegisterRoutesManager registers the given route manager in the simulation.
