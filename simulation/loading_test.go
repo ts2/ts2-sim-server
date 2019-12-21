@@ -80,7 +80,7 @@ func TestSimulationLoading(t *testing.T) {
 			So(ok, ShouldBeTrue)
 			So(d1, ShouldEqual, DirectionNormal)
 			So(r1.InitialState, ShouldEqual, Activated)
-			So(r1.State(), ShouldEqual, Activated)
+			So(r1.State(), ShouldEqual, Activating)
 
 			So(sim.Routes, ShouldContainKey, "4")
 			r4, ok := sim.Routes["4"]

@@ -238,10 +238,7 @@ func (t *Train) executeActions(advanceLength float64) {
 		t.logAndScoreTrainExited()
 	}
 	for ti := range toNotify {
-		t.simulation.sendEvent(&Event{
-			Name:   TrackItemChangedEvent,
-			Object: ti,
-		})
+		ti.notifyChange()
 	}
 }
 
@@ -362,7 +359,7 @@ func (t *Train) updateSignalActions() {
 		t.lastSignal = nextSignal
 	}
 
-	currentTime := t.simulation.Options.CurrentTime
+	currentTime := t.simulation.CurrentTime()
 	if math.Abs(t.Speed-t.ApplicableAction().Speed) < 0.1 {
 		// We have achieved the action's target speed.
 		if t.actionTime.IsZero() {
@@ -435,9 +432,7 @@ func (t *Train) Reverse() error {
 		signalAhead.setTrain(nil)
 	}
 	if activeRoute := t.TrainHead.TrackItem().ActiveRoute(); activeRoute != nil {
-		if err := activeRoute.Deactivate(); err != nil {
-			t.simulation.MessageLogger.addMessage(err.Error(), simulationMsg)
-		}
+		activeRoute.doDeactivate()
 	}
 	t.TrainHead = t.TrainTail().Reversed()
 	if newSignalAhead := t.findNextSignal(); newSignalAhead != nil {
@@ -550,7 +545,7 @@ func (t *Train) updateStatus(timeElapsed time.Duration) {
 		return
 	}
 	// Train is already stopped at the place
-	if line.ScheduledDepartureTime.Sub(t.simulation.Options.CurrentTime) > 0 ||
+	if line.ScheduledDepartureTime.Sub(t.simulation.CurrentTime()) > 0 ||
 		t.StoppedTime < int(t.minStopTime/time.Second) ||
 		line.ScheduledDepartureTime.IsZero() {
 		// Conditions to depart are not met
@@ -618,7 +613,7 @@ func (t *Train) logAndScoreTrainStoppedAtStation() {
 			t.ServiceCode, place.Name(), actualPlatform, plannedPlatform), simulationMsg)
 	}
 	scheduledArrivalTime := serviceLine.ScheduledArrivalTime
-	currentTime := sim.Options.CurrentTime
+	currentTime := sim.CurrentTime()
 	delay := currentTime.Sub(scheduledArrivalTime)
 	if delay > time.Minute {
 		playerDelay := delay - t.effInitialDelay

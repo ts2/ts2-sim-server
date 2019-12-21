@@ -33,7 +33,7 @@ func (nar NextActiveRoute) Code() string {
 
 // Solve returns if the condition is met for the given SignalItem and parameters
 func (nar NextActiveRoute) Solve(item *SignalItem, values []string, params []string) bool {
-	return item.nextActiveRoute != nil
+	return item.nextActiveRoute != nil && item.nextActiveRoute.IsActive()
 }
 
 // SetupTriggers installs needed triggers for the given SignalItem, with the
@@ -52,7 +52,7 @@ func (par PreviousActiveRoute) Code() string {
 
 // Solve returns if the condition is met for the given SignalItem and parameters
 func (par PreviousActiveRoute) Solve(item *SignalItem, values []string, params []string) bool {
-	return item.previousActiveRoute != nil
+	return item.previousActiveRoute != nil && (item.previousActiveRoute.IsActive() || item.previousActiveRoute.IsDestroying())
 }
 
 // SetupTriggers installs needed triggers for the given SignalItem, with the

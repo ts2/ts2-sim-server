@@ -316,10 +316,7 @@ func (si *SignalItem) setActiveRoute(r *Route, previous TrackItem) {
 // setTrainID sets the train associated with this signal train to display in berth.
 func (si *SignalItem) setTrain(t *Train) {
 	si.train = t
-	si.simulation.sendEvent(&Event{
-		Name:   TrackItemChangedEvent,
-		Object: si,
-	})
+	si.notifyChange()
 }
 
 // IsOnPosition returns true if this signal item is the track item of
@@ -449,10 +446,7 @@ func (si *SignalItem) updateSignalState(previous ...bool) {
 	if previousSignal != nil {
 		previousSignal.updateSignalState(append(previous, true)...)
 	}
-	si.simulation.sendEvent(&Event{
-		Name:   TrackItemChangedEvent,
-		Object: si,
-	})
+	si.notifyChange()
 }
 
 // resetNextActiveRoute information. If route is not nil, do

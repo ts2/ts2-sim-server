@@ -27,11 +27,11 @@ type PointsItemManager interface {
 	Name() string
 	// Direction returns the direction of the points
 	Direction(*PointsItem) PointDirection
-	// SetDirection tries to set the given PointsItem to the given direction
+	// SetDirection tries to set the given PointsItem to the given direction.
 	//
-	// You should not assume that the direction has been set, since this can be
-	// delayed or failed. Call Direction to check.
-	SetDirection(*PointsItem, PointDirection)
+	// Just after the function is called, the points will switch to DirectionUnknown.
+	// When the points are in position, the notify channel is closed.
+	SetDirection(*PointsItem, PointDirection, chan struct{})
 }
 
 // PointDirection are constants that represent the "physical state" of a PointsItem
@@ -146,6 +146,12 @@ func (pi *PointsItem) Reversed() bool {
 	return dir == DirectionReversed
 }
 
+// Moving returns true if the points are moving
+func (pi *PointsItem) Moving() bool {
+	dir := pointsItemManager.Direction(pi)
+	return dir == DirectionUnknown
+}
+
 // IsConnected returns true if this TrackItem is connected to the given
 // TrackItem, false otherwise
 func (pi *PointsItem) IsConnected(oti TrackItem) bool {
@@ -187,18 +193,22 @@ func (pi *PointsItem) FollowingItem(precedingItem TrackItem, dir PointDirection)
 // setActiveRoute sets the given route as active on this PointsItem.
 // previous gives the direction.
 func (pi *PointsItem) setActiveRoute(r *Route, previous TrackItem) {
+	notifyPaired := func() {
+		if pi.PairedItem() != nil {
+			pi.PairedItem().notifyChange()
+		}
+	}
 	if r != nil {
-		pointsItemManager.SetDirection(pi, r.Directions[pi.ID()])
+		pointsMoved := make(chan struct{})
+		pointsItemManager.SetDirection(pi, r.Directions[pi.ID()], pointsMoved)
+		go func() {
+			<-pointsMoved
+			pi.notifyChange()
+			notifyPaired()
+		}()
 	}
 	// Send event for pairedItem
-	if pi.PairedItem() != nil {
-		pi.simulation.sendEvent(&Event{
-			Name:   TrackItemChangedEvent,
-			Object: pi.PairedItem(),
-		})
-	}
-	// TODO We should check here whether the points have failed or not
-	// and delay route activation.
+	notifyPaired()
 	pi.trackStruct.setActiveRoute(r, previous)
 }
 
@@ -215,6 +225,7 @@ func (pi *PointsItem) MarshalJSON() ([]byte, error) {
 		ReverseTiId string  `json:"reverseTiId"`
 		PairedTiId  string  `json:"pairedTiId"`
 		Reversed    bool    `json:"reversed"`
+		Moving      bool    `json:"moving"`
 	}
 	aPI := auxPI{
 		jsonTrackStruct: pi.asJSONStruct(),
@@ -227,6 +238,7 @@ func (pi *PointsItem) MarshalJSON() ([]byte, error) {
 		ReverseTiId:     pi.ReverseTiId,
 		PairedTiId:      pi.PairedTiId,
 		Reversed:        pi.Reversed(),
+		Moving:          pi.Moving(),
 	}
 	return json.Marshal(aPI)
 }
