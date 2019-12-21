@@ -41,6 +41,9 @@ type Options struct {
 	WrongPlatformPenalty    int            `json:"wrongPlatformPenalty"`
 	WrongDestinationPenalty int            `json:"wrongDestinationPenalty"`
 	LatePenalty             int            `json:"latePenalty"`
+	PointsSetupDelay        DelayGenerator `json:"pointsSetupDelay"`
+	RoutesSetupDelay        DelayGenerator `json:"routesSetupDelay"`
+	RoutesCancelDelay       DelayGenerator `json:"routesCancelDelay"`
 
 	simulation *Simulation
 }

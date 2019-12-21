@@ -62,10 +62,11 @@ type Simulation struct {
 	MessageLogger *MessageLogger
 	EventChan     chan *Event
 
-	clockTicker *time.Ticker
-	stopChan    chan bool
-	routesChan  chan *Route
-	started     bool
+	clockTicker           *time.Ticker
+	stopChan              chan bool
+	activatedRoutesChan   chan *Route
+	deactivatedRoutesChan chan *Route
+	started               bool
 }
 
 // UnmarshalJSON for the Simulation type
@@ -85,7 +86,8 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 
 	sim.EventChan = make(chan *Event)
 	sim.stopChan = make(chan bool)
-	sim.routesChan = make(chan *Route)
+	sim.activatedRoutesChan = make(chan *Route)
+	sim.deactivatedRoutesChan = make(chan *Route)
 
 	var rawSim auxSim
 	if err := json.Unmarshal(data, &rawSim); err != nil {
@@ -398,13 +400,15 @@ func (sim *Simulation) updateScore(penalty int) {
 	})
 }
 
-// updateRoutes updates the routes that have been activated and that are send over routesChan
+// updateRoutes updates the routes that have been (de)activated
 func (sim *Simulation) updateRoutes() {
 mainLoop:
 	for {
 		select {
-		case route := <-sim.routesChan:
+		case route := <-sim.activatedRoutesChan:
 			route.doActivate()
+		case route := <-sim.deactivatedRoutesChan:
+			route.doDeactivate()
 		default:
 			break mainLoop
 		}

@@ -673,7 +673,8 @@ func TestHub(t *testing.T) {
 				So(resp.Data.Status, ShouldEqual, Ok)
 
 				resp = sendRequestStatus(c, "route", "activate", `{"id": "2"}`)
-				So(resp.Data.Status, ShouldEqual, Ok)
+				// Fails because route 1 did not have time to deactivate
+				So(resp.Data.Status, ShouldEqual, Fail)
 
 				err = c.WriteJSON(RequestListener{
 					Object: "server",

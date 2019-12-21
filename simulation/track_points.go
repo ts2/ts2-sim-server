@@ -195,10 +195,7 @@ func (pi *PointsItem) FollowingItem(precedingItem TrackItem, dir PointDirection)
 func (pi *PointsItem) setActiveRoute(r *Route, previous TrackItem) {
 	notifyPaired := func() {
 		if pi.PairedItem() != nil {
-			pi.simulation.sendEvent(&Event{
-				Name:   TrackItemChangedEvent,
-				Object: pi.PairedItem(),
-			})
+			pi.PairedItem().notifyChange()
 		}
 	}
 	if r != nil {
@@ -206,10 +203,7 @@ func (pi *PointsItem) setActiveRoute(r *Route, previous TrackItem) {
 		pointsItemManager.SetDirection(pi, r.Directions[pi.ID()], pointsMoved)
 		go func() {
 			<-pointsMoved
-			pi.simulation.sendEvent(&Event{
-				Name:   TrackItemChangedEvent,
-				Object: pi,
-			})
+			pi.notifyChange()
 			notifyPaired()
 		}()
 	}

@@ -238,10 +238,7 @@ func (t *Train) executeActions(advanceLength float64) {
 		t.logAndScoreTrainExited()
 	}
 	for ti := range toNotify {
-		t.simulation.sendEvent(&Event{
-			Name:   TrackItemChangedEvent,
-			Object: ti,
-		})
+		ti.notifyChange()
 	}
 }
 
@@ -435,9 +432,7 @@ func (t *Train) Reverse() error {
 		signalAhead.setTrain(nil)
 	}
 	if activeRoute := t.TrainHead.TrackItem().ActiveRoute(); activeRoute != nil {
-		if err := activeRoute.Deactivate(); err != nil {
-			t.simulation.MessageLogger.addMessage(err.Error(), simulationMsg)
-		}
+		activeRoute.doDeactivate()
 	}
 	t.TrainHead = t.TrainTail().Reversed()
 	if newSignalAhead := t.findNextSignal(); newSignalAhead != nil {

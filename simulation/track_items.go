@@ -185,6 +185,9 @@ type TrackItem interface {
 	// resetActiveRoute resets route information on this item.
 	resetActiveRoute()
 
+	// notifyChange sends a TrackItemChanged event for this item
+	notifyChange()
+
 	// TrainPresent returns true if at least one train is present on this TrackItem
 	TrainPresent() bool
 
@@ -364,10 +367,7 @@ func (t *trackStruct) underlying() *trackStruct {
 func (t *trackStruct) setActiveRoute(r *Route, previous TrackItem) {
 	t.activeRoute = r
 	t.arPreviousItem = previous
-	t.simulation.sendEvent(&Event{
-		Name:   TrackItemChangedEvent,
-		Object: t.full(),
-	})
+	t.notifyChange()
 }
 
 // ActiveRoute returns a pointer to the route currently active on this item
@@ -426,6 +426,11 @@ func (t *trackStruct) TrainPresent() bool {
 func (t *trackStruct) resetActiveRoute() {
 	t.activeRoute = nil
 	t.arPreviousItem = nil
+	t.notifyChange()
+}
+
+// notifyChange sends a TrackItemChangedEvent for this item
+func (t *trackStruct) notifyChange() {
 	t.simulation.sendEvent(&Event{
 		Name:   TrackItemChangedEvent,
 		Object: t.full(),

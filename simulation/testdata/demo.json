@@ -37,7 +37,10 @@
     "version": "0.7",
     "warningSpeed": 8.34,
     "wrongDestinationPenalty": 100,
-    "wrongPlatformPenalty": 5
+    "wrongPlatformPenalty": 5,
+    "pointsSetupDelay": [[1, 1, 100]],
+    "routesSetupDelay": [[1, 1, 100]],
+    "routesCancelDelay": [[1, 1, 100]]
   },
   "routes": {
     "1": {

@@ -120,6 +120,11 @@ func (r *Route) IsActive() bool {
 	return r.State() == Activated || r.State() == Persistent
 }
 
+// IsDestroying returns true if this Route is currently being destroyed
+func (r *Route) IsDestroying() bool {
+	return r.State() == Destroying
+}
+
 // addTrigger adds the given function to the list of function that will be
 // called when this Route is activated or deactivated.
 func (r *Route) addTrigger(trigger func(*Route)) {
@@ -146,6 +151,8 @@ func (r *Route) Activate(persistent bool) error {
 		Object: r,
 	})
 	go func() {
+		routesDelay := r.simulation.Options.RoutesSetupDelay.Yield()
+		startTime := r.simulation.CurrentTime()
 	waitLoop:
 		for {
 			<-time.After(TimeStep)
@@ -156,9 +163,12 @@ func (r *Route) Activate(persistent bool) error {
 					}
 				}
 			}
+			if r.simulation.CurrentTime().Sub(startTime.Add(routesDelay)) < 0 {
+				continue
+			}
 			break
 		}
-		r.simulation.routesChan <- r
+		r.simulation.activatedRoutesChan <- r
 	}()
 	return nil
 }
@@ -178,7 +188,6 @@ func (r *Route) doActivate() {
 	r.BeginSignal().updateSignalState()
 }
 
-
 // Deactivate the given route. If the route cannot be Deactivated, an error is returned.
 func (r *Route) Deactivate() error {
 	for _, rm := range routesManagers {
@@ -186,6 +195,30 @@ func (r *Route) Deactivate() error {
 			return fmt.Errorf("%s vetoed route deactivation", rm.Name())
 		}
 	}
+	r.activating = true
+	r.simulation.sendEvent(&Event{
+		Name:   RouteDeactivatedEvent,
+		Object: r,
+	})
+	r.BeginSignal().updateSignalState()
+	go func() {
+		routesDelay := r.simulation.Options.RoutesCancelDelay.Yield()
+		startTime := r.simulation.CurrentTime()
+		for {
+			<-time.After(TimeStep)
+			if r.simulation.CurrentTime().Sub(startTime.Add(routesDelay)) > 0 {
+				break
+			}
+		}
+		r.simulation.deactivatedRoutesChan <- r
+	}()
+	return nil
+}
+
+// doDeactivate sets the route's status to Deactivated at the end of the deactivation process.
+func (r *Route) doDeactivate() {
+	r.activating = false
+	r.Persistent = false
 	r.BeginSignal().resetNextActiveRoute(r)
 	r.EndSignal().resetPreviousActiveRoute(nil)
 	for _, pos := range r.Positions {
@@ -202,7 +235,6 @@ func (r *Route) Deactivate() error {
 		Object: r,
 	})
 	r.BeginSignal().updateSignalState()
-	return nil
 }
 
 // setSimulation sets the Simulation this Route is part of.
