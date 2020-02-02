@@ -75,7 +75,7 @@ type Train struct {
 	ServiceCode    string         `json:"serviceCode"`
 	Speed          float64        `json:"speed"`
 	Status         TrainStatus    `json:"status"`
-	StoppedTime    int            `json:"stoppedTime"`
+	StoppedTime    time.Duration  `json:"stoppedTime"`
 	TrainTypeCode  string         `json:"trainTypeCode"`
 	TrainHead      Position       `json:"trainHead"`
 
@@ -551,11 +551,11 @@ func (t *Train) updateStatus(timeElapsed time.Duration) {
 	}
 	// Train is already stopped at the place
 	if line.ScheduledDepartureTime.Sub(t.simulation.Options.CurrentTime) > 0 ||
-		t.StoppedTime < int(t.minStopTime/time.Second) ||
+		t.StoppedTime < t.minStopTime ||
 		line.ScheduledDepartureTime.IsZero() {
 		// Conditions to depart are not met
 		t.Status = Stopped
-		t.StoppedTime += int(timeElapsed / time.Second)
+		t.StoppedTime += timeElapsed
 		return
 	}
 	// Train departs
