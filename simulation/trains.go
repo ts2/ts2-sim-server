@@ -130,6 +130,24 @@ func (t *Train) TrainTail() Position {
 	return t.TrainHead.Add(-t.TrainType().Length)
 }
 
+// TrainTrackItems returns a list of trackitems occupied by the train
+func (t *Train) trainTrackItems() []TrackItem {
+	return t.TrainTail().trackItemsToPosition(t.TrainHead)
+}
+
+// MaxSpeedForTrainTrackItems returns the lowest speed permitted for the
+//  train's current TrackItems.  Speed will be > 0
+func (t *Train) MaxSpeedForTrainTrackItems() float64 {
+
+	lowestSpeed := t.TrainType().MaxSpeed
+	for _, tti := range t.trainTrackItems() {
+		if tti.MaxSpeed() < lowestSpeed {
+			lowestSpeed = tti.MaxSpeed()
+		}
+	}
+	return math.Min(t.TrainType().MaxSpeed, lowestSpeed)
+}
+
 // MarshalJSON method for the train type
 func (t Train) MarshalJSON() ([]byte, error) {
 	type auxTrain Train

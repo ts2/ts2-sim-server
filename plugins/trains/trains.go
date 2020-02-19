@@ -256,7 +256,7 @@ func calculatedSpeed(t *simulation.Train, targetDistance, targetSpeed float64) f
 
 // getMaxSpeed returns the maximum speed allowed for the train in its current position
 func getMaxSpeed(t *simulation.Train) float64 {
-	return math.Min(t.TrainType().MaxSpeed, t.TrainHead.TrackItem().MaxSpeed())
+	return math.Min(t.TrainType().MaxSpeed, t.MaxSpeedForTrainTrackItems())
 }
 
 var _ simulation.TrainsManager = StandardManager{}

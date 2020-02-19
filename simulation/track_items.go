@@ -21,6 +21,7 @@ package simulation
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"sync"
 )
 
@@ -273,10 +274,22 @@ func (t *trackStruct) PreviousItem() TrackItem {
 
 // MaxSpeed is the maximum allowed speed on this TrackItem in meters per second.
 func (t *trackStruct) MaxSpeed() float64 {
-	if t.TsMaxSpeed == 0 {
-		return t.simulation.Options.DefaultMaxSpeed
+
+	if t.PlaceCode == "" && t.TsMaxSpeed != 0 {
+		return t.TsMaxSpeed
 	}
-	return t.TsMaxSpeed
+	if t.PlaceCode != "" {
+		switch {
+		case t.Place().TsMaxSpeed == 0 && t.TsMaxSpeed != 0:
+			return t.TsMaxSpeed
+		case t.TsMaxSpeed == 0 && t.Place().TsMaxSpeed != 0:
+			return t.Place().TsMaxSpeed
+		case t.TsMaxSpeed != 0 && t.Place().TsMaxSpeed != 0:
+			return math.Min(t.TsMaxSpeed, t.Place().TsMaxSpeed)
+		}
+	}
+	// all other cases, default is the max speed of this sim
+	return t.simulation.Options.DefaultMaxSpeed
 }
 
 // RealLength is the length in meters that this TrackItem has in real life track length
