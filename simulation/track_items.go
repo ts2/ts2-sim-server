@@ -274,7 +274,6 @@ func (t *trackStruct) PreviousItem() TrackItem {
 
 // MaxSpeed is the maximum allowed speed on this TrackItem in meters per second.
 func (t *trackStruct) MaxSpeed() float64 {
-
 	if t.PlaceCode == "" && t.TsMaxSpeed != 0 {
 		return t.TsMaxSpeed
 	}

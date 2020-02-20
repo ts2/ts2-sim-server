@@ -138,7 +138,6 @@ func (t *Train) trainTrackItems() []TrackItem {
 // MaxSpeedForTrainTrackItems returns the lowest speed permitted for the
 //  train's current TrackItems.  Speed will be > 0
 func (t *Train) MaxSpeedForTrainTrackItems() float64 {
-
 	lowestSpeed := t.TrainType().MaxSpeed
 	for _, tti := range t.trainTrackItems() {
 		if tti.MaxSpeed() < lowestSpeed {
