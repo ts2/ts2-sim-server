@@ -273,10 +273,14 @@ func (t *trackStruct) PreviousItem() TrackItem {
 
 // MaxSpeed is the maximum allowed speed on this TrackItem in meters per second.
 func (t *trackStruct) MaxSpeed() float64 {
-	if t.TsMaxSpeed == 0 {
+	switch {
+	case t.TsMaxSpeed != 0:
+		return t.TsMaxSpeed
+	case t.PlaceCode != "" && t.Place().TsMaxSpeed != 0:
+		return t.Place().TsMaxSpeed
+	default:
 		return t.simulation.Options.DefaultMaxSpeed
 	}
-	return t.TsMaxSpeed
 }
 
 // RealLength is the length in meters that this TrackItem has in real life track length
