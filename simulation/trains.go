@@ -378,6 +378,17 @@ func (t *Train) updateSignalActions() {
 		}
 		t.lastSignal = nextSignal
 	}
+	
+	// make sure that at least one signal action is present now
+	// if not, accelerate to maximum speed
+	if len(t.signalActions) == 0 {
+		t.signalActions = []SignalAction{{
+			Target: ASAP,
+			Speed:  VeryHighSpeed,
+		}}
+		t.setActionIndex(0)
+		return
+	}
 
 	currentTime := t.simulation.Options.CurrentTime
 	if math.Abs(t.Speed-t.ApplicableAction().Speed) < 0.1 {
