@@ -31,7 +31,7 @@ type StandardManager struct {
 }
 
 // Direction returns the direction of the points
-func (sm StandardManager) Direction(p *simulation.PointsItem) simulation.PointDirection {
+func (sm *StandardManager) Direction(p *simulation.PointsItem) simulation.PointDirection {
 	sm.RLock()
 	defer sm.RUnlock()
 	return sm.directions[p.ID()]
@@ -54,7 +54,7 @@ func (sm *StandardManager) SetDirection(p *simulation.PointsItem, dir simulation
 }
 
 // Name returns a description of this manager that is used for the UI.
-func (sm StandardManager) Name() string {
+func (sm *StandardManager) Name() string {
 	return "Standard Manager"
 }
 
