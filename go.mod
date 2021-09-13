@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/go-stack/stack v1.8.0 // indirect
-	github.com/gorilla/websocket v1.4.0
+	github.com/gorilla/websocket v1.4.1
 	github.com/mattn/go-colorable v0.1.1 // indirect
 	github.com/mattn/go-isatty v0.0.7 // indirect
 	github.com/rakyll/statik v0.1.6
