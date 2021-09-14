@@ -106,7 +106,7 @@ func (i ItemInconsistentLinkError) Error() string {
 //
 // Every TrackItem has an Origin() Point defined by its X and Y values.
 type TrackItem interface {
-	// routeID returns the unique routeID of this TrackItem, which is the index of this
+	// ID returns the unique ID of this TrackItem, which is the index of this
 	// item in the Simulation's TrackItems map.
 	ID() string
 
@@ -241,7 +241,7 @@ type trackStruct struct {
 	triggers       []func(TrackItem)
 }
 
-// routeID returns the unique routeID of this TrackItem, which is the index of this
+// ID returns the unique ID of this TrackItem, which is the index of this
 // item in the Simulation's TrackItems map.
 func (t *trackStruct) ID() string {
 	return t.tsId
@@ -324,7 +324,7 @@ func (t *trackStruct) TrackCode() string {
 //
 // The second argument will return a ItemsNotLinkedError if the given
 // precedingItem is not linked to this item.
-func (t *trackStruct) FollowingItem(precedingItem TrackItem, dir PointDirection) (TrackItem, error) {
+func (t *trackStruct) FollowingItem(precedingItem TrackItem, _ PointDirection) (TrackItem, error) {
 	if precedingItem == TrackItem(t).PreviousItem() {
 		return t.NextItem(), nil
 	}
@@ -385,14 +385,14 @@ func (t *trackStruct) ActiveRoutePreviousItem() TrackItem {
 }
 
 // trainHeadActions performs the actions to be done when a train head reaches this TrackItem
-func (t *trackStruct) trainHeadActions(train *Train) {
+func (t *trackStruct) trainHeadActions(_ *Train) {
 	for _, trigger := range t.triggers {
 		trigger(t)
 	}
 }
 
 // trainTailActions performs the actions to be done when a train tail reaches this TrackItem
-func (t *trackStruct) trainTailActions(train *Train) {
+func (t *trackStruct) trainTailActions(_ *Train) {
 	for _, trigger := range t.triggers {
 		trigger(t)
 	}
@@ -643,7 +643,7 @@ func (ei *EndItem) Type() TrackItemType {
 	return TypeEnd
 }
 
-// RealLength() is the length in meters that this TrackItem has in real life track length
+// RealLength is the length in meters that this TrackItem has in real life track length
 func (ei *EndItem) RealLength() float64 {
 	return bigFloat
 }
@@ -655,7 +655,7 @@ func (ei *EndItem) MarshalJSON() ([]byte, error) {
 
 var _ TrackItem = new(EndItem)
 
-// PlatformItem's are usually represented as a colored rectangle on the scene to
+// PlatformItem are usually represented as a colored rectangle on the scene to
 // symbolise the platform. This colored rectangle can permit user interaction.
 type PlatformItem struct {
 	LineItem

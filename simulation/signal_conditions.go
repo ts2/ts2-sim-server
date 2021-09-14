@@ -23,7 +23,7 @@ import (
 	"strings"
 )
 
-// nextActiveRoute is true if a route starting from this Signal is active
+// NextActiveRoute is true if a route starting from this Signal is active
 type NextActiveRoute struct{}
 
 // Code of the ConditionType, uniquely defines this ConditionType
@@ -42,7 +42,7 @@ func (nar NextActiveRoute) SetupTriggers(item *SignalItem, params []string) {}
 
 // ---------------------------------------------------------------------------------------------------------------
 
-// previousActiveRoute is true if a route ending at this Signal is active
+// PreviousActiveRoute is true if a route ending at this Signal is active
 type PreviousActiveRoute struct{}
 
 // Code of the ConditionType, uniquely defines this ConditionType

@@ -67,7 +67,7 @@ const minRunningSpeed float64 = 0.25
 // Train is a stock of `TrainType` running on a track at a certain speed and to which
 // is assigned a `Service`.
 type Train struct {
-	trainID        string         `json:"-"`
+	trainID        string
 	AppearTime     Time           `json:"appearTime"`
 	InitialDelay   DelayGenerator `json:"initialDelay"`
 	InitialSpeed   float64        `json:"initialSpeed"`
@@ -379,7 +379,7 @@ func (t *Train) updateSignalActions() {
 		t.lastSignal = nextSignal
 	}
 
-	currentTime := t.simulation.Options.CurrentTime
+	currentTime := t.simulation.Options.CurrentTime()
 	if math.Abs(t.Speed-t.ApplicableAction().Speed) < 0.1 {
 		// We have achieved the action's target speed.
 		if t.actionTime.IsZero() {
@@ -567,7 +567,7 @@ func (t *Train) updateStatus(timeElapsed time.Duration) {
 		return
 	}
 	// Train is already stopped at the place
-	if line.ScheduledDepartureTime.Sub(t.simulation.Options.CurrentTime) > 0 ||
+	if line.ScheduledDepartureTime.Sub(t.simulation.Options.CurrentTime()) > 0 ||
 		t.StoppedTime < t.minStopTime ||
 		line.ScheduledDepartureTime.IsZero() {
 		// Conditions to depart are not met
@@ -635,7 +635,7 @@ func (t *Train) logAndScoreTrainStoppedAtStation() {
 			t.ServiceCode, place.Name(), actualPlatform, plannedPlatform), simulationMsg)
 	}
 	scheduledArrivalTime := serviceLine.ScheduledArrivalTime
-	currentTime := sim.Options.CurrentTime
+	currentTime := sim.Options.CurrentTime()
 	delay := currentTime.Sub(scheduledArrivalTime)
 	if delay > time.Minute {
 		playerDelay := delay - t.effInitialDelay

@@ -54,7 +54,7 @@ type Simulation struct {
 	SignalLib     SignalLibrary
 	TrackItems    map[string]TrackItem
 	Places        map[string]*Place
-	Options       Options
+	Options       *Options
 	Routes        map[string]*Route
 	TrainTypes    map[string]*TrainType
 	Services      map[string]*Service
@@ -73,7 +73,7 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 
 	type auxSim struct {
 		TrackItems    map[string]json.RawMessage
-		Options       Options
+		Options       *Options
 		SignalLib     SignalLibrary         `json:"signalLibrary"`
 		Routes        map[string]*Route     `json:"routes"`
 		TrainTypes    map[string]*TrainType `json:"trainTypes"`
@@ -302,7 +302,7 @@ func (sim *Simulation) run() {
 			return
 		case <-clockTicker.C:
 			sim.increaseTime(timeStep)
-			sim.sendEvent(&Event{Name: ClockEvent, Object: sim.Options.CurrentTime})
+			sim.sendEvent(&Event{Name: ClockEvent, Object: sim.Options.CurrentTime()})
 			sim.updateTrains()
 		}
 	}
@@ -327,9 +327,7 @@ func (sim *Simulation) sendEvent(evt *Event) {
 
 // increaseTime adds the step to the simulation time.
 func (sim *Simulation) increaseTime(step time.Duration) {
-	sim.Options.CurrentTime.Lock()
-	defer sim.Options.CurrentTime.Unlock()
-	sim.Options.CurrentTime = sim.Options.CurrentTime.Add(time.Duration(sim.Options.TimeFactor) * step)
+	sim.Options.IncreaseTime(time.Duration(sim.Options.TimeFactor) * step)
 }
 
 // checks that all TrackItems are linked together.
@@ -371,7 +369,7 @@ func (sim *Simulation) checkTrackItemsLinks() error {
 // updateTrains update all trains information such as status, position, speed, etc.
 func (sim *Simulation) updateTrains() {
 	for _, train := range sim.Trains {
-		train.activate(sim.Options.CurrentTime)
+		train.activate(sim.Options.CurrentTime())
 		if !train.IsActive() {
 			continue
 		}

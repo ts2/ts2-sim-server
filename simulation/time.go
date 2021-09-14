@@ -22,7 +22,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
-	"sync"
 	"time"
 )
 
@@ -130,7 +129,6 @@ func (dg DelayGenerator) IsNull() bool {
 //
 // Valid Time objects start on 0000-01-02.
 type Time struct {
-	sync.RWMutex
 	time.Time
 }
 

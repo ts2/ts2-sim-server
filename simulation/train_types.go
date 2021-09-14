@@ -49,7 +49,7 @@ func (tt *TrainType) initialize(code string) {
 	tt.code = code
 }
 
-// Elements() returns the train types this TrainType is composed of.
+// Elements returns the train types this TrainType is composed of.
 func (tt *TrainType) Elements() []*TrainType {
 	res := make([]*TrainType, 0)
 	for _, code := range tt.ElementsStr {

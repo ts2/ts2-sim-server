@@ -290,7 +290,7 @@ func (si *SignalItem) SignalType() *SignalType {
 	return si.simulation.SignalLib.Types[si.SignalTypeCode]
 }
 
-// Reversed() return true if the SignalItem is for trains coming from the right
+// Reversed return true if the SignalItem is for trains coming from the right
 func (si *SignalItem) Reversed() bool {
 	return si.Reverse
 }

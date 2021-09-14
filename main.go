@@ -78,8 +78,8 @@ OPTIONS:
 	} else {
 		outputHandler = log.StreamHandler(os.Stdout, log.TerminalFormat())
 	}
-	logLvl, err_level := log.LvlFromString(*logLevel)
-	if err_level != nil {
+	logLvl, errLevel := log.LvlFromString(*logLevel)
+	if errLevel != nil {
 		fmt.Fprintf(os.Stderr, "Error: Unknown loglevel\n\n")
 		flag.Usage()
 		os.Exit(1)

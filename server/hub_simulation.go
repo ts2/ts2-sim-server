@@ -42,7 +42,7 @@ func (s *simulationObject) dispatch(h *Hub, req Request, conn *connection) {
 			ch <- NewErrorResponse(req.ID, fmt.Errorf("internal error: %s", err))
 			return
 		}
-		ch <- NewResponse(req.ID, RawJSON(j))
+		ch <- NewResponse(req.ID, j)
 	case "dump":
 		data, err := json.Marshal(sim)
 		if err != nil {
