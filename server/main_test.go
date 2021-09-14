@@ -59,7 +59,7 @@ func clientDial(t *testing.T) *websocket.Conn {
 }
 
 // register dials to the server and logs the client in
-func register(t *testing.T, c *websocket.Conn, ct ClientType, mt ManagerType, token string) error {
+func register(_ *testing.T, c *websocket.Conn, ct ClientType, mt ManagerType, token string) error {
 	loginRequest := RequestRegister{1234, "server", "register", ParamsRegister{ct, mt, token}}
 	if err := c.WriteJSON(loginRequest); err != nil {
 		return err

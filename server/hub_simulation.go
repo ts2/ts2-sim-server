@@ -26,7 +26,7 @@ import (
 type simulationObject struct{}
 
 // dispatch processes requests made on the Simulation object
-func (s *simulationObject) dispatch(h *Hub, req Request, conn *connection) {
+func (s *simulationObject) dispatch(_ *Hub, req Request, conn *connection) {
 	ch := conn.pushChan
 	logger.Debug("Request for simulation received", "submodule", "hub", "object", req.Object, "action", req.Action)
 	switch req.Action {

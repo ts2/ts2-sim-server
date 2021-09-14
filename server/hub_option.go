@@ -26,7 +26,7 @@ import (
 type optionObject struct{}
 
 // dispatch processes requests made on the Option object
-func (s *optionObject) dispatch(h *Hub, req Request, conn *connection) {
+func (s *optionObject) dispatch(_ *Hub, req Request, conn *connection) {
 	ch := conn.pushChan
 	switch req.Action {
 	case "list":

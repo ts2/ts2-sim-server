@@ -98,7 +98,7 @@ func (h *Hub) removeRegistryEntry(req Request, conn *connection) error {
 }
 
 // renotifyClient will resend the last notification for each event and object ID
-func (h *Hub) renotifyClient(req Request, conn *connection) error {
+func (h *Hub) renotifyClient(_ Request, conn *connection) error {
 	h.lastEventsMutex.RLock()
 	defer h.lastEventsMutex.RUnlock()
 	for re, event := range h.lastEvents {

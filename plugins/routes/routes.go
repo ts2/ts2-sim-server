@@ -73,7 +73,7 @@ func (sm StandardManager) CanActivate(r *simulation.Route) error {
 
 // CanDeactivate returns an error if the given route cannot be deactivated.
 // In this implementation, it always returns true.
-func (sm StandardManager) CanDeactivate(r *simulation.Route) error {
+func (sm StandardManager) CanDeactivate(_ *simulation.Route) error {
 	return nil
 }
 

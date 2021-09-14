@@ -24,7 +24,7 @@ import "github.com/ts2/ts2-sim-server/simulation"
 type StandardManager struct{}
 
 // IsFailed returns whether the track circuit of the given line item is failed or not
-func (sm StandardManager) IsFailed(p *simulation.LineItem) bool {
+func (sm StandardManager) IsFailed(_ *simulation.LineItem) bool {
 	return false
 }
 

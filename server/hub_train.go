@@ -28,7 +28,7 @@ import (
 type trainObject struct{}
 
 // dispatch processes requests made on the Service object
-func (t *trainObject) dispatch(h *Hub, req Request, conn *connection) {
+func (t *trainObject) dispatch(_ *Hub, req Request, conn *connection) {
 	logger.Debug("Request for train received", "submodule", "hub", "object", req.Object, "action", req.Action)
 	ch := conn.pushChan
 	switch req.Action {

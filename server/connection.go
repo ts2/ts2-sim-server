@@ -37,7 +37,7 @@ type ManagerType string
 
 // connection is a wrapper around the websocket.Conn
 type connection struct {
-	websocket.Conn
+	*websocket.Conn
 	// pushChan is the channel on which pushed messaged are sent
 	pushChan    chan interface{}
 	clientType  ClientType

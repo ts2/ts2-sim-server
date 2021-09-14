@@ -28,7 +28,7 @@ import (
 type placeObject struct{}
 
 // dispatch processes requests made on the Place object
-func (s *placeObject) dispatch(h *Hub, req Request, conn *connection) {
+func (s *placeObject) dispatch(_ *Hub, req Request, conn *connection) {
 	ch := conn.pushChan
 	switch req.Action {
 	case "list":

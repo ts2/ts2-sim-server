@@ -28,7 +28,7 @@ import (
 type serviceObject struct{}
 
 // dispatch processes requests made on the Service object
-func (s *serviceObject) dispatch(h *Hub, req Request, conn *connection) {
+func (s *serviceObject) dispatch(_ *Hub, req Request, conn *connection) {
 	ch := conn.pushChan
 	switch req.Action {
 	case "list":

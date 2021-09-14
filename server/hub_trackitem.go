@@ -28,7 +28,7 @@ import (
 type trackItemObject struct{}
 
 // dispatch processes requests made on the TrackItem object
-func (s *trackItemObject) dispatch(h *Hub, req Request, conn *connection) {
+func (s *trackItemObject) dispatch(_ *Hub, req Request, conn *connection) {
 	ch := conn.pushChan
 	switch req.Action {
 	case "list":

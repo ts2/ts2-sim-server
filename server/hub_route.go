@@ -28,7 +28,7 @@ import (
 type routeObject struct{}
 
 // dispatch processes requests made on the route object
-func (r *routeObject) dispatch(h *Hub, req Request, conn *connection) {
+func (r *routeObject) dispatch(_ *Hub, req Request, conn *connection) {
 	ch := conn.pushChan
 	switch req.Action {
 	case "list":
