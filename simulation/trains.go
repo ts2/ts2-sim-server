@@ -112,6 +112,15 @@ func (t *Train) initialize(id string) {
 	if t.trainManager == nil {
 		t.trainManager = defaultTrainManager
 	}
+	if t.Status == Running || t.Status == Stopped || t.Status == Waiting {
+		// Signal actions update
+		t.signalActions = []SignalAction{{
+			Target: ASAP,
+			Speed:  VeryHighSpeed,
+		}}
+		t.setActionIndex(0)
+		t.updateSignalActions()
+	}
 }
 
 // Service returns a pointer to the Service assigned to this Train, or nil if no
