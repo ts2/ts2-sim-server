@@ -64,6 +64,16 @@ func TestHub(t *testing.T) {
 	// Wait for server to come up
 	time.Sleep(100 * time.Millisecond)
 	Convey("Testing hub functions", t, func() {
+		stopChan := make(chan struct{})
+		// Creating a few concurrent connections
+		for i := 0; i < 10; i ++ {
+			go func() {
+				conn := clientDial(t)
+				defer conn.Close()
+				register(t, conn, Client, "", "client-secret")
+				<- stopChan
+			}()
+		}
 		c := clientDial(t)
 		err := register(t, c, Client, "", "client-secret")
 		So(err, ShouldBeNil)
@@ -743,6 +753,7 @@ func TestHub(t *testing.T) {
 		})
 		Reset(func() {
 			err := c.Close()
+			close(stopChan)
 			So(err, ShouldBeNil)
 		})
 	})

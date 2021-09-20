@@ -30,6 +30,16 @@ func TestConnection(t *testing.T) {
 	// Wait for server to come up
 	time.Sleep(2 * time.Second)
 	Convey("Testing server connection", t, func() {
+		stopChan := make(chan struct{})
+		// Creating a few concurrent connections
+		for i := 0; i < 10; i ++ {
+			go func() {
+				conn := clientDial(t)
+				defer conn.Close()
+				register(t, conn, Client, "", "client-secret")
+				<- stopChan
+			}()
+		}
 		c := clientDial(t)
 		Convey("Login test", func() {
 			Convey("First request that is not a register request should fail", func() {
@@ -70,6 +80,7 @@ func TestConnection(t *testing.T) {
 		})
 		Reset(func() {
 			err := c.Close()
+			close(stopChan)
 			So(err, ShouldBeNil)
 		})
 	})
