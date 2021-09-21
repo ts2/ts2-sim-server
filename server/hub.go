@@ -62,21 +62,28 @@ func (h *Hub) run(hubUp chan bool) {
 	)
 	for {
 		select {
-		case e = <-sim.EventChan:
-			logger.Debug("Received event from simulation", "submodule", "hub", "event", e.Name, "object", e.Object)
-			if e.Name == simulation.ClockEvent {
-				sim.ProcessTimeStep()
-			}
-			h.notifyClients(e)
 		case c = <-h.readChan:
 			logger.Debug("Reading request from client", "submodule", "hub", "data", c.getRequest())
 			h.dispatchObject(c)
+		default:
+		}
+		select {
 		case c = <-h.registerChan:
 			logger.Debug("Registering connection", "submodule", "hub", "connection", c.RemoteAddr())
 			h.register(c)
 		case c = <-h.unregisterChan:
 			logger.Info("Unregistering connection", "submodule", "hub", "connection", c.RemoteAddr())
 			h.unregister(c)
+		default:
+		}
+		select {
+		case e = <-sim.EventChan:
+			logger.Debug("Received event from simulation", "submodule", "hub", "event", e.Name, "object", e.Object)
+			if e.Name == simulation.ClockEvent {
+				sim.ProcessTimeStep()
+			}
+			h.notifyClients(e)
+		default:
 		}
 	}
 }
@@ -108,7 +115,7 @@ func (h *Hub) removeEntryFromRegistry(conn *connection, eventName simulation.Eve
 func (h *Hub) removeConnectionFromRegistry(conn *connection) {
 	for re, rv := range h.registry {
 		if _, ok := rv[conn]; ok {
-			delete(h.registry, re)
+			delete(h.registry[re], conn)
 		}
 	}
 }
