@@ -60,7 +60,7 @@ type Simulation struct {
 	Services      map[string]*Service
 	Trains        []*Train
 	MessageLogger *MessageLogger
-	EventChan     chan *Event
+	EventChan     chan Event
 
 	clockTicker *time.Ticker
 	stopChan    chan bool
@@ -82,7 +82,7 @@ func (sim *Simulation) UnmarshalJSON(data []byte) error {
 		MessageLogger *MessageLogger        `json:"messageLogger"`
 	}
 
-	sim.EventChan = make(chan *Event)
+	sim.EventChan = make(chan Event)
 	sim.stopChan = make(chan bool)
 
 	var rawSim auxSim
@@ -286,7 +286,7 @@ func (sim *Simulation) Start() {
 	}
 	sim.started = true
 	go sim.run()
-	sim.sendEvent(&Event{Name: StateChangedEvent, Object: BoolObject{Value: true}})
+	sim.sendEvent(Event{Name: StateChangedEvent, Object: BoolObject{Value: true}})
 	Logger.Info("Simulation started")
 }
 
@@ -297,13 +297,12 @@ func (sim *Simulation) run() {
 		select {
 		case <-sim.stopChan:
 			clockTicker.Stop()
-			sim.sendEvent(&Event{Name: StateChangedEvent, Object: BoolObject{Value: false}})
+			sim.sendEvent(Event{Name: StateChangedEvent, Object: BoolObject{Value: false}})
 			Logger.Info("Simulation paused")
 			return
 		case <-clockTicker.C:
 			sim.increaseTime(timeStep)
-			sim.sendEvent(&Event{Name: ClockEvent, Object: sim.Options.CurrentTime()})
-			sim.updateTrains()
+			sim.sendEvent(Event{Name: ClockEvent, Object: sim.Options.CurrentTime()})
 		}
 	}
 }
@@ -321,13 +320,20 @@ func (sim *Simulation) IsStarted() bool {
 
 // sendEvent sends the given event on the event channel to notify clients.
 // Sending is done asynchronously so as not to block.
-func (sim *Simulation) sendEvent(evt *Event) {
-	sim.EventChan <- evt
+func (sim *Simulation) sendEvent(evt Event) {
+	go func() {
+		sim.EventChan <- evt
+	}()
 }
 
 // increaseTime adds the step to the simulation time.
 func (sim *Simulation) increaseTime(step time.Duration) {
 	sim.Options.IncreaseTime(time.Duration(sim.Options.TimeFactor) * step)
+}
+
+// ProcessTimeStep is called from the hub goroutine to update the simulation after a time change
+func (sim *Simulation) ProcessTimeStep() {
+	sim.updateTrains()
 }
 
 // checks that all TrackItems are linked together.
@@ -380,7 +386,7 @@ func (sim *Simulation) updateTrains() {
 // updateScore updates the score by adding penalty and notifiying clients
 func (sim *Simulation) updateScore(penalty int) {
 	sim.Options.CurrentScore += penalty
-	sim.sendEvent(&Event{
+	sim.sendEvent(Event{
 		Name:   OptionsChangedEvent,
 		Object: sim.Options,
 	})

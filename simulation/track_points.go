@@ -192,7 +192,7 @@ func (pi *PointsItem) setActiveRoute(r *Route, previous TrackItem) {
 	}
 	// Send event for pairedItem
 	if pi.PairedItem() != nil {
-		pi.simulation.sendEvent(&Event{
+		pi.simulation.sendEvent(Event{
 			Name:   TrackItemChangedEvent,
 			Object: pi.PairedItem(),
 		})

@@ -72,3 +72,27 @@ func register(_ *testing.T, c *websocket.Conn, ct ClientType, mt ManagerType, to
 		return fmt.Errorf(expectedResponse.Data.Message)
 	}
 }
+
+// addListener for the given event
+func addListener(t *testing.T, c *websocket.Conn, event simulation.EventName) {
+	err := c.WriteJSON(RequestListener{
+		Object: "server",
+		Action: "addListener",
+		Params: ParamsListener{
+			Event: event,
+		},
+	})
+	if err != nil {
+		t.Error(err)
+	}
+	var resp ResponseStatus
+	for resp.MsgType != TypeResponse {
+		err = c.ReadJSON(&resp)
+		if err != nil {
+			t.Error(err)
+		}
+	}
+	if resp.Data.Status != Ok {
+		t.Errorf("error while setting up listener: %v", resp)
+	}
+}

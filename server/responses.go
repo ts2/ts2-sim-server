@@ -19,6 +19,7 @@
 package server
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/ts2/ts2-sim-server/simulation"
@@ -62,7 +63,7 @@ type ResponseStatus struct {
 // DataEvent is the Data part of a ResponseNotification message
 type DataEvent struct {
 	Name   simulation.EventName `json:"name"`
-	Object interface{}          `json:"object"`
+	Object RawJSON              `json:"object"`
 }
 
 // ResponseNotification is a message sent by the server to the clients when an event is triggered in the simulation
@@ -72,17 +73,17 @@ type ResponseNotification struct {
 }
 
 // NewResponse returns a Response with the given data
-func NewResponse(id int, data RawJSON) *Response {
+func NewResponse(id int, data RawJSON) Response {
 	r := Response{
 		ID:      id,
 		MsgType: TypeResponse,
 		Data:    data,
 	}
-	return &r
+	return r
 }
 
 // NewErrorResponse returns a ResponseStatus object corresponding to the given error.
-func NewErrorResponse(id int, e error) *ResponseStatus {
+func NewErrorResponse(id int, e error) ResponseStatus {
 	sr := ResponseStatus{
 		ID:      id,
 		MsgType: TypeResponse,
@@ -91,11 +92,11 @@ func NewErrorResponse(id int, e error) *ResponseStatus {
 			fmt.Sprintf("Error: %s", e),
 		},
 	}
-	return &sr
+	return sr
 }
 
 // NewOkResponse returns a new ResponseStatus object with OK status and empty message.
-func NewOkResponse(id int, msg string) *ResponseStatus {
+func NewOkResponse(id int, msg string) ResponseStatus {
 	sr := ResponseStatus{
 		ID:      id,
 		MsgType: TypeResponse,
@@ -104,17 +105,18 @@ func NewOkResponse(id int, msg string) *ResponseStatus {
 			msg,
 		},
 	}
-	return &sr
+	return sr
 }
 
 // NewNotificationResponse returns a new ResponseNotification object from the given Event
-func NewNotificationResponse(e *simulation.Event) *ResponseNotification {
+func NewNotificationResponse(e simulation.Event) ResponseNotification {
+	objRaw, _ := json.Marshal(e.Object)
 	er := ResponseNotification{
 		MsgType: TypeNotification,
 		Data: DataEvent{
 			Name:   e.Name,
-			Object: e.Object,
+			Object: objRaw,
 		},
 	}
-	return &er
+	return er
 }

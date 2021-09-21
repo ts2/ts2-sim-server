@@ -68,6 +68,8 @@ func TestSimulationRun(t *testing.T) {
 			So(sim.TrackItems["3"].(*simulation.SignalItem).ActiveAspect().Name, ShouldEqual, "UK_CLEAR")
 			sim.Start()
 			time.Sleep(600 * time.Millisecond)
+			// We need to do this manually because there is no hub
+			sim.ProcessTimeStep()
 			sim.Pause()
 			sim.Options.TrackCircuitBased = true
 			So(sim.Options.CurrentTime(), ShouldResemble, simulation.ParseTime("06:00:02.5"))
@@ -90,7 +92,10 @@ func TestSimulationRun(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(sim.TrackItems["5"].(*simulation.SignalItem).ActiveAspect().Name, ShouldEqual, "UK_DANGER")
 			sim.Start()
-			time.Sleep(7 * time.Second)
+			for i := 0; i < 14; i++ {
+				time.Sleep(500 * time.Millisecond)
+				sim.ProcessTimeStep()
+			}
 			sim.Pause()
 			So(sim.TrackItems["5"].(*simulation.SignalItem).ActiveAspect().Name, ShouldEqual, "UK_CAUTION")
 			So(sim.TrackItems["3"].(*simulation.SignalItem).ActiveAspect().Name, ShouldEqual, "UK_CLEAR")

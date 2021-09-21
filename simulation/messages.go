@@ -61,7 +61,7 @@ func (ml *MessageLogger) addMessage(msg string, typ MessageType) {
 	if Logger != nil {
 		Logger.Info(msg, "msgType", typ)
 	}
-	ml.simulation.sendEvent(&Event{
+	ml.simulation.sendEvent(Event{
 		Name:   MessageReceivedEvent,
 		Object: newMsg,
 	})

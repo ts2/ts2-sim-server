@@ -23,6 +23,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"sync"
 
 	"github.com/gorilla/websocket"
 )
@@ -38,11 +39,12 @@ type ManagerType string
 // connection is a wrapper around the websocket.Conn
 type connection struct {
 	*websocket.Conn
+	sync.RWMutex
 	// pushChan is the channel on which pushed messaged are sent
 	pushChan    chan interface{}
 	clientType  ClientType
-	ManagerType ManagerType
-	Requests    []Request
+	managerType ManagerType
+	requests    []Request
 }
 
 // loop starts the reading and writing loops of the connection.
@@ -82,7 +84,7 @@ func (conn *connection) processRead(ctx context.Context) {
 				continue
 			}
 		}
-		conn.Requests = append(conn.Requests, req)
+		conn.appendRequest(req)
 		hub.readChan <- conn
 	}
 }
@@ -130,8 +132,31 @@ func (conn *connection) registerClient() (error, *Request) {
 		logger.Info("Error while writing", "connection", conn.RemoteAddr(), "request", "NewOkResponse", "error", err)
 	}
 	hub.registerChan <- conn
-	logger.Info("Registered client", "connection", conn.RemoteAddr(), "clientType", conn.clientType, "managerType", conn.ManagerType)
+	logger.Info("Registered client", "connection", conn.RemoteAddr(), "clientType", conn.clientType, "managerType", conn.managerType)
 	return nil, req
+}
+
+// popRequest pops the first request of this connection
+func (conn *connection) popRequest() Request {
+	conn.Lock()
+	defer conn.Unlock()
+	req := conn.requests[0]
+	conn.requests = conn.requests[1:]
+	return req
+}
+
+// getRequest returns the first request of this connection
+func (conn *connection) getRequest() Request {
+	conn.RLock()
+	defer conn.RUnlock()
+	return conn.requests[0]
+}
+
+// appendRequest appends the given request to the requests list
+func (conn *connection) appendRequest(req Request) {
+	conn.Lock()
+	defer conn.Unlock()
+	conn.requests = append(conn.requests, req)
 }
 
 // Close terminates the websocket connection and closes associated resources

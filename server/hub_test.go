@@ -33,6 +33,8 @@ import (
 	"github.com/ts2/ts2-sim-server/simulation"
 )
 
+const nbGoroutines = 10
+
 type trackStruct struct {
 	ID           string  `json:"id"`
 	TiType       string  `json:"__type__"`
@@ -66,12 +68,26 @@ func TestHub(t *testing.T) {
 	Convey("Testing hub functions", t, func() {
 		stopChan := make(chan struct{})
 		// Creating a few concurrent connections
-		for i := 0; i < 10; i ++ {
+		for i := 0; i < nbGoroutines; i++ {
 			go func() {
 				conn := clientDial(t)
-				defer conn.Close()
-				register(t, conn, Client, "", "client-secret")
-				<- stopChan
+				defer func() {
+					if err := conn.Close(); err != nil {
+						t.Error(err)
+					}
+				}()
+				if err := register(t, conn, Client, "", "client-secret"); err != nil {
+					t.Error(err)
+				}
+				addListener(t, conn, simulation.TrackItemChangedEvent)
+				addListener(t, conn, simulation.RouteActivatedEvent)
+				addListener(t, conn, simulation.RouteDeactivatedEvent)
+				addListener(t, conn, simulation.ClockEvent)
+				addListener(t, conn, simulation.TrainChangedEvent)
+				addListener(t, conn, simulation.MessageReceivedEvent)
+				addListener(t, conn, simulation.OptionsChangedEvent)
+				addListener(t, conn, simulation.StateChangedEvent)
+				<-stopChan
 			}()
 		}
 		c := clientDial(t)

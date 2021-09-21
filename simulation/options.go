@@ -59,7 +59,7 @@ func (o *Options) ID() string {
 // option can be either the struct field name or the json key of the struct field.
 func (o *Options) Set(option string, value interface{}) error {
 	defer func() {
-		o.simulation.sendEvent(&Event{Name: OptionsChangedEvent, Object: o})
+		o.simulation.sendEvent(Event{Name: OptionsChangedEvent, Object: o})
 	}()
 	if value == nil {
 		return fmt.Errorf("option %s cannot have nil value", option)

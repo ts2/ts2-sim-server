@@ -137,7 +137,7 @@ func (r *Route) Activate(persistent bool) error {
 	for _, t := range r.triggers {
 		t(r)
 	}
-	r.simulation.sendEvent(&Event{
+	r.simulation.sendEvent(Event{
 		Name:   RouteActivatedEvent,
 		Object: r,
 	})
@@ -163,7 +163,7 @@ func (r *Route) Deactivate() error {
 	for _, t := range r.triggers {
 		t(r)
 	}
-	r.simulation.sendEvent(&Event{
+	r.simulation.sendEvent(Event{
 		Name:   RouteDeactivatedEvent,
 		Object: r,
 	})
