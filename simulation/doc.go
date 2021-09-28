@@ -16,5 +16,5 @@
 // Free Software Foundation, Inc.,
 // 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-// package simulation contains core logic of ts2
+// Package simulation contains core logic of ts2
 package simulation

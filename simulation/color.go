@@ -23,12 +23,12 @@ import (
 	"fmt"
 )
 
-// A Colour stored as RGB values
+// A Color stored as RGB values
 type Color struct {
 	R, G, B uint8
 }
 
-// Implement the Go color.Color interface.
+// RGBA implements the Go color.Color interface.
 func (c Color) RGBA() (r, g, b, a uint32) {
 	r = uint32(c.R)
 	g = uint32(c.G)
@@ -37,12 +37,12 @@ func (c Color) RGBA() (r, g, b, a uint32) {
 	return
 }
 
-// Color.Hex() returns the hex "html" representation of the color, as in #ff0080.
+// Hex returns the hex "html" representation of the color, as in #ff0080.
 func (c Color) Hex() string {
-	return fmt.Sprintf("#%02x%02x%02x", uint8(c.R), uint8(c.G), uint8(c.B))
+	return fmt.Sprintf("#%02x%02x%02x", c.R, c.G, c.B)
 }
 
-// FromHex() parses a "css/html" hex color-string, either in the 3 "#f0c" or 6 "#ff1034" digits form.
+// FromHex parses a "css/html" hex color-string, either in the 3 "#f0c" or 6 "#ff1034" digits form.
 func FromHex(scol string) (Color, error) {
 	format := "#%02x%02x%02x"
 

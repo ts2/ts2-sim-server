@@ -28,7 +28,7 @@ import (
 type trainTypeObject struct{}
 
 // dispatch processes requests made on the TrainType object
-func (s *trainTypeObject) dispatch(h *Hub, req Request, conn *connection) {
+func (s *trainTypeObject) dispatch(_ *Hub, req Request, conn *connection) {
 	ch := conn.pushChan
 	switch req.Action {
 	case "list":

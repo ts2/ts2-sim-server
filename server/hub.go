@@ -20,7 +20,6 @@ package server
 
 import (
 	"fmt"
-	"sync"
 
 	"github.com/ts2/ts2-sim-server/simulation"
 )
@@ -33,14 +32,8 @@ type Hub struct {
 	// Registry of client listeners
 	registry map[registryEntry]map[*connection]bool
 
-	// registryMutex protects the registry
-	registryMutex sync.RWMutex
-
 	// lastEvents holds the last event sent for each registryEntry
-	lastEvents map[registryEntry]*simulation.Event
-
-	// lastEventsMutex protects the lastEvents map
-	lastEventsMutex sync.RWMutex
+	lastEvents map[registryEntry]simulation.Event
 
 	// Register requests from the connection
 	registerChan chan *connection
@@ -64,28 +57,31 @@ func (h *Hub) run(hubUp chan bool) {
 
 	hubUp <- true
 	var (
-		e *simulation.Event
+		e simulation.Event
 		c *connection
 	)
 	for {
 		select {
-		case e = <-sim.EventChan:
-			logger.Debug("Received event from simulation", "submodule", "hub", "event", e.Name, "object", e.Object)
-			h.notifyClients(e)
 		case c = <-h.readChan:
-			logger.Debug("Reading request from client", "submodule", "hub", "data", c.Requests[0])
-			go h.dispatchObject(c)
+			logger.Debug("Reading request from client", "submodule", "hub", "data", c.getRequest())
+			h.dispatchObject(c)
 		case c = <-h.registerChan:
 			logger.Debug("Registering connection", "submodule", "hub", "connection", c.RemoteAddr())
 			h.register(c)
 		case c = <-h.unregisterChan:
 			logger.Info("Unregistering connection", "submodule", "hub", "connection", c.RemoteAddr())
 			h.unregister(c)
+		case e = <-sim.EventChan:
+			logger.Debug("Received event from simulation", "submodule", "hub", "event", e.Name, "object", e.Object)
+			if e.Name == simulation.ClockEvent {
+				sim.ProcessTimeStep()
+			}
+			h.notifyClients(e)
 		}
 	}
 }
 
-// register registers the given connection to this hub
+// register the given connection to this hub
 func (h *Hub) register(c *connection) {
 	switch c.clientType {
 	case Client:
@@ -95,8 +91,6 @@ func (h *Hub) register(c *connection) {
 
 // addConnectionToRegistry adds this connection to the registry for eventName and id.
 func (h *Hub) addConnectionToRegistry(conn *connection, eventName simulation.EventName, id string) {
-	h.registryMutex.Lock()
-	defer h.registryMutex.Unlock()
 	re := registryEntry{eventName: eventName, id: id}
 	if _, ok := h.registry[re]; !ok {
 		h.registry[re] = make(map[*connection]bool)
@@ -106,24 +100,20 @@ func (h *Hub) addConnectionToRegistry(conn *connection, eventName simulation.Eve
 
 // removeEntryFromRegistry removes this connection from the registry for eventName and id.
 func (h *Hub) removeEntryFromRegistry(conn *connection, eventName simulation.EventName, id string) {
-	h.registryMutex.Lock()
-	defer h.registryMutex.Unlock()
 	re := registryEntry{eventName: eventName, id: id}
 	delete(h.registry[re], conn)
 }
 
 // removeConnectionFromRegistry removes all entries of this connection in the registry.
 func (h *Hub) removeConnectionFromRegistry(conn *connection) {
-	h.registryMutex.Lock()
-	defer h.registryMutex.Unlock()
 	for re, rv := range h.registry {
 		if _, ok := rv[conn]; ok {
-			delete(h.registry, re)
+			delete(h.registry[re], conn)
 		}
 	}
 }
 
-// unregister unregisters the connection to this hub
+// unregister the connection to this hub
 func (h *Hub) unregister(c *connection) {
 	switch c.clientType {
 	case Client:
@@ -135,14 +125,16 @@ func (h *Hub) unregister(c *connection) {
 }
 
 // notifyClients sends the given event to all registered clients.
-func (h *Hub) notifyClients(e *simulation.Event) {
+func (h *Hub) notifyClients(e simulation.Event) {
 	logger.Debug("Notifying clients", "submodule", "hub", "event", e)
 	h.updateLastEvents(e)
-	h.registryMutex.RLock()
-	defer h.registryMutex.RUnlock()
 	// Notify clients that subscribed to all objects
 	for conn := range h.registry[registryEntry{eventName: e.Name, id: ""}] {
-		conn.pushChan <- NewNotificationResponse(e)
+		resp := NewNotificationResponse(e)
+		// Send notification in another goroutine so as not to block
+		go func(c* connection) {
+			c.pushChan <- resp
+		}(conn)
 	}
 	if e.Object.ID() == "" {
 		// Object has no ID. Don't send twice
@@ -150,24 +142,22 @@ func (h *Hub) notifyClients(e *simulation.Event) {
 	}
 	// Notify clients that subscribed to specific object IDs
 	for conn := range h.registry[registryEntry{eventName: e.Name, id: e.Object.ID()}] {
-		conn.pushChan <- NewNotificationResponse(e)
+		resp := NewNotificationResponse(e)
+		// Send notification in another goroutine so as not to block
+		go func(c* connection) {
+			c.pushChan <- resp
+		}(conn)
 	}
 }
 
 // updateLastEvents updates the lastEvents map in a concurrently safe way
-func (h *Hub) updateLastEvents(e *simulation.Event) {
-	h.lastEventsMutex.Lock()
-	defer h.lastEventsMutex.Unlock()
+func (h *Hub) updateLastEvents(e simulation.Event) {
 	h.lastEvents[registryEntry{eventName: e.Name, id: e.Object.ID()}] = e
 }
 
 // dispatchObject process a request.
-//
-// - req is the request to process
-// - ch is the channel on which to send the response
 func (h *Hub) dispatchObject(conn *connection) {
-	req := conn.Requests[0]
-	conn.Requests = conn.Requests[1:]
+	req := conn.popRequest()
 	obj, ok := h.objects[req.Object]
 	if !ok {
 		conn.pushChan <- NewErrorResponse(req.ID, fmt.Errorf("unknown object %s", req.Object))
@@ -184,7 +174,7 @@ func newHub() *Hub {
 	h.clientConnections = make(map[*connection]bool)
 	// make registry map
 	h.registry = make(map[registryEntry]map[*connection]bool)
-	h.lastEvents = make(map[registryEntry]*simulation.Event)
+	h.lastEvents = make(map[registryEntry]simulation.Event)
 	// make channels
 	h.registerChan = make(chan *connection)
 	h.unregisterChan = make(chan *connection)

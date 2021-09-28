@@ -67,7 +67,7 @@ const minRunningSpeed float64 = 0.25
 // Train is a stock of `TrainType` running on a track at a certain speed and to which
 // is assigned a `Service`.
 type Train struct {
-	trainID        string         `json:"-"`
+	trainID        string
 	AppearTime     Time           `json:"appearTime"`
 	InitialDelay   DelayGenerator `json:"initialDelay"`
 	InitialSpeed   float64        `json:"initialSpeed"`
@@ -111,6 +111,15 @@ func (t *Train) initialize(id string) {
 	t.minStopTime = t.simulation.Options.DefaultMinimumStopTime.Yield()
 	if t.trainManager == nil {
 		t.trainManager = defaultTrainManager
+	}
+	if t.Status == Running || t.Status == Stopped || t.Status == Waiting {
+		// Signal actions update
+		t.signalActions = []SignalAction{{
+			Target: ASAP,
+			Speed:  VeryHighSpeed,
+		}}
+		t.setActionIndex(0)
+		t.updateSignalActions()
 	}
 }
 
@@ -218,7 +227,7 @@ func (t *Train) advance(timeElapsed time.Duration) {
 	t.TrainHead = t.TrainHead.Add(advanceLength)
 	t.updateStatus(timeElapsed)
 	t.executeActions(advanceLength)
-	t.simulation.sendEvent(&Event{
+	t.simulation.sendEvent(Event{
 		Name:   TrainChangedEvent,
 		Object: t,
 	})
@@ -255,7 +264,7 @@ func (t *Train) executeActions(advanceLength float64) {
 		t.logAndScoreTrainExited()
 	}
 	for ti := range toNotify {
-		t.simulation.sendEvent(&Event{
+		t.simulation.sendEvent(Event{
 			Name:   TrackItemChangedEvent,
 			Object: ti,
 		})
@@ -265,8 +274,6 @@ func (t *Train) executeActions(advanceLength float64) {
 // updateItemWithTrainHead updates the knowledge of this trackItem about this train's Head,
 // knowing that this item is between the former head and the current head of the train.
 func (t *Train) updateItemWithTrainHead(ti TrackItem) {
-	ti.underlying().trainEndMutex.Lock()
-	defer ti.underlying().trainEndMutex.Unlock()
 	ti.underlying().trainEndsFW[t] = ti.RealLength()
 	ti.underlying().trainEndsBK[t] = 0
 	if t.simulation.Options.TrackCircuitBased {
@@ -284,8 +291,6 @@ func (t *Train) updateItemWithTrainHead(ti TrackItem) {
 // updateItemWithTrainTail updates the knowledge of this trackItem about this train's Tail,
 // knowing that this item is between the former tail and the current tail of the train.
 func (t *Train) updateItemWithTrainTail(ti TrackItem) {
-	ti.underlying().trainEndMutex.Lock()
-	defer ti.underlying().trainEndMutex.Unlock()
 	if !ti.Equals(t.TrainHead.TrackItem()) {
 		delete(ti.underlying().trainEndsBK, t)
 		delete(ti.underlying().trainEndsFW, t)
@@ -379,7 +384,7 @@ func (t *Train) updateSignalActions() {
 		t.lastSignal = nextSignal
 	}
 
-	currentTime := t.simulation.Options.CurrentTime
+	currentTime := t.simulation.Options.CurrentTime()
 	if math.Abs(t.Speed-t.ApplicableAction().Speed) < 0.1 {
 		// We have achieved the action's target speed.
 		if t.actionTime.IsZero() {
@@ -483,7 +488,7 @@ func (t *Train) AssignService(srv string) error {
 	} else {
 		t.Status = Running
 	}
-	t.simulation.sendEvent(&Event{
+	t.simulation.sendEvent(Event{
 		Name:   TrainChangedEvent,
 		Object: t,
 	})
@@ -555,7 +560,7 @@ func (t *Train) updateStatus(timeElapsed time.Duration) {
 		// Train just stopped
 		t.Status = Stopped
 		t.StoppedTime = 0
-		t.simulation.sendEvent(&Event{
+		t.simulation.sendEvent(Event{
 			Name:   TrainStoppedAtStationEvent,
 			Object: t,
 		})
@@ -567,7 +572,7 @@ func (t *Train) updateStatus(timeElapsed time.Duration) {
 		return
 	}
 	// Train is already stopped at the place
-	if line.ScheduledDepartureTime.Sub(t.simulation.Options.CurrentTime) > 0 ||
+	if line.ScheduledDepartureTime.Sub(t.simulation.Options.CurrentTime()) > 0 ||
 		t.StoppedTime < t.minStopTime ||
 		line.ScheduledDepartureTime.IsZero() {
 		// Conditions to depart are not met
@@ -583,7 +588,7 @@ func (t *Train) updateStatus(timeElapsed time.Duration) {
 		if t.TrainHead.TrackItem().Place().PlaceCode != t.Service().Lines[t.NextPlaceIndex].PlaceCode {
 			// The first scheduled place of this new service is not here, so we depart
 			t.Status = Running
-			t.simulation.sendEvent(&Event{
+			t.simulation.sendEvent(Event{
 				Name:   TrainDepartedFromStationEvent,
 				Object: t,
 			})
@@ -600,7 +605,7 @@ func (t *Train) updateStatus(timeElapsed time.Duration) {
 	}
 	// There are still places to call at
 	t.Status = Running
-	t.simulation.sendEvent(&Event{
+	t.simulation.sendEvent(Event{
 		Name:   TrainDepartedFromStationEvent,
 		Object: t,
 	})
@@ -635,7 +640,7 @@ func (t *Train) logAndScoreTrainStoppedAtStation() {
 			t.ServiceCode, place.Name(), actualPlatform, plannedPlatform), simulationMsg)
 	}
 	scheduledArrivalTime := serviceLine.ScheduledArrivalTime
-	currentTime := sim.Options.CurrentTime
+	currentTime := sim.Options.CurrentTime()
 	delay := currentTime.Sub(scheduledArrivalTime)
 	if delay > time.Minute {
 		playerDelay := delay - t.effInitialDelay

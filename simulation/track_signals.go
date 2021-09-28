@@ -290,7 +290,7 @@ func (si *SignalItem) SignalType() *SignalType {
 	return si.simulation.SignalLib.Types[si.SignalTypeCode]
 }
 
-// Reversed() return true if the SignalItem is for trains coming from the right
+// Reversed return true if the SignalItem is for trains coming from the right
 func (si *SignalItem) Reversed() bool {
 	return si.Reverse
 }
@@ -316,7 +316,7 @@ func (si *SignalItem) setActiveRoute(r *Route, previous TrackItem) {
 // setTrainID sets the train associated with this signal train to display in berth.
 func (si *SignalItem) setTrain(t *Train) {
 	si.train = t
-	si.simulation.sendEvent(&Event{
+	si.simulation.sendEvent(Event{
 		Name:   TrackItemChangedEvent,
 		Object: si,
 	})
@@ -439,7 +439,7 @@ func (si *SignalItem) updateSignalState(previous ...bool) {
 		si.activeAspect = signalItemManager.GetAspect(si)
 	}
 	if !oldAspect.Equals(si.activeAspect) {
-		si.simulation.sendEvent(&Event{
+		si.simulation.sendEvent(Event{
 			Name:   SignalaspectChangedEvent,
 			Object: si,
 		})
@@ -449,7 +449,7 @@ func (si *SignalItem) updateSignalState(previous ...bool) {
 	if previousSignal != nil {
 		previousSignal.updateSignalState(append(previous, true)...)
 	}
-	si.simulation.sendEvent(&Event{
+	si.simulation.sendEvent(Event{
 		Name:   TrackItemChangedEvent,
 		Object: si,
 	})
@@ -476,7 +476,7 @@ func (si *SignalItem) resetPreviousActiveRoute(r *Route) {
 }
 
 // MarshalJSON method for SignalItem
-func (si *SignalItem) MarshalJSON() ([]byte, error) {
+func (si SignalItem) MarshalJSON() ([]byte, error) {
 	type jsonSignalItem struct {
 		jsonTrackStruct
 		Xb                  float64 `json:"xn"`

@@ -24,12 +24,31 @@ import (
 
 	"github.com/gorilla/websocket"
 	. "github.com/smartystreets/goconvey/convey"
+	"github.com/ts2/ts2-sim-server/simulation"
 )
 
 func TestConnection(t *testing.T) {
 	// Wait for server to come up
 	time.Sleep(2 * time.Second)
 	Convey("Testing server connection", t, func() {
+		stopChan := make(chan struct{})
+		// Creating a few concurrent connections
+		for i := 0; i < nbGoroutines; i++ {
+			go func() {
+				conn := clientDial(t)
+				defer conn.Close()
+				register(t, conn, Client, "", "client-secret")
+				addListener(t, conn, simulation.TrackItemChangedEvent)
+				addListener(t, conn, simulation.RouteActivatedEvent)
+				addListener(t, conn, simulation.RouteDeactivatedEvent)
+				addListener(t, conn, simulation.ClockEvent)
+				addListener(t, conn, simulation.TrainChangedEvent)
+				addListener(t, conn, simulation.MessageReceivedEvent)
+				addListener(t, conn, simulation.OptionsChangedEvent)
+				addListener(t, conn, simulation.StateChangedEvent)
+				<-stopChan
+			}()
+		}
 		c := clientDial(t)
 		Convey("Login test", func() {
 			Convey("First request that is not a register request should fail", func() {
@@ -70,6 +89,7 @@ func TestConnection(t *testing.T) {
 		})
 		Reset(func() {
 			err := c.Close()
+			close(stopChan)
 			So(err, ShouldBeNil)
 		})
 	})

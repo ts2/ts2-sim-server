@@ -59,7 +59,7 @@ func clientDial(t *testing.T) *websocket.Conn {
 }
 
 // register dials to the server and logs the client in
-func register(t *testing.T, c *websocket.Conn, ct ClientType, mt ManagerType, token string) error {
+func register(_ *testing.T, c *websocket.Conn, ct ClientType, mt ManagerType, token string) error {
 	loginRequest := RequestRegister{1234, "server", "register", ParamsRegister{ct, mt, token}}
 	if err := c.WriteJSON(loginRequest); err != nil {
 		return err
@@ -70,5 +70,29 @@ func register(t *testing.T, c *websocket.Conn, ct ClientType, mt ManagerType, to
 		return nil
 	} else {
 		return fmt.Errorf(expectedResponse.Data.Message)
+	}
+}
+
+// addListener for the given event
+func addListener(t *testing.T, c *websocket.Conn, event simulation.EventName) {
+	err := c.WriteJSON(RequestListener{
+		Object: "server",
+		Action: "addListener",
+		Params: ParamsListener{
+			Event: event,
+		},
+	})
+	if err != nil {
+		t.Error(err)
+	}
+	var resp ResponseStatus
+	for resp.MsgType != TypeResponse {
+		err = c.ReadJSON(&resp)
+		if err != nil {
+			t.Error(err)
+		}
+	}
+	if resp.Data.Status != Ok {
+		t.Errorf("error while setting up listener: %v", resp)
 	}
 }

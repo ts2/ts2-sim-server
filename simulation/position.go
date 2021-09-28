@@ -92,7 +92,10 @@ func (pos Position) IsOut() bool {
 
 // Next is the first Position on the next TrackItem with regard to this Position
 func (pos Position) Next(dir PointDirection) Position {
-	nextTi, _ := pos.TrackItem().FollowingItem(pos.PreviousItem(), dir)
+	nextTi, err := pos.TrackItem().FollowingItem(pos.PreviousItem(), dir)
+	if err != nil {
+		panic(err)
+	}
 	return Position{
 		simulation:     pos.simulation,
 		TrackItemID:    nextTi.ID(),
@@ -103,7 +106,10 @@ func (pos Position) Next(dir PointDirection) Position {
 
 // Previous is the last Position on the previous TrackItem with regard to this Position
 func (pos Position) Previous() Position {
-	previousTI, _ := pos.PreviousItem().FollowingItem(pos.TrackItem(), DirectionCurrent)
+	previousTI, err := pos.PreviousItem().FollowingItem(pos.TrackItem(), DirectionCurrent)
+	if err != nil {
+		panic(err)
+	}
 	var previousTIID string
 	if previousTI != nil {
 		previousTIID = previousTI.ID()

@@ -16,5 +16,5 @@
 // Free Software Foundation, Inc.,
 // 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-// Package `server` implements the http/websocket front end for the ts2 simulator
+// Package server implements the http/websocket front end for the ts2 simulator
 package server

@@ -21,7 +21,6 @@ package simulation
 import (
 	"encoding/json"
 	"fmt"
-	"sync"
 )
 
 // bigFloat is a large number used for the length of an EndItem. It must be bigger
@@ -106,7 +105,7 @@ func (i ItemInconsistentLinkError) Error() string {
 //
 // Every TrackItem has an Origin() Point defined by its X and Y values.
 type TrackItem interface {
-	// routeID returns the unique routeID of this TrackItem, which is the index of this
+	// ID returns the unique ID of this TrackItem, which is the index of this
 	// item in the Simulation's TrackItems map.
 	ID() string
 
@@ -237,11 +236,10 @@ type trackStruct struct {
 	selected       bool
 	trainEndsFW    map[*Train]float64
 	trainEndsBK    map[*Train]float64
-	trainEndMutex  sync.RWMutex
 	triggers       []func(TrackItem)
 }
 
-// routeID returns the unique routeID of this TrackItem, which is the index of this
+// ID returns the unique ID of this TrackItem, which is the index of this
 // item in the Simulation's TrackItems map.
 func (t *trackStruct) ID() string {
 	return t.tsId
@@ -324,7 +322,7 @@ func (t *trackStruct) TrackCode() string {
 //
 // The second argument will return a ItemsNotLinkedError if the given
 // precedingItem is not linked to this item.
-func (t *trackStruct) FollowingItem(precedingItem TrackItem, dir PointDirection) (TrackItem, error) {
+func (t *trackStruct) FollowingItem(precedingItem TrackItem, _ PointDirection) (TrackItem, error) {
 	if precedingItem == TrackItem(t).PreviousItem() {
 		return t.NextItem(), nil
 	}
@@ -368,7 +366,7 @@ func (t *trackStruct) underlying() *trackStruct {
 func (t *trackStruct) setActiveRoute(r *Route, previous TrackItem) {
 	t.activeRoute = r
 	t.arPreviousItem = previous
-	t.simulation.sendEvent(&Event{
+	t.simulation.sendEvent(Event{
 		Name:   TrackItemChangedEvent,
 		Object: t.full(),
 	})
@@ -385,14 +383,14 @@ func (t *trackStruct) ActiveRoutePreviousItem() TrackItem {
 }
 
 // trainHeadActions performs the actions to be done when a train head reaches this TrackItem
-func (t *trackStruct) trainHeadActions(train *Train) {
+func (t *trackStruct) trainHeadActions(_ *Train) {
 	for _, trigger := range t.triggers {
 		trigger(t)
 	}
 }
 
 // trainTailActions performs the actions to be done when a train tail reaches this TrackItem
-func (t *trackStruct) trainTailActions(train *Train) {
+func (t *trackStruct) trainTailActions(_ *Train) {
 	for _, trigger := range t.triggers {
 		trigger(t)
 	}
@@ -421,8 +419,6 @@ func (t *trackStruct) releaseRouteBehind() {
 
 // TrainPresent returns true if at least one train is present on this TrackItem
 func (t *trackStruct) TrainPresent() bool {
-	t.trainEndMutex.RLock()
-	defer t.trainEndMutex.RUnlock()
 	return len(t.trainEndsFW)+len(t.trainEndsBK) > 0
 }
 
@@ -430,7 +426,7 @@ func (t *trackStruct) TrainPresent() bool {
 func (t *trackStruct) resetActiveRoute() {
 	t.activeRoute = nil
 	t.arPreviousItem = nil
-	t.simulation.sendEvent(&Event{
+	t.simulation.sendEvent(Event{
 		Name:   TrackItemChangedEvent,
 		Object: t.full(),
 	})
@@ -445,8 +441,6 @@ func (t *trackStruct) IsOnPosition(pos Position) bool {
 // train tail) of the closest train when on pos. If no train is on this item, the
 // distance will be 0, and the second argument will be false.
 func (t *trackStruct) DistanceToTrainEnd(pos Position) (float64, bool) {
-	t.trainEndMutex.RLock()
-	defer t.trainEndMutex.RUnlock()
 	var mdSet bool
 	minDist := bigFloat
 	if pos.PreviousItemID == t.PreviousTiID {
@@ -487,8 +481,6 @@ func (t *trackStruct) Equals(ti TrackItem) bool {
 
 // initialize this track item
 func (t *trackStruct) initialize() error {
-	t.trainEndMutex.Lock()
-	defer t.trainEndMutex.Unlock()
 	t.trainEndsFW = make(map[*Train]float64)
 	t.trainEndsBK = make(map[*Train]float64)
 	return nil
@@ -500,13 +492,13 @@ func (t *trackStruct) full() TrackItem {
 }
 
 // MarshalJSON method for trackStruct
-func (t *trackStruct) MarshalJSON() ([]byte, error) {
+func (t trackStruct) MarshalJSON() ([]byte, error) {
 	ai := t.asJSONStruct()
 	return json.Marshal(ai)
 }
 
 // asJSONStruct returns this trackStruct as a jsonTrackStruct
-func (t *trackStruct) asJSONStruct() jsonTrackStruct {
+func (t trackStruct) asJSONStruct() jsonTrackStruct {
 	var arID, arpiID string
 	if t.activeRoute != nil {
 		arID = t.activeRoute.ID()
@@ -514,8 +506,6 @@ func (t *trackStruct) asJSONStruct() jsonTrackStruct {
 	if t.arPreviousItem != nil {
 		arpiID = t.arPreviousItem.ID()
 	}
-	t.trainEndMutex.RLock()
-	defer t.trainEndMutex.RUnlock()
 	tEndsFW := make(map[string]float64)
 	for t, p := range t.trainEndsFW {
 		tEndsFW[t.ID()] = p
@@ -643,7 +633,7 @@ func (ei *EndItem) Type() TrackItemType {
 	return TypeEnd
 }
 
-// RealLength() is the length in meters that this TrackItem has in real life track length
+// RealLength is the length in meters that this TrackItem has in real life track length
 func (ei *EndItem) RealLength() float64 {
 	return bigFloat
 }
@@ -655,7 +645,7 @@ func (ei *EndItem) MarshalJSON() ([]byte, error) {
 
 var _ TrackItem = new(EndItem)
 
-// PlatformItem's are usually represented as a colored rectangle on the scene to
+// PlatformItem are usually represented as a colored rectangle on the scene to
 // symbolise the platform. This colored rectangle can permit user interaction.
 type PlatformItem struct {
 	LineItem

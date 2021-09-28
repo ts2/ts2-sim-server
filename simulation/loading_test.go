@@ -50,7 +50,7 @@ func TestSimulationLoading(t *testing.T) {
 		So(err, ShouldBeNil)
 		Convey("Options should be all loaded", func() {
 			So(sim.Options.CurrentScore, ShouldEqual, 0)
-			So(sim.Options.CurrentTime, ShouldResemble, ParseTime("06:00:00"))
+			So(sim.Options.CurrentTime(), ShouldResemble, ParseTime("06:00:00"))
 			So(sim.Options.DefaultDelayAtEntry.Equals(DelayGenerator{[]delayTuplet{{0, 0, 100}}}), ShouldBeTrue)
 			So(sim.Options.DefaultMinimumStopTime.Equals(DelayGenerator{[]delayTuplet{{20, 40, 90}, {40, 120, 10}}}), ShouldBeTrue)
 			So(sim.Options.DefaultMaxSpeed, ShouldEqual, 18.06)

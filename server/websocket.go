@@ -42,7 +42,7 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	conn := &connection{
-		Conn:     *ws,
+		Conn:     ws,
 		pushChan: make(chan interface{}, 256),
 	}
 	ctx, cancel := context.WithCancel(context.Background())
