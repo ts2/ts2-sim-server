@@ -50,16 +50,26 @@ type trackStruct struct {
 }
 
 func sendRequestStatus(c *websocket.Conn, object, action, params string) ResponseStatus {
+	resp, err := sendRequestStatusWithError(c, object, action, params)
+	So(err, ShouldBeNil)
+	return resp
+}
+
+func sendRequestStatusWithError(c *websocket.Conn, object, action, params string) (ResponseStatus, error) {
 	if params == "" {
 		params = "null"
 	}
-	err := c.WriteJSON(Request{Object: object, Action: action, Params: RawJSON(params)})
-	So(err, ShouldBeNil)
+	if err := c.WriteJSON(Request{Object: object, Action: action, Params: RawJSON(params)}); err != nil {
+		return ResponseStatus{}, err
+	}
 	var resp ResponseStatus
-	err = c.ReadJSON(&resp)
-	So(err, ShouldBeNil)
-	So(resp.MsgType, ShouldEqual, TypeResponse)
-	return resp
+	for resp.MsgType != TypeResponse {
+		err := c.ReadJSON(&resp)
+		if err != nil {
+			return ResponseStatus{}, err
+		}
+	}
+	return resp, nil
 }
 
 func TestHub(t *testing.T) {
@@ -764,6 +774,76 @@ func TestHub(t *testing.T) {
 						So(err, ShouldBeNil)
 						So(de.Name, ShouldEqual, simulation.RouteActivatedEvent)
 					}
+				}
+			})
+		})
+
+		Convey("Testing the whole system", func() {
+			Convey("Start simulation and execute a few actions concurrently", func() {
+				for i := 0; i < nbGoroutines; i++ {
+					go func() {
+						conn := clientDial(t)
+						defer func() {
+							if err := conn.Close(); err != nil {
+								t.Error(err)
+							}
+						}()
+						if err := register(t, conn, Client, "", "client-secret"); err != nil {
+							t.Error(err)
+						}
+
+						addListener(t, conn, simulation.TrackItemChangedEvent)
+						addListener(t, conn, simulation.RouteActivatedEvent)
+						addListener(t, conn, simulation.RouteDeactivatedEvent)
+						addListener(t, conn, simulation.ClockEvent)
+						addListener(t, conn, simulation.TrainChangedEvent)
+						addListener(t, conn, simulation.MessageReceivedEvent)
+						addListener(t, conn, simulation.OptionsChangedEvent)
+						addListener(t, conn, simulation.StateChangedEvent)
+
+						resp, err := sendRequestStatusWithError(conn, "simulation", "start", "")
+						if err != nil {
+							t.Error(err)
+						}
+						if resp.Data.Status != Ok {
+							t.Error("simulation did not start", resp)
+						}
+
+						time.Sleep(500 * time.Millisecond)
+						if sim.Options.CurrentTime() != simulation.ParseTime("06:00:02.5") {
+							t.Error("simulation time is not evolving. Expected 06:00:02.5 got", sim.Options.CurrentTime())
+						}
+
+						resp, err = sendRequestStatusWithError(conn, "route", "deactivate", `{"id": "1"}`)
+						if err != nil {
+							t.Error(err)
+						}
+
+						resp, err = sendRequestStatusWithError(conn, "route", "deactivate", `{"id": "2"}`)
+						if err != nil {
+							t.Error(err)
+						}
+
+						resp, err = sendRequestStatusWithError(conn, "route", "activate", `{"id": "1"}`)
+						if err != nil {
+							t.Error(err)
+						}
+
+						resp, err = sendRequestStatusWithError(conn, "route", "activate", `{"id": "2"}`)
+						if err != nil {
+							t.Error(err)
+						}
+
+						time.Sleep(500 * time.Millisecond)
+
+						resp, err = sendRequestStatusWithError(conn, "simulation", "pause", "")
+						if err != nil {
+							t.Error(err)
+						}
+						if resp.Data.Status != Ok {
+							t.Error("simulation did not pause", resp)
+						}
+					}()
 				}
 			})
 		})

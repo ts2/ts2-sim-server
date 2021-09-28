@@ -65,25 +65,18 @@ func (h *Hub) run(hubUp chan bool) {
 		case c = <-h.readChan:
 			logger.Debug("Reading request from client", "submodule", "hub", "data", c.getRequest())
 			h.dispatchObject(c)
-		default:
-		}
-		select {
 		case c = <-h.registerChan:
 			logger.Debug("Registering connection", "submodule", "hub", "connection", c.RemoteAddr())
 			h.register(c)
 		case c = <-h.unregisterChan:
 			logger.Info("Unregistering connection", "submodule", "hub", "connection", c.RemoteAddr())
 			h.unregister(c)
-		default:
-		}
-		select {
 		case e = <-sim.EventChan:
 			logger.Debug("Received event from simulation", "submodule", "hub", "event", e.Name, "object", e.Object)
 			if e.Name == simulation.ClockEvent {
 				sim.ProcessTimeStep()
 			}
 			h.notifyClients(e)
-		default:
 		}
 	}
 }
@@ -120,7 +113,7 @@ func (h *Hub) removeConnectionFromRegistry(conn *connection) {
 	}
 }
 
-// unregister unregisters the connection to this hub
+// unregister the connection to this hub
 func (h *Hub) unregister(c *connection) {
 	switch c.clientType {
 	case Client:
@@ -137,7 +130,11 @@ func (h *Hub) notifyClients(e simulation.Event) {
 	h.updateLastEvents(e)
 	// Notify clients that subscribed to all objects
 	for conn := range h.registry[registryEntry{eventName: e.Name, id: ""}] {
-		conn.pushChan <- NewNotificationResponse(e)
+		resp := NewNotificationResponse(e)
+		// Send notification in another goroutine so as not to block
+		go func(c* connection) {
+			c.pushChan <- resp
+		}(conn)
 	}
 	if e.Object.ID() == "" {
 		// Object has no ID. Don't send twice
@@ -145,7 +142,11 @@ func (h *Hub) notifyClients(e simulation.Event) {
 	}
 	// Notify clients that subscribed to specific object IDs
 	for conn := range h.registry[registryEntry{eventName: e.Name, id: e.Object.ID()}] {
-		conn.pushChan <- NewNotificationResponse(e)
+		resp := NewNotificationResponse(e)
+		// Send notification in another goroutine so as not to block
+		go func(c* connection) {
+			c.pushChan <- resp
+		}(conn)
 	}
 }
 
